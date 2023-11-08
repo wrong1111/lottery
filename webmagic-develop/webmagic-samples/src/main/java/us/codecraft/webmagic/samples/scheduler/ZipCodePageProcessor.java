@@ -81,5 +81,7 @@ public class ZipCodePageProcessor implements PageProcessor {
         Spider spider = Spider.create(new ZipCodePageProcessor()).scheduler(new PriorityScheduler()).addUrl("http://www.ip138.com/post/");
 
         spider.run();
+
+
     }
 }

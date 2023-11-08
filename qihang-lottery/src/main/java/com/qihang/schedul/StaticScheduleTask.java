@@ -76,6 +76,7 @@ public class StaticScheduleTask {
     @Scheduled(cron = "0 0/9 * * * ?")
     private void configureProcessorTasks() {
         //执行爬虫
+        log.info("爬虫定时任务 configureProcessorTasks   触发时间【{}】", DateUtil.now());
         lotteryProcessor.run();
     }
 

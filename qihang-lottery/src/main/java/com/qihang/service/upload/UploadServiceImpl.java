@@ -13,11 +13,15 @@ import javax.annotation.Resource;
  * @description:
  * @time: 2022-07-17 18:30
  */
-@Service
 public class UploadServiceImpl implements IUploadService {
 
     @Resource
     private S3Util s3Util;
+
+    public IUploadService setProperties(S3Util s3Util) {
+        this.s3Util = s3Util;
+        return this;
+    }
 
     @Override
     public BaseVO upload(MultipartFile file) {

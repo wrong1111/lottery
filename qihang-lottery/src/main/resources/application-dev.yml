@@ -140,6 +140,8 @@ exclude:
     - /sys/user/token/*
     - /app/domain/query
 
+##=======指定上传使用的是 s3 oss对象存储还是本机存储  #####
+
 #============== S3对象存储 ===================
 s3:
   # s3上已经存在该存储桶
@@ -150,7 +152,12 @@ s3:
   secret_key: PmYSYx1YN/gyZbQBRqbsdYj/edvb2qROmgxi+xyq
   # AWS 云平台地址
   url: https://ppm-pics-resource.s3.us-east-1.amazonaws.com/
-
+###################本地存储 #########
+local:
+  file_path: /home/static
+  url: http://localhost/
+  ##local 本机存储，s3 oss对象存储
+  type: local
 #============== 腾讯云相关配置 ===================
 
 tencent:
@@ -168,7 +175,7 @@ tencent:
 webdriver:
   chrome:
     driver:
-      path: C:\chromedriver.exe
+      path: D:\\work\\chromedriver\\chromedriver.exe
 
 #支付宝支付配置
 alipay:
