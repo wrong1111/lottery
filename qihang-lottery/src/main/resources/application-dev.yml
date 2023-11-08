@@ -58,7 +58,7 @@ spring:
           # 连接池大小
           connectionPoolSize: 64
           # 数据库编号
-          database: 0
+          database: 3
           # DNS监测时间间隔，单位：毫秒
           dnsMonitoringInterval: 5000
           pingConnectionInterval: 1000
@@ -77,7 +77,7 @@ spring:
     host: 127.0.0.1
     port: 5672
     username: admin
-    password: 123456
+    password: admin123
     #确认消息已发送到交换机(Exchange)
     publisher-confirm-type: correlated
     #保证交换机能把消息推送到队列中

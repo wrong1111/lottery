@@ -63,9 +63,11 @@
 		onLoad(option) {
 			//如果登录过的直接显示从缓存中取出店铺信息的logo
 			this.shop = uni.getStorageSync("shop");
+			console.log(' store shop',this.shop)
 			this.register.whether = option.whether
 			//初始化
 			shopList(this.register).then(res => {
+				console.log('register shopList',res)
 				this.columns.push(res.voList)
 				//邀请进来的需要在这里赋值pid数据
 				if (option.uid != undefined && option.uid != null) {
@@ -103,9 +105,14 @@
 				this.tips = text;
 			},
 			confirm(data) {
+				console.log(' register' ,data)
 				//点击确定进行赋值操作
 				this.text = data.value[0].name
 				this.show = false;
+				//wyong
+				//如果当前缓存没有  shop 且选中了的话就把这个当shop
+				this.shop = data.value[0]
+				uni.setStorageSync("shop",this.shop)
 			},
 			inputBtn() {
 				this.show = true;

@@ -234,6 +234,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             userId = userDO.getId();
         }
         UserDO userDO = new UserDO();
+        //如果是选择的店铺，或者默认  1 前端的uid是 tenant_id
+        //会员主键
         userDO.setUid(uid);
         //设置上级pid
         userDO.setPid(StrUtil.isBlank(registerDTO.getWhether()) ? userId : null);
@@ -246,9 +248,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         userDO.setCreateTime(new Date());
         userDO.setUpdateTime(new Date());
         SysDomainDO sysDomain = sysDomainMapper.selectOne(null);
-        InputStream is = QrCodeUtil.generate(sysDomain.getAppUrl() + "/#/pages/user/register?uid=" + uid);
-        String codeUrl = s3Util.upload(is);
-        userDO.setQrCode(codeUrl);
+        //wyong edit    推广二维码需要 生成出来。
+//        InputStream is = QrCodeUtil.generate(sysDomain.getAppUrl() + "/#/pages/user/register?uid=" + uid);
+//        String codeUrl = s3Util.upload(is);
+        userDO.setQrCode("");
         userDO.setAvatar("https://ppm-pics-resource.s3.us-east-1.amazonaws.com/cms/QQ截图20230324020824.png");
         userMapper.insert(userDO);
         UserTokenVO userTokenVO = new UserTokenVO();
