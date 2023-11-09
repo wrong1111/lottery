@@ -28,7 +28,8 @@
 			</view>
 		</view>
 		<view class="body">
-			<uni-card is-shadow v-if="lotteryOrder.type=='3'">
+			<!-- 福彩3D WYONG EDIT-->
+			<uni-card is-shadow v-if="lotteryOrder.type=='3' ||lotteryOrder.type =='21'">
 				<view>
 					<span class="title">{{lotteryOrder.ballName}}</span>
 					<p style="display: flex;justify-content: flex-end;align-items: center;">
@@ -473,7 +474,7 @@
 			</uni-card>
 
 			<uni-card class="phone"
-				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type!=3&&lotteryOrder.type!=4&&lotteryOrder.type!=5&&lotteryOrder.type!=8">
+				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type!=3 && lotteryOrder.type!=21 &&lotteryOrder.type!=4&&lotteryOrder.type!=5&&lotteryOrder.type!=8">
 				<p>
 					<view class="title">方案详情</view>
 					<uni-table border stripe emptyText="暂无更多数据" class="make">
@@ -528,14 +529,14 @@
 			</uni-card>
 
 			<uni-card class="phone"
-				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type==3||lotteryOrder.type==4||lotteryOrder.type==5||lotteryOrder.type==8">
+				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type==3 ||lotteryOrder.type ==21||lotteryOrder.type==4||lotteryOrder.type==5||lotteryOrder.type==8">
 				<p>
 					<view class="title">方案详情</view>
 					<uni-table border stripe emptyText="暂无更多数据" class="make">
 						<!-- 表头行 -->
 						<uni-tr>
 							<uni-th width="20px" align="center">期号</uni-th>
-							<uni-th align="center" width="30px" v-if="lotteryOrder.type==3">过关</uni-th>
+							<uni-th align="center" width="30px" v-if="lotteryOrder.type==3 || lotteryOrder.type ==21">过关</uni-th>
 							<uni-th align="center" width="80px">中奖组合</uni-th>
 							<uni-th align="center" width="30px">倍数</uni-th>
 							<uni-th align="center" width="120px">预测奖金</uni-th>
@@ -544,7 +545,7 @@
 						<tbody v-for="(item,index) in lotteryOrder.schemeDetails" :key="index">
 							<uni-tr>
 								<uni-td align="center">{{item.stageNumber}}</uni-td>
-								<uni-td align="center" v-if="lotteryOrder.type==3">
+								<uni-td align="center" v-if="lotteryOrder.type==3||lotteryOrder.type==21">
 									{{item.mode|formatMode}}
 								</uni-td>
 								<uni-td align="center">
@@ -554,7 +555,7 @@
 									{{lotteryOrder.times}}
 								</uni-td>
 								<uni-td align="center"
-									v-if="lotteryOrder.type==3||lotteryOrder.type==4">{{item.forecastBonus}}</uni-td>
+									v-if="lotteryOrder.type==3||lotteryOrder.type==4 ||lotteryOrder.type==21">{{item.forecastBonus}}</uni-td>
 								<uni-td align="center" v-else>
 									浮动奖金以官网出奖为准
 								</uni-td>
@@ -709,7 +710,7 @@
 					if (res.schemeDetails != null && res.schemeDetails != undefined && res.schemeDetails != "") {
 						this.lotteryOrder.schemeDetails = JSON.parse(this.lotteryOrder.schemeDetails)
 						//过滤掉数字彩
-						if (this.lotteryOrder.type != 3 && this.lotteryOrder.type != 4 && this.lotteryOrder.type !=
+						if (this.lotteryOrder.type != 3 &&this.lotteryOrder.type != 21&& this.lotteryOrder.type != 4 && this.lotteryOrder.type !=
 							5 && this.lotteryOrder.type != 8) {
 							this.lotteryOrder.schemeDetails.map((item, index) => {
 								item.forecastBonus = parseFloat((item.forecastBonus / item.notes) * this
@@ -749,7 +750,8 @@
 						}
 					})
 					//处理排列3的组三和组六的字符串转数组
-					if (this.lotteryOrder.type == "3") {
+					//wyong edit 
+					if (this.lotteryOrder.type == "3" ||this.lotteryOrder.type =="21") {
 						this.lotteryOrder.recordList.map(item => {
 							if (item.mode == "1" || item.mode == "2") {
 								item.individual = JSON.parse(item.individual)

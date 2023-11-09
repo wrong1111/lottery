@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 
 /**
  * @author: bright
@@ -29,5 +30,10 @@ public class UploadServiceImpl implements IUploadService {
         String url = s3Util.upload(file);
         fileVO.setUrl(url);
         return fileVO;
+    }
+
+    @Override
+    public String upload(InputStream in) {
+        return s3Util.upload(in);
     }
 }

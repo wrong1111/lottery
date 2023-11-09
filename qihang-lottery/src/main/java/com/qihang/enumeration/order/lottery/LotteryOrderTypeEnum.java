@@ -24,7 +24,9 @@ public enum LotteryOrderTypeEnum {
 
     REN_JIU("7", "任选九"),
 
-    GRAND_LOTTO("8", "大乐透");
+    GRAND_LOTTO("8", "大乐透"),
+
+    FC3D("21", "福彩3D");
     private String key;
     private String value;
 

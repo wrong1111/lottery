@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.qihang.common.util.reward.LotteryAlgorithmUtil;
 import com.qihang.constant.CrawlingAddressConstant;
 import com.qihang.domain.basketball.BasketballMatchDO;
@@ -13,6 +14,7 @@ import com.qihang.domain.omit.OmitDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Page;
@@ -35,6 +37,8 @@ import java.util.List;
  * @description:
  * @time: 2022-10-03 10:28
  */
+
+@Slf4j
 @Component
 public class LotteryProcessor implements PageProcessor {
 
@@ -86,8 +90,10 @@ public class LotteryProcessor implements PageProcessor {
                     footballMatchList.add(footballMatch);
                 }
             }
+            log.info(" 足彩比赛 >>>> {} ，result:{}", page.getUrl().toString(), JSON.toJSONString(footballMatchList));
             page.putField("footballGoalList", footballMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL2) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL16) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL17) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL20)) {
+            log.info(page.getUrl() + " >> {}", html);
             //排列 开奖结果爬取
             PermutationAwardDO permutationAward = new PermutationAwardDO();
             permutationAward.setStageNumber(Integer.valueOf(page.getHtml().css(".td_title01 .cfont2 strong", "text").get()));
@@ -105,6 +111,7 @@ public class LotteryProcessor implements PageProcessor {
                 permutationAward.setMoneyAward(html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[4]/text()").toString().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[4]/text()").toString().replaceAll(",", ""));
             }
             permutationAward.setReward(StrUtil.join(",", rewardList));
+            log.info(" 开奖>>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(permutationAward));
             page.putField("permutation", permutationAward);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL3)) {
             //抓取竞彩网的队伍分析数据
@@ -119,6 +126,7 @@ public class LotteryProcessor implements PageProcessor {
                 footballMatch.setAnalysis("http://wap.310win.com" + clk.substring(clk.indexOf("('") + 2, clk.indexOf("')")));
                 footballMatchList.add(footballMatch);
             }
+            log.info(" 足彩对局分析 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(footballMatchList));
             page.putField("footballGoalList", footballMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL4)) {
             List<BasketballMatchDO> basketballMatchList = new ArrayList<>();
@@ -155,6 +163,7 @@ public class LotteryProcessor implements PageProcessor {
                     basketballMatchList.add(basketballMatch);
                 }
             }
+            log.info(" 篮彩比赛 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(basketballMatchList));
             page.putField("basketballMatchList", basketballMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL5)) {
             //抓取竞彩网的队伍分析数据
@@ -169,6 +178,7 @@ public class LotteryProcessor implements PageProcessor {
                 basketballMatch.setAnalysis("http://wap.310win.com" + clk.substring(clk.indexOf("('") + 2, clk.indexOf("')")));
                 basketballMatchList.add(basketballMatch);
             }
+            log.info(" 篮球对局分析 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(basketballMatchList));
             page.putField("basketballMatchList", basketballMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL6)) {
             List<FootballMatchDO> footballMatchList = new ArrayList<>();
@@ -186,6 +196,7 @@ public class LotteryProcessor implements PageProcessor {
                 footballMatch.setHalfFullCourt(StrUtil.join(",", str.split(" ")));
                 footballMatchList.add(footballMatch);
             }
+            log.info(" 足球开奖 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(footballMatchList));
             page.putField("footballGoalList", footballMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL7)) {
             //篮球开奖
@@ -218,6 +229,7 @@ public class LotteryProcessor implements PageProcessor {
                 basketballMatch.setHalfFullCourt(score);
                 basketballMatchList.add(basketballMatch);
             }
+            log.info(" 篮球开奖 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(basketballMatchList));
             page.putField("basketballMatchList", basketballMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL8)) {
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
@@ -265,6 +277,7 @@ public class LotteryProcessor implements PageProcessor {
                     beiDanMatchList.add(beiDanMatch);
                 }
             }
+            log.info(" 北京单场 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(beiDanMatchList));
             page.putField("beiDanMatchList", beiDanMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL9) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL10) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL12)) {
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
@@ -308,6 +321,7 @@ public class LotteryProcessor implements PageProcessor {
                     beiDanMatchList.add(beiDanMatch);
                 }
             }
+            log.info(" 北京单场 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(beiDanMatchList));
             page.putField("beiDanMatchList", beiDanMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL11)) {
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
@@ -346,6 +360,7 @@ public class LotteryProcessor implements PageProcessor {
                     beiDanMatchList.add(beiDanMatch);
                 }
             }
+            log.info(" 北京单场 比分 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(beiDanMatchList));
             page.putField("beiDanMatchList", beiDanMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL13)) {
             //北单开奖
@@ -376,6 +391,7 @@ public class LotteryProcessor implements PageProcessor {
                 beiDanMatch.setBonusOdds(nodes.get(i).css("td:nth-child(10) span", "text").toString() + "," + nodes.get(i).css("td:nth-child(13) span", "text") + "," + nodes.get(i).css("td:nth-child(16) span", "text") + "," + nodes.get(i).css("td:nth-child(19) span", "text") + "," + nodes.get(i).css("td:nth-child(22) span", "text"));
                 beiDanMatchList.add(beiDanMatch);
             }
+            log.info(" 北单开奖 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(beiDanMatchList));
             page.putField("beiDanMatchList", beiDanMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL14)) {
             List<BasketballMatchDO> basketballMatchList = new ArrayList<>();
@@ -404,6 +420,7 @@ public class LotteryProcessor implements PageProcessor {
                     basketballMatchList.add(basketballMatch);
                 }
             }
+            log.info(" 篮球单关查询 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(basketballMatchList));
             page.putField("basketballMatchList", basketballMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL15)) {
             //抓取竞彩网的队伍分析数据
@@ -419,6 +436,7 @@ public class LotteryProcessor implements PageProcessor {
                 beiDanMatch.setAnalysis("http://wap.310win.com" + clk.substring(clk.indexOf("('") + 2, clk.indexOf("')")));
                 beiDanMatchList.add(beiDanMatch);
             }
+            log.info(" 北单分析 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(beiDanMatchList));
             page.putField("beiDanMatchList", beiDanMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL18)) {
             //胜负彩比赛
@@ -444,6 +462,7 @@ public class LotteryProcessor implements PageProcessor {
                 winBurdenMatch.setUpdateTime(new Date());
                 winBurdenMatchList.add(winBurdenMatch);
             }
+            log.info(" 胜负彩比赛 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(winBurdenMatchList));
             page.putField("winBurdenMatchList", winBurdenMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL19)) {
             //胜负彩开奖
@@ -456,11 +475,11 @@ public class LotteryProcessor implements PageProcessor {
                 winBurdenMatch.setIssueNo(issueNo);
                 winBurdenMatch.setHomeTeam(node.css(".div_shupai", "text").toString().replaceAll(" ", ""));
                 String str = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[1]/tbody/tr[3]/td[" + idx++ + "]/span/text()").toString();
-                if (str.equals("3")) {
+                if ("3".equals(str)) {
                     winBurdenMatch.setAward("胜");
-                } else if (str.equals("1")) {
+                } else if ("1".equals(str)) {
                     winBurdenMatch.setAward("平");
-                } else if (str.equals("0")) {
+                } else if ("0".equals(str)) {
                     winBurdenMatch.setAward("负");
                 }
                 winBurdenMatch.setMoneyAward(
@@ -469,6 +488,7 @@ public class LotteryProcessor implements PageProcessor {
                                 + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().replaceAll(",", ""));
                 winBurdenMatchList.add(winBurdenMatch);
             }
+            log.info(" 胜负彩开奖 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(winBurdenMatchList));
             page.putField("winBurdenMatchList", winBurdenMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL21)
                 || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL22)
@@ -499,6 +519,7 @@ public class LotteryProcessor implements PageProcessor {
             }
             omit.setRecord(StrUtil.join(",", list));
             omitList.add(omit);
+            log.info(" 排列号码遗漏 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(omitList));
             page.putField("omitList", omitList);
         }
     }
@@ -521,7 +542,8 @@ public class LotteryProcessor implements PageProcessor {
     }
 
     public void run() {
-        Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL1
+        Spider.create(new LotteryProcessor()).addUrl(
+                        CrawlingAddressConstant.URL1
                         , CrawlingAddressConstant.URL2
                         , CrawlingAddressConstant.URL3
                         , CrawlingAddressConstant.URL4
@@ -544,7 +566,8 @@ public class LotteryProcessor implements PageProcessor {
                         , CrawlingAddressConstant.URL21
                         , CrawlingAddressConstant.URL22
                         , CrawlingAddressConstant.URL23
-                        , CrawlingAddressConstant.URL24)
+                        , CrawlingAddressConstant.URL24
+                )
                 //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
                 // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
                 .setDownloader(new SeleniumDownloader(chromeDriverPath)).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();

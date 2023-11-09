@@ -371,6 +371,7 @@ public class LotteryPipeline implements Pipeline {
                     omitService.save(omitDO);
                 } else {
                     omit.setRecord(omitDO.getRecord());
+                    omit.setUpdateTime(new Date());
                     omitService.updateById(omit);
                 }
             }

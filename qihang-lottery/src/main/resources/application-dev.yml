@@ -155,7 +155,7 @@ s3:
 ###################本地存储 #########
 local:
   file_path: /home/static
-  url: http://localhost/
+  url: http://localhost/static
   ##local 本机存储，s3 oss对象存储
   type: local
 #============== 腾讯云相关配置 ===================

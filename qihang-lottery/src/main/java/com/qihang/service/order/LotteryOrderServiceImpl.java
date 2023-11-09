@@ -214,7 +214,12 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         //下注的所有id转换成list
         List<Integer> ids = Convert.toList(Integer.class, lotteryOrder.getTargetIds());
 
-        if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.ARRAY.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.ARRANGE.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SEVEN_STAR.getKey())|| StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
+        //wyong edit 福彩3D
+        if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.ARRAY.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.ARRANGE.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SEVEN_STAR.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.GRAND_LOTTO.getKey())
+                ||StrUtil.equals(lotteryOrder.getType(),LotteryOrderTypeEnum.FC3D.getKey())) {
             //批量查询下注列表
             List<PermutationDO> permutationList = permutationMapper.selectBatchIds(ids);
             //竞彩列表 由于都是一样的直接取第一个就行
@@ -329,7 +334,12 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             if (ObjectUtil.isNotNull(parentUser)) {
                 lotteryOrderQueryVO.setParentName(parentUser.getNickname());
             }
-            if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.ARRAY.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.ARRANGE.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SEVEN_STAR.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
+            if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.ARRAY.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.ARRANGE.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SEVEN_STAR.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.GRAND_LOTTO.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FC3D.getKey())
+            ) {
                 List<RacingBallVO> ballList = new ArrayList<>();
                 //排列3组装数据
                 List<PermutationDO> threeList = permutationMapper.selectBatchIds(Convert.toList(Integer.class, lotteryOrder.getTargetIds()));
@@ -348,7 +358,10 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                             str += permutation.getTenMyriad() + "|";
                         }
                     }
-                    if (permutation.getType().equals(LotteryOrderTypeEnum.ARRANGE.getKey()) || permutation.getType().equals(LotteryOrderTypeEnum.SEVEN_STAR.getKey())) {
+                    if (permutation.getType().equals(LotteryOrderTypeEnum.ARRANGE.getKey())
+                            || permutation.getType().equals(LotteryOrderTypeEnum.SEVEN_STAR.getKey())
+                            || permutation.getType().equals(LotteryOrderTypeEnum.FC3D.getKey())
+                    ) {
                         if (StrUtil.isNotBlank(permutation.getMyriad())) {
                             str += permutation.getMyriad() + "|";
                         }
@@ -665,6 +678,9 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             type = PayOrderTypeEnum.REN_JIU_AWARD.getKey();
         } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
             type = PayOrderTypeEnum.GRAND_LOTTO_AWARD.getKey();
+            //wyong edit 福彩3D派奖
+        } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FC3D.getKey())) {
+            type = PayOrderTypeEnum.FC3D_AWARD.getKey();
         }
         payOrder.setType(type);
         payOrder.setState(PayOrderStateEnum.PAYMENT.getKey());

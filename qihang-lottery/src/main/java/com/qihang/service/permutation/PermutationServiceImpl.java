@@ -119,6 +119,9 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             payOrder.setType(PayOrderTypeEnum.SEVEN_STAR.getKey());
         } else if (type.equals(LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
             payOrder.setType(PayOrderTypeEnum.GRAND_LOTTO.getKey());
+            //wyong edit 福彩3D
+        } else if (type.equals(LotteryOrderTypeEnum.FC3D.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.FC3D.getKey());
         }
         payOrder.setUserId(userId);
         payOrder.setPayType(PayTypeEnum.APP.getKey());
@@ -163,7 +166,7 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             ids.add(permutation.getId());
             List<PermutationVO> makeUp = new ArrayList<>();
             //组合成方案
-            if (type.equals(LotteryOrderTypeEnum.ARRAY.getKey())) {
+            if (type.equals(LotteryOrderTypeEnum.ARRAY.getKey()) || type.equals(LotteryOrderTypeEnum.FC3D.getKey())) {
                 //排列3
                 if (placeOrderDTO.getMode().equals("0")) {
                     makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), permutationAward.getStageNumber() + 1, placeOrderDTO.getTimes(), placeOrderDTO.getHundred().toArray(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
@@ -214,6 +217,9 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
         return commonList;
     }
 
+    /*
+     排列开奖逻辑。
+     */
     @Override
     @TenantIgnore
     public BaseVO calculation(PermutationAwardDO permutationAward) {
@@ -250,7 +256,8 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
                     Boolean flag = false;
                     Long bonus = 0L;
                     //是排列3还是排列5
-                    if (permutationAward.getType().equals(LotteryOrderTypeEnum.ARRAY.getKey())) {
+                    //wyong edit  福彩3D
+                    if (permutationAward.getType().equals(LotteryOrderTypeEnum.ARRAY.getKey()) || permutationAward.getType().equals(LotteryOrderTypeEnum.FC3D.getKey())) {
                         //直选
                         if (ObjectUtil.equal(permutationDO.getMode(), "0")) {
                             bonus = PermutationUtil.directlyElected(permutationDO.getHundred().split(","), permutationDO.getTen().split(","), permutationDO.getIndividual().split(","), permutationAward.getReward());
@@ -329,6 +336,9 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             type = PayOrderTypeEnum.ARRANGE_REFUND.getKey();
         } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SEVEN_STAR.getKey())) {
             type = PayOrderTypeEnum.SEVEN_STAR_REFUND.getKey();
+            //wyong edit 福彩3D退标
+        } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FC3D.getKey())) {
+            type = PayOrderTypeEnum.FC3D_REFUND.getKey();
         }
         payOrder.setType(type);
         payOrder.setState(PayOrderStateEnum.PAYMENT.getKey());

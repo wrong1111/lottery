@@ -60,9 +60,11 @@ public enum PayOrderTypeEnum {
 
     GRAND_LOTTO_AWARD("28", "大乐透派奖"),
 
-    GRAND_LOTTO_REFUND("29", "大乐透退票");
+    GRAND_LOTTO_REFUND("29", "大乐透退票"),
 
-
+    FC3D("30", "下单福彩3D"),
+    FC3D_REFUND("31", "福彩3D退票"),
+    FC3D_AWARD("32", "福彩3D派奖");
 
     private String key;
     private String value;

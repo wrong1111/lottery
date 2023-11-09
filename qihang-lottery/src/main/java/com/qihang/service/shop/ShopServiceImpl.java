@@ -56,7 +56,9 @@ import com.qihang.mapper.shop.ShopMapper;
 import com.qihang.mapper.user.SysUserMapper;
 import com.qihang.mapper.user.UserMapper;
 import com.qihang.mapper.withdrawal.WithdrawalMapper;
+import com.qihang.service.upload.IUploadService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,8 +125,9 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, ShopDO> implements 
     @Resource
     private SysDomainMapper sysDomainMapper;
 
-    @Resource
-    private S3Util s3Util;
+
+    @Autowired
+    IUploadService uploadService;
 
     @Override
     @TenantIgnore
@@ -250,7 +253,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, ShopDO> implements 
         userDO.setUpdateTime(new Date());
         SysDomainDO sysDomain = sysDomainMapper.selectOne(null);
         InputStream is = QrCodeUtil.generate(sysDomain.getAppUrl() + "/#/pages/user/register?uid=" + uid);
-        String codeUrl = s3Util.upload(is);
+        String codeUrl = uploadService.upload(is);
         userDO.setQrCode(codeUrl);
         userDO.setAvatar("https://img-blog.csdnimg.cn/142cf2dca89e456aa3fe3aacdf688363.jpeg");
         userMapper.insert(userDO);

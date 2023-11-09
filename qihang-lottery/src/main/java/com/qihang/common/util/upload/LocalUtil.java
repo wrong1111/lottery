@@ -16,10 +16,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.time.LocalDateTime;
 
 
@@ -32,6 +29,30 @@ public class LocalUtil {
     String url;
     String type;
 
+    public String saveFile(InputStream is, String path) {
+        try {
+            byte[] by = new byte[1024];
+            int len = -1;
+            String root = this.filePath;
+            String filePath = File.separator + path + File.separator + builderName(".png");
+            File saveFile = new File(root + filePath);
+            saveFile.getParentFile().mkdirs();
+            if (!saveFile.exists()) {
+                saveFile.createNewFile();
+            }
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(saveFile));
+            while ((len = is.read(by)) != -1) {
+                bufferedOutputStream.write(by, 0, len);
+            }
+            //文件访问路径
+            String address = url + filePath;
+            return address;
+        } catch (Exception e) {
+
+        }
+        return "";
+    }
+
     /**
      * 前端上传文件
      *
@@ -40,25 +61,10 @@ public class LocalUtil {
      */
     public String upload(MultipartFile files) {
         try {
-            InputStream is = files.getInputStream();
-            String fileName = IdWorker.get32UUID() + ".png";
-            byte[] by = new byte[1024];
-            int len = -1;
-            String root = this.filePath;
-            String path = "font";
-            String filePaths = buildPath(root, path, fileName);
-            String file = root + File.separator + path + File.separator + builderName(".png");
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(new File(file)));
-            while ((len = is.read(by)) != -1) {
-                bufferedOutputStream.write(by, 0, len);
-            }
-            //文件访问路径
-            String address = url + filePaths;
-            return address;
-        } catch (Exception e) {
-            e.printStackTrace();
+            return saveFile(files.getInputStream(), "font");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     /**
@@ -68,39 +74,11 @@ public class LocalUtil {
      * @return
      */
     public String upload(InputStream is) {
-        try {
-            String fileName = IdWorker.get32UUID() + ".png";
-            byte[] by = new byte[1024];
-            int len = -1;
-            String root = this.filePath;
-            String path = "admin";
-            String filePaths = buildPath(root, path, fileName);
-            String file = root + File.separator + path + File.separator + builderName(".png");
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(new File(file)));
-            while ((len = is.read(by)) != -1) {
-                bufferedOutputStream.write(by, 0, len);
-            }
-            //文件访问路径
-            String address = url + filePaths;
-            return address;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        return saveFile(is, "admin");
     }
 
     public static String builderName(String suffix) {
-        return DateUtil.format(LocalDateTime.now(), "yyyy/MM/dd/HH") + RandomStringUtils.randomAlphanumeric(10) + suffix;
-    }
-
-    @SneakyThrows
-    public static String buildPath(String root, String path, String name) {
-        File file = new File(root + File.separator + path + File.separator + name);
-        file.getParentFile().mkdirs();
-        if (!file.exists()) {
-            file.createNewFile();
-        }
-        return path + name;
+        return DateUtil.format(LocalDateTime.now(), "yyyy/MM/dd/HH") + "/" + RandomStringUtils.randomAlphanumeric(10) + suffix;
     }
 
 

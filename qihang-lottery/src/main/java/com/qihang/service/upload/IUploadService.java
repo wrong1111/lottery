@@ -3,6 +3,8 @@ package com.qihang.service.upload;
 import com.qihang.common.vo.BaseVO;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+
 /**
  * @author: bright
  * @description:
@@ -16,4 +18,6 @@ public interface IUploadService {
      * @return
      */
     BaseVO upload(MultipartFile file);
+
+    String upload(InputStream in);
 }

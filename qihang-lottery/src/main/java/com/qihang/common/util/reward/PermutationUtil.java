@@ -29,7 +29,9 @@ public class PermutationUtil {
     /**
      * 数字彩组合
      *
-     * @param type        类型 排列3 排列5 七星彩
+     * 入库处理逻辑
+     *
+     * @param type        类型 排列3 排列5 七星彩 福彩3D
      * @param mode        模式
      * @param stageNumber 期号
      * @return
@@ -42,7 +44,7 @@ public class PermutationUtil {
             , Object[]... args) {
         List<PermutationVO> list = new ArrayList<>();
         //排列3
-        if (type.equals(LotteryOrderTypeEnum.ARRAY.getKey())) {
+        if (type.equals(LotteryOrderTypeEnum.ARRAY.getKey()) || type.equals(LotteryOrderTypeEnum.FC3D.getKey())) {
             //直选
             if (mode.equals("0")) {
                 for (int i = 0; i < args[0].length; i++) {

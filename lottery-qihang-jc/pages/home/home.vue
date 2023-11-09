@@ -259,7 +259,11 @@
 					uni.navigateTo({
 						url: "/pages/dlt/dlt"
 					});
-				} else {
+				} else if (item.name == "福彩3D") {
+					uni.navigateTo({
+						url: "/pages/fc3d/fc3d"
+					});
+				}else {
 					uni.showToast({
 						title: '敬请期待',
 						icon: 'none'

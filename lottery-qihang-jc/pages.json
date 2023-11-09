@@ -210,8 +210,18 @@
 		}, {
 			"path": "pages/dlt/buyShoppingCar",
 			"style": {}
+		},
+		{
+			"path" : "pages/fc3d/fc3d",
+			"style" :  { }
+		}, {
+			"path": "pages/fc3d/buyShoppingCar",
+			"style": {}
 		}
-
+, {
+			"path": "pages/fc3d/openPrize",
+			"style": {}
+		}
 
 	],
 	"globalStyle": {
