@@ -127,7 +127,7 @@
 						map.push({
 							"mode":"双色球",
 							"stageNumber":this.issueNo,
-							"content":item.ten.join(',')+","+item.individual.join(','),
+							"content":item.ten.map(item=>item.num).join(',')+","+item.individual.map(item=>item.num).join(','),
 							"forecastBonus":null
 						})
 						//转成字符串json
@@ -240,6 +240,8 @@
 						let num=index+1;
 						if (num < 10) {
 							num= '0' + num;
+						}else{
+							num = ''+num;
 						}
 						list.push(num)
 						i++;
