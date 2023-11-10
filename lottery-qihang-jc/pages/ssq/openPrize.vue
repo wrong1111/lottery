@@ -1,9 +1,9 @@
 <template>
 	<view>
 		
-			<nav-bar :title="'双色球开奖'" :back="true"></nav-bar>
+			<nav-bar :title="'大乐透开奖'" :back="true"></nav-bar>
 			<div class="box">
-				<web-view src="https://m.310win.com/Trade/DrawInfo/OtherDrawList.aspx?lotteryType=30011"></web-view>
+				<web-view src="https://m.310win.com/Trade/DrawInfo/OtherDrawList.aspx?lotteryType=10051"></web-view>
 			</div>
 		
 	</view>
@@ -11,7 +11,7 @@
 
 <script>
 	export default {
-		name: 'ssq',
+		name: 'qxc',
 		data() {
 			return {
 			}

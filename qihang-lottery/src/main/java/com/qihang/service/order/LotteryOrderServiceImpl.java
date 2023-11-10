@@ -167,6 +167,9 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         return commonList;
     }
 
+    /*
+     * 查询订单记录
+     * */
     @Override
     @TenantIgnore
     public LotteryOrderVO getLotteryOrderById(Integer id, Integer userId) {
@@ -219,7 +222,11 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                 || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.ARRANGE.getKey())
                 || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SEVEN_STAR.getKey())
                 || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.GRAND_LOTTO.getKey())
-                ||StrUtil.equals(lotteryOrder.getType(),LotteryOrderTypeEnum.FC3D.getKey())) {
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FC3D.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FCSSQ.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FCKL8.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FCQLC.getKey())
+        ) {
             //批量查询下注列表
             List<PermutationDO> permutationList = permutationMapper.selectBatchIds(ids);
             //竞彩列表 由于都是一样的直接取第一个就行

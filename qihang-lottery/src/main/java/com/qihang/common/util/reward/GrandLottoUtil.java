@@ -2,13 +2,77 @@ package com.qihang.common.util.reward;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
+import com.qihang.common.util.CombinationUtil;
 import com.qihang.controller.grandlotto.dto.GrandLottoObjDTO;
 import com.qihang.controller.winburden.dto.WinBurdenMatchDTO;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GrandLottoUtil {
+
+
+    /*
+    最多可以选择25个红球，胆最多不能超过5个。
+     */
+    public static List<String> calculationSsq(List<GrandLottoObjDTO> redListDTO, List<GrandLottoObjDTO> blueListDTO) {
+        List<String> danList = collectDanSSQ(redListDTO);
+        List<String> redList = collectNumberSSQ(redListDTO);
+        List<String> weiList = collectNumberSSQ(blueListDTO);
+        List<String> reList = new ArrayList<>();
+        //最大前区胆只有5个。
+        if (danList.size() > 5) {
+            return new ArrayList<>();
+        }
+        if (danList.size() + redList.size() > 25) {
+            return new ArrayList<>();
+        }
+        if (weiList.size() < 0 || weiList.size() > 16) {
+            return new ArrayList<>();
+        }
+
+        List<String> frontList = new ArrayList<>();
+        int maxSelected = 6 - danList.size();
+        List<String> redStringList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(danList)) {
+            List<List<String>> combine = CombinationUtil.getCombinations(redList.toArray(new String[0]), maxSelected);
+            String danString = StringUtils.join(danList, ",");
+            combine.stream().forEach(item -> {
+                redStringList.add(danString + "," + StringUtils.join(item, ","));
+            });
+        } else {
+            List<List<String>> combine = CombinationUtil.getCombinations(redList.toArray(new String[0]), maxSelected);
+            combine.stream().forEach(item -> {
+                redStringList.add(StringUtils.join(item, ","));
+            });
+        }
+        //排序号码
+        redStringList.forEach(p -> {
+            String[] ballString = StringUtils.splitByWholeSeparatorPreserveAllTokens(p, ",");
+            List<String> balls = Arrays.asList(ballString);
+            balls.sort((a, b) -> {
+                return a.compareTo(b);
+            });
+            frontList.add(StringUtils.join(balls, ","));
+        });
+
+        for (String weiNumber : weiList) {
+            for (String frontNumber : frontList) {
+                reList.add(frontNumber + "," + weiNumber);
+            }
+        }
+        return reList;
+    }
+
+    private static List<String> collectNumberSSQ(List<GrandLottoObjDTO> redListDTO) {
+        return redListDTO.stream().filter(item -> !item.getIsGallbladder()).map(item -> item.getNum()).collect(Collectors.toList());
+    }
+
+    private static List<String> collectDanSSQ(List<GrandLottoObjDTO> redListDTO) {
+        return redListDTO.stream().filter(item -> item.getIsGallbladder()).map(item -> item.getNum()).collect(Collectors.toList());
+    }
 
     /**
      * redList 红球
@@ -936,7 +1000,6 @@ public class GrandLottoUtil {
                 GrandLottoObjDTO grandLottoObjDTO = new GrandLottoObjDTO();
                 grandLottoObjDTO.setIsGallbladder(false);
                 grandLottoObjDTO.setNum("X");
-
                 rList.add(grandLottoObjDTO);
             }
         }

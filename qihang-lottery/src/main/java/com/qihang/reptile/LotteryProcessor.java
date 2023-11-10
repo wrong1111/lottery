@@ -92,7 +92,15 @@ public class LotteryProcessor implements PageProcessor {
             }
             log.info(" 足彩比赛 >>>> {} ，result:{}", page.getUrl().toString(), JSON.toJSONString(footballMatchList));
             page.putField("footballGoalList", footballMatchList);
-        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL2) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL16) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL17) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL20)) {
+        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL2)
+                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL16)
+                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL17)
+                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL20)
+                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_FC3D)
+                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_QLC)
+                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_SSQ)
+                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_KL8)
+        ) {
             log.info(page.getUrl() + " >> {}", html);
             //排列 开奖结果爬取
             PermutationAwardDO permutationAward = new PermutationAwardDO();
@@ -109,6 +117,20 @@ public class LotteryProcessor implements PageProcessor {
                 permutationAward.setType(LotteryOrderTypeEnum.GRAND_LOTTO.getKey());
                 rewardList = page.getHtml().css(".ball_box01 li", "text").all();
                 permutationAward.setMoneyAward(html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[4]/text()").toString().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[4]/text()").toString().replaceAll(",", ""));
+            } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_FC3D)) {
+                permutationAward.setType(LotteryOrderTypeEnum.FC3D.getKey());
+            } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_QLC)) {
+                permutationAward.setType(LotteryOrderTypeEnum.FCQLC.getKey());
+                //开奖号码
+                rewardList = page.getHtml().css(".ball_box01 li", "text").all();
+            } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_SSQ)) {
+                permutationAward.setType(LotteryOrderTypeEnum.FCSSQ.getKey());
+                //开奖号码
+                rewardList = page.getHtml().css(".ball_box01 li", "text").all();
+            } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_KL8)) {
+                permutationAward.setType(LotteryOrderTypeEnum.FCKL8.getKey());
+                //开奖号码
+                rewardList = page.getHtml().css(".ball_box01 li", "text").all();
             }
             permutationAward.setReward(StrUtil.join(",", rewardList));
             log.info(" 开奖>>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(permutationAward));
@@ -541,32 +563,91 @@ public class LotteryProcessor implements PageProcessor {
         return site;
     }
 
+
+    /*
+     比赛 赛事
+     */
+    public void runHour() {
+        Spider.create(new LotteryProcessor()).addUrl(
+                        CrawlingAddressConstant.URL1 //足彩比赛
+                        , CrawlingAddressConstant.URL4 // 篮彩比赛
+                        , CrawlingAddressConstant.URL8 //北京单场
+                        , CrawlingAddressConstant.URL9 //北京单场 进球
+                        , CrawlingAddressConstant.URL10 //北京单场 上下单双
+                        , CrawlingAddressConstant.URL11 //北京单场 比分
+                        , CrawlingAddressConstant.URL12 //北京单场 半全场进球
+                        , CrawlingAddressConstant.URL18 //胜负彩比赛
+                )
+                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
+                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
+                .setDownloader(new SeleniumDownloader(chromeDriverPath)).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
+    }
+
+    /*
+        遗漏 七星彩，排列3，排列5，大乐透
+        */
+    public void runOmit() {
+        Spider.create(new LotteryProcessor()).addUrl(
+                        CrawlingAddressConstant.URL21 //数字彩 遗漏排列3
+                        , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
+                        , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
+                        , CrawlingAddressConstant.URL24 //数字彩 遗漏大乐透
+                )
+                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
+                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
+                .setDownloader(new SeleniumDownloader(chromeDriverPath)).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
+
+    }
+
+    /*
+     双色球，快乐8，福彩3D，七乐彩,排列3,排列5，七星彩， 开奖
+     */
+    public void runDay() {
+        Spider.create(new LotteryProcessor()).addUrl(
+                        CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
+                        , CrawlingAddressConstant.URL_SSQ // 双色球 开奖
+                        ,CrawlingAddressConstant.URL_KL8 // 快乐8 开奖
+                        , CrawlingAddressConstant.URL_QLC // 七乐彩 开奖
+                        , CrawlingAddressConstant.URL20 //大乐透开奖
+                        , CrawlingAddressConstant.URL17 //七星彩开奖
+                        , CrawlingAddressConstant.URL16 //排列5开奖
+                        , CrawlingAddressConstant.URL2 //排列三出奖
+                )
+                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
+                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
+                .setDownloader(new SeleniumDownloader(chromeDriverPath)).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
+    }
+
     public void run() {
         Spider.create(new LotteryProcessor()).addUrl(
-                        CrawlingAddressConstant.URL1
-                        , CrawlingAddressConstant.URL2
-                        , CrawlingAddressConstant.URL3
-                        , CrawlingAddressConstant.URL4
-                        , CrawlingAddressConstant.URL5
-                        , CrawlingAddressConstant.URL6
-                        , CrawlingAddressConstant.URL7
-                        , CrawlingAddressConstant.URL8
-                        , CrawlingAddressConstant.URL9
-                        , CrawlingAddressConstant.URL10
-                        , CrawlingAddressConstant.URL11
-                        , CrawlingAddressConstant.URL12
-                        , CrawlingAddressConstant.URL13
-                        , CrawlingAddressConstant.URL14
-                        , CrawlingAddressConstant.URL15
-                        , CrawlingAddressConstant.URL16
-                        , CrawlingAddressConstant.URL17
-                        , CrawlingAddressConstant.URL18
-                        , CrawlingAddressConstant.URL19
-                        , CrawlingAddressConstant.URL20
-                        , CrawlingAddressConstant.URL21
-                        , CrawlingAddressConstant.URL22
-                        , CrawlingAddressConstant.URL23
-                        , CrawlingAddressConstant.URL24
+//                        CrawlingAddressConstant.URL1 //足彩比赛
+//                        , CrawlingAddressConstant.URL2 //排列三出奖
+                        CrawlingAddressConstant.URL3 //足彩对局分析
+//                        , CrawlingAddressConstant.URL4 // 篮彩比赛
+                        , CrawlingAddressConstant.URL5 //篮球对局分析
+                        , CrawlingAddressConstant.URL6 //足球开奖
+                        , CrawlingAddressConstant.URL7 //篮球开奖
+//                        , CrawlingAddressConstant.URL8 //北京单场
+//                        , CrawlingAddressConstant.URL9 //北京单场 进球
+//                        , CrawlingAddressConstant.URL10 //北京单场 上下单双
+//                        , CrawlingAddressConstant.URL11 //北京单场 比分
+//                        , CrawlingAddressConstant.URL12 //北京单场 半全场进球
+//                        , CrawlingAddressConstant.URL13 //北单开奖
+                        , CrawlingAddressConstant.URL14 //篮球单关查询
+                        , CrawlingAddressConstant.URL15 //北单分析
+//                        , CrawlingAddressConstant.URL16 //排列5开奖
+//                        , CrawlingAddressConstant.URL17 //七星彩开奖
+                        , CrawlingAddressConstant.URL18 //胜负彩比赛
+                        , CrawlingAddressConstant.URL19 //胜负彩开奖
+//                        , CrawlingAddressConstant.URL20 //大乐透开奖
+//                        , CrawlingAddressConstant.URL21 //数字彩 遗漏排列3
+//                        , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
+//                        , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
+//                        , CrawlingAddressConstant.URL24 //数字彩 遗漏大乐透
+//                        , CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
+//                        ,CrawlingAddressConstant.URL_SSQ // 双色球 开奖
+//                        , CrawlingAddressConstant.URL_KL8 // 快乐8 开奖
+//                        , CrawlingAddressConstant.URL_QLC // 七乐彩 开奖
                 )
                 //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
                 // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应

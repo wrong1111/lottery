@@ -677,9 +677,10 @@ public class NameUtil {
 
     // 随机函数
 
-    public static ThreadLocalRandom getRandom(){
+    public static ThreadLocalRandom getRandom() {
         return ThreadLocalRandom.current();
     }
+
     /**
      * 生成网络昵称
      *
@@ -720,5 +721,9 @@ public class NameUtil {
     public static String getName() {
         int i = getRandom().nextInt(2);
         return i == 0 ? getNickName() : getTwoSurname();
+    }
+
+    public static void main(String[] args) {
+        System.out.println("0608141619212310122".replaceAll("(\\d\\d)", "$1,").replaceAll("(,$)", ""));
     }
 }

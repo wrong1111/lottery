@@ -27,25 +27,49 @@ public class GrandLottoServiceImpl implements IGrandLottoService {
 
     @Resource
     private PermutationAwardMapper permutationAwardMapper;
+
+    /*
+      默认 大乐透 8
+      新增 双色球 24
+     */
     @Override
     public GrandLottoVO calculation(GrandLottoDTO grandLotto) {
-        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, LotteryOrderTypeEnum.GRAND_LOTTO.getKey()).orderByDesc(PermutationAwardDO::getCreateTime).last("limit 1"));
-
         GrandLottoVO grandLottoVO = new GrandLottoVO();
+        if ("8".equals(grandLotto.getType())) {
+            String type = grandLotto.getType();
+            PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).orderByDesc(PermutationAwardDO::getCreateTime).last("limit 1"));
 
-        //获取对应的下单号码
-        List<String> list = GrandLottoUtil.calculation(grandLotto.getRedList(),grandLotto.getBlueList());
+            //获取对应的下单号码
+            List<String> list = GrandLottoUtil.calculation(grandLotto.getRedList(), grandLotto.getBlueList());
 
-        grandLottoVO.setNotes(list.size());
-        List<PermutationVO> permutationList = new ArrayList<>();
-        for (String s : list){
-            PermutationVO permutationVO = new PermutationVO();
-            permutationVO.setContent(s);
-            permutationVO.setMode("大乐透");
-            permutationVO.setStageNumber(permutationAward.getStageNumber()+1);
-            permutationList.add(permutationVO);
+            grandLottoVO.setNotes(list.size());
+            List<PermutationVO> permutationList = new ArrayList<>();
+            for (String s : list) {
+                PermutationVO permutationVO = new PermutationVO();
+                permutationVO.setContent(s);
+                permutationVO.setMode("大乐透");
+                permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
+                permutationList.add(permutationVO);
+            }
+            grandLottoVO.setPermutationList(permutationList);
+            return grandLottoVO;
+        } else if ("24".equals(grandLotto.getType())) {
+            PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, LotteryOrderTypeEnum.FCSSQ.getKey()).orderByDesc(PermutationAwardDO::getCreateTime).last("limit 1"));
+            //获取对应的下单号码
+            List<String> list = GrandLottoUtil.calculationSsq(grandLotto.getRedList(), grandLotto.getBlueList());
+
+            grandLottoVO.setNotes(list.size());
+            List<PermutationVO> permutationList = new ArrayList<>();
+            for (String s : list) {
+                PermutationVO permutationVO = new PermutationVO();
+                permutationVO.setContent(s);
+                permutationVO.setMode("双色球");
+                permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
+                permutationList.add(permutationVO);
+            }
+            grandLottoVO.setPermutationList(permutationList);
+            return grandLottoVO;
         }
-        grandLottoVO.setPermutationList(permutationList);
         return grandLottoVO;
     }
 }

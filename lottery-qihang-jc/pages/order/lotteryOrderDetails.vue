@@ -122,7 +122,7 @@
 				</uni-table>
 			</uni-card>
 
-			<uni-card is-shadow v-if="lotteryOrder.type=='8'">
+			<uni-card is-shadow v-if="lotteryOrder.type=='8' ||lotteryOrder.type == 24">
 				<view>
 					<span class="title">{{lotteryOrder.ballName}}</span>
 					<p style="display: flex;justify-content: flex-end;align-items: center;">
@@ -474,7 +474,7 @@
 			</uni-card>
 
 			<uni-card class="phone"
-				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type!=3 && lotteryOrder.type!=21 &&lotteryOrder.type!=4&&lotteryOrder.type!=5&&lotteryOrder.type!=8">
+				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type!=3 && lotteryOrder.type!=21 &&lotteryOrder.type!=4&&lotteryOrder.type!=5&&lotteryOrder.type!=8&&lotteryOrder.type!=24">
 				<p>
 					<view class="title">方案详情</view>
 					<uni-table border stripe emptyText="暂无更多数据" class="make">
@@ -529,7 +529,7 @@
 			</uni-card>
 
 			<uni-card class="phone"
-				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type==3 ||lotteryOrder.type ==21||lotteryOrder.type==4||lotteryOrder.type==5||lotteryOrder.type==8">
+				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type==3 ||lotteryOrder.type ==21||lotteryOrder.type==4||lotteryOrder.type==5||lotteryOrder.type==8||lotteryOrder.type==24">
 				<p>
 					<view class="title">方案详情</view>
 					<uni-table border stripe emptyText="暂无更多数据" class="make">
@@ -711,7 +711,7 @@
 						this.lotteryOrder.schemeDetails = JSON.parse(this.lotteryOrder.schemeDetails)
 						//过滤掉数字彩
 						if (this.lotteryOrder.type != 3 &&this.lotteryOrder.type != 21&& this.lotteryOrder.type != 4 && this.lotteryOrder.type !=
-							5 && this.lotteryOrder.type != 8) {
+							5 && this.lotteryOrder.type != 8 && this.lotteryOrder.type!=24) {
 							this.lotteryOrder.schemeDetails.map((item, index) => {
 								item.forecastBonus = parseFloat((item.forecastBonus / item.notes) * this
 									.lotteryOrder.times).toFixed(2)
@@ -758,8 +758,8 @@
 							}
 						})
 					}
-					//处理大乐透
-					if (this.lotteryOrder.type == "8") {
+					//处理大乐透 ,双色球
+					if (this.lotteryOrder.type == "8" || this.lotteryOrder.type =="24") {
 						this.lotteryOrder.recordList.map(item => {
 							item.ten = JSON.parse(item.ten)
 							item.individual = JSON.parse(item.individual)

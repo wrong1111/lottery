@@ -263,6 +263,10 @@
 					uni.navigateTo({
 						url: "/pages/fc3d/fc3d"
 					});
+				} else if (item.name == "双色球") {
+					uni.navigateTo({
+						url: "/pages/ssq/ssq"
+					});
 				}else {
 					uni.showToast({
 						title: '敬请期待',

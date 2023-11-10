@@ -64,7 +64,14 @@ public enum PayOrderTypeEnum {
 
     FC3D("30", "下单福彩3D"),
     FC3D_REFUND("31", "福彩3D退票"),
-    FC3D_AWARD("32", "福彩3D派奖");
+    FC3D_AWARD("32", "福彩3D派奖"),
+
+    FCSSQ("33", "下单双色球"),
+    FCSSQ_AWARD("34", "双色球派奖"),
+    FCSSQ_REFUND("35", "双色球退票"),
+    FCKL8("36", "下单快乐8"),
+    FCKL8_AWARD("37", "快乐8派奖"),
+    FCKL8_REFUND("38", "快乐8退票");
 
     private String key;
     private String value;

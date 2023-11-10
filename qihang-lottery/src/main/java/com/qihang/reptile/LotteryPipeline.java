@@ -85,7 +85,15 @@ public class LotteryPipeline implements Pipeline {
             }
             log.info(" 足球赛事 ： {} 场 ", footballMatchList.size());
             footballMatchService.saveOrUpdateBatch(footballMatchList);
-        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL2) || ObjectUtil.equal(url, CrawlingAddressConstant.URL16) || ObjectUtil.equal(url, CrawlingAddressConstant.URL17) || ObjectUtil.equal(url, CrawlingAddressConstant.URL20)) {
+        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL2)
+                || ObjectUtil.equal(url, CrawlingAddressConstant.URL16)
+                || ObjectUtil.equal(url, CrawlingAddressConstant.URL17)
+                || ObjectUtil.equal(url, CrawlingAddressConstant.URL20)
+                || ObjectUtil.equal(url, CrawlingAddressConstant.URL_FC3D)
+                || ObjectUtil.equal(url, CrawlingAddressConstant.URL_KL8)
+                || ObjectUtil.equal(url, CrawlingAddressConstant.URL_SSQ)
+                || ObjectUtil.equal(url, CrawlingAddressConstant.URL_QLC)
+        ) {
             //存储爬取到的排列开奖结果
             PermutationAwardDO permutationAward = resultItems.get("permutation");
             log.info(" 排列开奖 ： {} 场 ", permutationAward);

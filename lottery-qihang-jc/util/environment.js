@@ -1,11 +1,10 @@
-/* 后端源码请联系;QQ419367301
-飞机Telegram账号:qihang9981 */
+ 
 
 
 //生产环境
 const prod = {
    BASE_API: '/api',
-  //BASE_API: 'https://QQ419367301.com/api',
+  //BASE_API: 'https://.com/api',
 }
 
 //开发环境
@@ -22,6 +21,4 @@ export default {
   BASE_API: environment.BASE_API,
 }
 
-
-/* 后端源码请联系;QQ419367301
-飞机Telegram账号:qihang9981 */
+ 

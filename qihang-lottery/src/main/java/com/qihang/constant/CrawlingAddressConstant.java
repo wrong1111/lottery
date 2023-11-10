@@ -18,6 +18,9 @@ public class CrawlingAddressConstant {
     public static final String URL2 = "https://kaijiang.500.com/pls.shtml";
 
 
+    public static final String URL_FC3D = "https://kaijiang.500.com/sd.shtml";
+
+
     /**
      * 足彩对局分析
      */
@@ -111,4 +114,19 @@ public class CrawlingAddressConstant {
 
     public static final String URL24 = "https://trade.500.com/dlt/";
 
+    /*
+     双色球开奖
+     */
+    public static final String URL_SSQ  = "https://kaijiang.500.com/ssq.shtml";
+
+
+    /*
+     七乐彩开奖
+     */
+    public static final String URL_QLC  = "https://kaijiang.500.com/qlc.shtml";
+
+    /*
+     快乐8开奖
+     */
+    public static final String URL_KL8  = "https://kaijiang.500.com/kl8.shtml";
 }

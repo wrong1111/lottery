@@ -20,4 +20,7 @@ public class GrandLottoDTO implements Serializable {
 
     @ApiModelProperty(value = "篮球")
     List<GrandLottoObjDTO> blueList;
+
+    @ApiModelProperty(value = "类型", notes = "24 双色球")
+    String type;
 }

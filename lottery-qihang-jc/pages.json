@@ -221,6 +221,21 @@
 , {
 			"path": "pages/fc3d/openPrize",
 			"style": {}
+		},
+		{
+			"path" : "pages/qlc/qlc",
+			"style" : {}
+		},
+		{
+			"path" : "pages/ssq/ssq",
+			"style" : {}
+		}, {
+			"path": "pages/ssq/buyShoppingCar",
+			"style": {}
+		}
+, {
+			"path": "pages/ssq/openPrize",
+			"style": {}
 		}
 
 	],

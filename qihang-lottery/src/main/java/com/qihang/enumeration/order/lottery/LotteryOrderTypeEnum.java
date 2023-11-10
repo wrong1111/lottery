@@ -26,7 +26,12 @@ public enum LotteryOrderTypeEnum {
 
     GRAND_LOTTO("8", "大乐透"),
 
-    FC3D("21", "福彩3D");
+    FC3D("21", "福彩3D"),
+    FCQLC("22", "七乐彩"),
+    FCKL8("23", "快乐8"),
+    FCSSQ("24", "双色球");
+
+
     private String key;
     private String value;
 

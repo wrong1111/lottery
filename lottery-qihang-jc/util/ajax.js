@@ -90,7 +90,7 @@ instance.interceptors.response.use(
 	},
 	error => {
 		uni.showToast({
-			title: "接口错误！请和我联系QQ419367301"
+			title: "接口错误！"
 		})
 		// 对响应错误做些什么
 		return Promise.reject(error)
@@ -99,5 +99,5 @@ instance.interceptors.response.use(
 
 // 导出 create 创建后的实例
 export default instance
-/* 后端源码请联系;QQ419367301
-飞机Telegram账号:qihang9981 */
+/* ;
+: */

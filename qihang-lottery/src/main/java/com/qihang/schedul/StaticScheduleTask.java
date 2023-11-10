@@ -72,13 +72,49 @@ public class StaticScheduleTask {
         lotteryOrderService.NoTicketIssuedSedEmail();
     }
 
+    /*
+       爬虫 遗漏
 
-    @Scheduled(cron = "0 0/9 * * * ?")
+       */
+    @Scheduled(cron = "0 0/11 * * * ?")
+    private void configureProcessorOmitTasks() {
+        //执行爬虫
+        log.info("遗漏 爬虫定时任务 configureProcessorOmitTasks   触发时间【{}】", DateUtil.now());
+      //  lotteryProcessor.runOmit();
+    }
+
+    /*
+     爬虫
+     体彩，福彩每日开奖类
+     */
+    @Scheduled(cron = "0 0/10 20,21,22 * * ?")
+    // @Scheduled(cron = "0 0/1 * * * ?")
     private void configureProcessorTasks() {
         //执行爬虫
-        log.info("爬虫定时任务 configureProcessorTasks   触发时间【{}】", DateUtil.now());
-        lotteryProcessor.run();
+        log.info(" 开奖 爬虫定时任务 configureProcessorTasks   触发时间【{}】", DateUtil.now());
+       // lotteryProcessor.runDay();
     }
+
+    /*
+      爬虫 赛事 每小时
+      */
+    @Scheduled(cron = "0 30 */1 * * ?")
+    private void configureProcessorMatchTasks() {
+        //执行爬虫
+        log.info("赛事 爬虫定时任务 configureProcessorMatchTasks   触发时间【{}】", DateUtil.now());
+        // lotteryProcessor.runHour();
+    }
+
+    /*
+     获取赛事，SP值类，几分钟执行一次。
+     */
+    @Scheduled(cron = "0 0/9 * * * ?")
+    private void configureProcessorMiuteTasks() {
+        //执行爬虫
+        log.info("爬虫定时任务 configureProcessorMiuteTasks   触发时间【{}】", DateUtil.now());
+        //  lotteryProcessor.run();
+    }
+
 
     /**
      * 执行每60秒执行派奖计算
@@ -86,6 +122,10 @@ public class StaticScheduleTask {
     @Scheduled(cron = "0 0/1 * * * ?")
     private void configureTasks() {
         log.info("爬虫定时任务触发时间【{}】", DateUtil.now());
+        //runAward();
+    }
+
+    private void runAward() {
         //查询足球当天的比赛记录
         List<FootballMatchDO> footballMatchList = footballMatchMapper.selectList(new QueryWrapper<FootballMatchDO>().lambda().le(FootballMatchDO::getDeadline, DateUtil.now()).eq(FootballMatchDO::getState, "1"));
         //循环查找看比赛截止时间是否到了，到了就关闭这个比赛下注

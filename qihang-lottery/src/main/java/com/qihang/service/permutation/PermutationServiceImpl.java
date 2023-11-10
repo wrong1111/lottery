@@ -122,6 +122,10 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             //wyong edit 福彩3D
         } else if (type.equals(LotteryOrderTypeEnum.FC3D.getKey())) {
             payOrder.setType(PayOrderTypeEnum.FC3D.getKey());
+        } else if (type.equals(LotteryOrderTypeEnum.FCSSQ.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.FCSSQ.getKey());
+        } else if (type.equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.FCKL8.getKey());
         }
         payOrder.setUserId(userId);
         payOrder.setPayType(PayTypeEnum.APP.getKey());
@@ -153,7 +157,9 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             if (permutation.getMode().equals("1") || permutation.getMode().equals("2")) {
                 permutation.setIndividual(JSONUtil.toJsonStr(placeOrderDTO.getIndividual()));
             }
-            if (StrUtil.equals(type, LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
+            if (StrUtil.equals(type, LotteryOrderTypeEnum.GRAND_LOTTO.getKey())
+                    || StrUtil.equals(type, LotteryOrderTypeEnum.FCSSQ.getKey())
+            ) {
                 permutation.setIndividual(JSONUtil.toJsonStr(placeOrderDTO.getIndividual()));
                 permutation.setTen(JSONUtil.toJsonStr(placeOrderDTO.getTen()));
             }
@@ -183,6 +189,9 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
                 makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), permutationAward.getStageNumber() + 1, placeOrderDTO.getTimes(), placeOrderDTO.getHundredMyriad().toArray(), placeOrderDTO.getTenMyriad().toArray(), placeOrderDTO.getMyriad().toArray(), placeOrderDTO.getKilo().toArray(), placeOrderDTO.getHundred().toArray(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
             } else if (type.equals(LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
                 //大乐透
+                makeUp = JSONUtil.toList(placeOrderDTO.getSchemeDetails(), PermutationVO.class);
+            } else if (type.equals(LotteryOrderTypeEnum.FCSSQ.getKey())) {
+                //双色球
                 makeUp = JSONUtil.toList(placeOrderDTO.getSchemeDetails(), PermutationVO.class);
             }
             list.addAll(makeUp);

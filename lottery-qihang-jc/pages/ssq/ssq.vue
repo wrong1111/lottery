@@ -1,22 +1,22 @@
 <template>
 	<view class="box">
 
-		<cmd-nav-bar back title="大乐透" font-color="#fff" background-color="#FF3F43" right-text="大乐透开奖"
+		<cmd-nav-bar back title="双色球" font-color="#fff" background-color="#FF3F43" right-text="双色球开奖"
 			@rightText="rightBtn">
 		</cmd-nav-bar>
 		<div style="height:100%">
-			<p class="fc_index">第{{issueNo}}期，每周一、三、六 21:35开奖</p>
+			<p class="fc_index">第{{issueNo}}期，每周二、四、日 21:35开奖</p>
 			<div class="fc">
 				<view
 					style="display: flex;justify-content: space-between;align-items: center;width: 95%;margin: 0 auto;">
-					<p class="tips">奖池<span>7.5亿</span></p>
+					<p class="tips">奖池<span>7.64亿</span></p>
 					<u-checkbox-group @change="checkChange" size="15" shape="square" placement="column"
 						style="margin-left: 20px;">
 						<u-checkbox labelSize="14" activeColor="#FF3F43" :label="'显示遗漏'">
 						</u-checkbox>
 					</u-checkbox-group>
 				</view>
-				<u-divider text="前区(至少5个)"></u-divider>
+				<u-divider text="前区(至少6个)"></u-divider>
 				<ul>
 					<li @click="check(1,1,index)" v-for="(item,index) in  shi" :class="item.active?'active':''">
 						{{item.num}}<span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
@@ -26,7 +26,7 @@
 								{{omitData.record[index]}}
 							</view>
 							<u-checkbox-group shape="square" @change="checkboxChange($event,index,1)"
-								:disabled="redLength>=4&&item.isGallbladder==false">
+								:disabled="redLength>=5&&item.isGallbladder==false">
 								<u-checkbox activeColor="#FF3F43" :name="item.isGallbladder"
 									:checked="item.isGallbladder">
 								</u-checkbox>
@@ -34,7 +34,7 @@
 						</view>
 					</li>
 				</ul>
-				<u-divider text="后区(至少2个)"></u-divider>
+				<u-divider text="后区(至少1个)"></u-divider>
 				<ul style="margin-bottom: 30px;">
 					<li id="last" @click="check(1,2,index)" v-for="(item,index) in ge"
 						:class="item.active?'active1':''">
@@ -42,14 +42,14 @@
 						<view style="display: flex;justify-content: center;align-items: center;">
 							<view v-if="omitData.record!=undefined&&omiIsShow"
 								style="color: #A5A5A5;font-size: 13px;margin-top: 6px;">
-								{{omitData.record[index+35]}}
+								{{omitData.record[index+33]}}
 							</view>
-							<u-checkbox-group shape="square" @change="checkboxChange($event,index,2)"
+							<!-- <u-checkbox-group shape="square" @change="checkboxChange($event,index,2)"
 								:disabled="blueLength>=1&&item.isGallbladder==false">
 								<u-checkbox activeColor="#007BED" :name="item.isGallbladder"
 									:checked="item.isGallbladder">
 								</u-checkbox>
-							</u-checkbox-group>
+							</u-checkbox-group> -->
 						</view>
 					</li>
 				</ul>
@@ -93,14 +93,14 @@
 		onLoad() {
 			let ge = [],
 				shi = [];
-			for (var i = 1; i < 36; i++) {
+			for (var i = 1; i < 34; i++) {
 				let obj = {}
 				obj.active = false;
 				obj.isGallbladder = false;
 				obj.num = this.globalUtil.formatNum(i);
 				shi.push(obj)
 			}
-			for (var i = 1; i < 13; i++) {
+			for (var i = 1; i < 17; i++) {
 				let obj = {}
 				obj.active = false;
 				obj.isGallbladder = false;
@@ -119,11 +119,31 @@
 					this.omiIsShow = false;
 				}
 			},
+			 
+			checkOverMaxNumber(){
+				 const shiNumber = this.shi.filter(v=>{
+				 	return v.active
+				 }).length
+				 if(shiNumber>=25){
+				 		uni.showModal({
+				 			title:'双色球前区最多支持25个号码',
+				 			icon:'none'
+				 		})
+				 	return false
+				 }
+				// console.log(' shiNumber >>>> ',shiNumber)
+				 return true
+			},
+			//胆选
 			checkboxChange(item, index, type) {
+				if(!this.checkOverMaxNumber()){
+					return
+				}
 				if (type == 1) {
 					this.shi[index].isGallbladder = !this.shi[index].isGallbladder;
 					this.gallbladderStatistics(type);
 				} else if (type == 2) {
+					
 					this.ge[index].isGallbladder = !this.ge[index].isGallbladder;
 					this.gallbladderStatistics(type);
 				}
@@ -140,11 +160,12 @@
 				this.shiarr = this.shi.filter(v => {
 					return v.active
 				})
-				if (this.shiarr.length >= 5 && this.gearr.length >= 2) {
+				 
+				if (this.shiarr.length >= 6 && this.gearr.length >= 1) {
 					calculation({
 						redList: this.shiarr,
 						blueList: this.gearr,
-						type:8
+						type:24
 					}).then(res => {
 						this.acount = res.notes;
 						this.schemeDetails=res.permutationList
@@ -156,10 +177,10 @@
 				}
 			},
 			init() {
-				getIssueNo("8").then(res => {
+				getIssueNo("24").then(res => {
 					this.issueNo = res.stageNumber
 				})
-				getOmitByType("8").then(res => {
+				getOmitByType("24").then(res => {
 					this.omitData = res
 					this.omitData.record = res.record.split(",")
 				})
@@ -179,12 +200,15 @@
 			},
 			rightBtn() {
 				uni.navigateTo({
-					url: "/pages/dlt/openPrize"
+					url: "/pages/ssq/openPrize"
 				})
 			},
 			check(type, wei = 0, index) {
 				switch (type) {
 					case 1:
+						if(!this.checkOverMaxNumber()){
+							return
+						}
 						if (wei == 1) {
 							this.shi[index].active = !this.shi[index].active;
 							this.shi[index].isGallbladder = false;
@@ -201,11 +225,12 @@
 						this.shiarr = this.shi.filter(v => {
 							return v.active
 						})
-						if (this.shiarr.length >= 5 && this.gearr.length >= 2) {
+					 
+						if (this.shiarr.length >= 6 && this.gearr.length >= 1) {
 							calculation({
 								redList: this.shiarr,
 								blueList: this.gearr,
-								type:8
+								type:24
 							}).then(res => {
 								this.acount = res.notes;
 								this.schemeDetails=res.permutationList
@@ -237,12 +262,12 @@
 			//机选
 			randomSelect() {
 				this.clear()
-				let numberArr = this.globalUtil.randomFromZero(35, 5);
+				let numberArr = this.globalUtil.randomFromZero(33, 6);
 				for (var i = 0; i < numberArr.length; i++) {
 					let j = numberArr[i];
 					this.shi[j].active = true;
 				}
-				let numArr = this.globalUtil.randomFromZero(12, 2);
+				let numArr = this.globalUtil.randomFromZero(16, 1);
 				for (var i = 0; i < numArr.length; i++) {
 					let j = numArr[i];
 					this.ge[j].active = true;
@@ -253,10 +278,11 @@
 				this.gearr = this.ge.filter(v => {
 					return v.active
 				})
-				if (this.shiarr.length >= 5 && this.gearr.length >= 2) {
+				if (this.shiarr.length >=6 && this.gearr.length >= 1) {
 					calculation({
 						redList: this.shiarr,
-						blueList: this.gearr
+						blueList: this.gearr,
+						type:24
 					}).then(res => {
 						this.acount = res.notes;
 						this.schemeDetails=res.permutationList
@@ -285,7 +311,7 @@
 					ten: this.shiarr,
 				}
 				uni.navigateTo({
-					url: "/pages/dlt/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data)),
+					url: "/pages/ssq/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data)),
 					animationType: 'pop-in',
 					animationDuration: 200
 				})
