@@ -1,2 +1,7 @@
 server:
   port: 48080
+task:
+  day: true
+  hour: true
+  match: true
+  minute: true

@@ -158,6 +158,11 @@ local:
   url: http://localhost/static
   ##local 本机存储，s3 oss对象存储
   type: local
+task:
+  day: false
+  hour: false
+  match: false
+  minute: false
 #============== 腾讯云相关配置 ===================
 
 tencent:

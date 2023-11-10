@@ -2,6 +2,7 @@ package com.qihang.schedul;
 
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.qihang.config.TaskConfig;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.football.FootballMatchDO;
@@ -64,6 +65,9 @@ public class StaticScheduleTask {
     @Resource
     private IWinBurdenMatchService winBurdenMatchService;
 
+    @Resource
+    TaskConfig taskConfig;
+
     /**
      * 处理订单没出票采用邮件通知
      */
@@ -79,8 +83,10 @@ public class StaticScheduleTask {
     @Scheduled(cron = "0 0/11 * * * ?")
     private void configureProcessorOmitTasks() {
         //执行爬虫
-        log.info("遗漏 爬虫定时任务 configureProcessorOmitTasks   触发时间【{}】", DateUtil.now());
-      //  lotteryProcessor.runOmit();
+        log.info("遗漏 爬虫定时任务 configureProcessorOmitTasks  {}  触发时间【{}】", taskConfig.getOmit(), DateUtil.now());
+        if (taskConfig.getOmit()) {
+            lotteryProcessor.runOmit();
+        }
     }
 
     /*
@@ -91,8 +97,10 @@ public class StaticScheduleTask {
     // @Scheduled(cron = "0 0/1 * * * ?")
     private void configureProcessorTasks() {
         //执行爬虫
-        log.info(" 开奖 爬虫定时任务 configureProcessorTasks   触发时间【{}】", DateUtil.now());
-       // lotteryProcessor.runDay();
+        log.info(" 开奖 爬虫定时任务 configureProcessorTasks {}   触发时间【{}】", taskConfig.getDay(), DateUtil.now());
+        if (taskConfig.getDay()) {
+            lotteryProcessor.runDay();
+        }
     }
 
     /*
@@ -101,8 +109,10 @@ public class StaticScheduleTask {
     @Scheduled(cron = "0 30 */1 * * ?")
     private void configureProcessorMatchTasks() {
         //执行爬虫
-        log.info("赛事 爬虫定时任务 configureProcessorMatchTasks   触发时间【{}】", DateUtil.now());
-        // lotteryProcessor.runHour();
+        log.info("赛事 爬虫定时任务 configureProcessorMatchTasks  {}  触发时间【{}】", taskConfig.getHour(), DateUtil.now());
+        if (taskConfig.getHour()) {
+            lotteryProcessor.runHour();
+        }
     }
 
     /*
@@ -111,8 +121,10 @@ public class StaticScheduleTask {
     @Scheduled(cron = "0 0/9 * * * ?")
     private void configureProcessorMiuteTasks() {
         //执行爬虫
-        log.info("爬虫定时任务 configureProcessorMiuteTasks   触发时间【{}】", DateUtil.now());
-        //  lotteryProcessor.run();
+        log.info("爬虫定时任务 configureProcessorMiuteTasks  {} 触发时间【{}】", taskConfig.getMinute(), DateUtil.now());
+        if (taskConfig.getMinute()) {
+            lotteryProcessor.run();
+        }
     }
 
 
@@ -121,8 +133,10 @@ public class StaticScheduleTask {
      */
     @Scheduled(cron = "0 0/1 * * * ?")
     private void configureTasks() {
-        log.info("爬虫定时任务触发时间【{}】", DateUtil.now());
-        //runAward();
+        log.info("爬虫定时任务触发时间【{}】 {} ", taskConfig.getMinute(), DateUtil.now());
+        if (taskConfig.getMinute()) {
+            runAward();
+        }
     }
 
     private void runAward() {
