@@ -31,6 +31,7 @@ public class GrandLottoServiceImpl implements IGrandLottoService {
     /*
       默认 大乐透 8
       新增 双色球 24
+      七乐彩 22
      */
     @Override
     public GrandLottoVO calculation(GrandLottoDTO grandLotto) {
@@ -47,7 +48,7 @@ public class GrandLottoServiceImpl implements IGrandLottoService {
             for (String s : list) {
                 PermutationVO permutationVO = new PermutationVO();
                 permutationVO.setContent(s);
-                permutationVO.setMode("大乐透");
+                permutationVO.setMode(LotteryOrderTypeEnum.GRAND_LOTTO.getValue());
                 permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
                 permutationList.add(permutationVO);
             }
@@ -63,7 +64,22 @@ public class GrandLottoServiceImpl implements IGrandLottoService {
             for (String s : list) {
                 PermutationVO permutationVO = new PermutationVO();
                 permutationVO.setContent(s);
-                permutationVO.setMode("双色球");
+                permutationVO.setMode(LotteryOrderTypeEnum.FCSSQ.getValue());
+                permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
+                permutationList.add(permutationVO);
+            }
+            grandLottoVO.setPermutationList(permutationList);
+            return grandLottoVO;
+        } else if ("22".equals(grandLotto.getType())) {
+            PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, LotteryOrderTypeEnum.FCSSQ.getKey()).orderByDesc(PermutationAwardDO::getCreateTime).last("limit 1"));
+            //获取对应的下单号码
+            List<String> list = GrandLottoUtil.calculationQLC(grandLotto.getRedList());
+            grandLottoVO.setNotes(list.size());
+            List<PermutationVO> permutationList = new ArrayList<>();
+            for (String s : list) {
+                PermutationVO permutationVO = new PermutationVO();
+                permutationVO.setContent(s);
+                permutationVO.setMode(LotteryOrderTypeEnum.FCQLC.getValue());
                 permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
                 permutationList.add(permutationVO);
             }

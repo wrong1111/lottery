@@ -212,28 +212,33 @@
 			"style": {}
 		},
 		{
-			"path" : "pages/fc3d/fc3d",
-			"style" :  { }
+			"path": "pages/fc3d/fc3d",
+			"style": {}
 		}, {
 			"path": "pages/fc3d/buyShoppingCar",
 			"style": {}
-		}
-, {
+		}, {
 			"path": "pages/fc3d/openPrize",
 			"style": {}
 		},
 		{
-			"path" : "pages/qlc/qlc",
-			"style" : {}
+			"path": "pages/qlc/qlc",
+			"style": {}
 		},
 		{
-			"path" : "pages/ssq/ssq",
-			"style" : {}
+			"path": "pages/qlc/buyShoppingCar",
+			"style": {}
+		}, {
+			"path": "pages/qlc/openPrize",
+			"style": {}
+		},
+		{
+			"path": "pages/ssq/ssq",
+			"style": {}
 		}, {
 			"path": "pages/ssq/buyShoppingCar",
 			"style": {}
-		}
-, {
+		}, {
 			"path": "pages/ssq/openPrize",
 			"style": {}
 		}

@@ -267,6 +267,10 @@
 					uni.navigateTo({
 						url: "/pages/ssq/ssq"
 					});
+				}else if (item.name == "七乐彩") {
+					uni.navigateTo({
+						url: "/pages/qlc/qlc"
+					});
 				}else {
 					uni.showToast({
 						title: '敬请期待',

@@ -20,6 +20,8 @@ import java.util.List;
 /**
  * @author bright
  * @since 2022-10-10
+ *
+ * 排列入库
  */
 @RestController
 @RequestMapping("/app/permutation")

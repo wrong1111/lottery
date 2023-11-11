@@ -159,6 +159,8 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             }
             if (StrUtil.equals(type, LotteryOrderTypeEnum.GRAND_LOTTO.getKey())
                     || StrUtil.equals(type, LotteryOrderTypeEnum.FCSSQ.getKey())
+                    || StrUtil.equals(type, LotteryOrderTypeEnum.FCQLC.getKey())
+                    || StrUtil.equals(type, LotteryOrderTypeEnum.FCKL8.getKey())
             ) {
                 permutation.setIndividual(JSONUtil.toJsonStr(placeOrderDTO.getIndividual()));
                 permutation.setTen(JSONUtil.toJsonStr(placeOrderDTO.getTen()));
@@ -192,6 +194,12 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
                 makeUp = JSONUtil.toList(placeOrderDTO.getSchemeDetails(), PermutationVO.class);
             } else if (type.equals(LotteryOrderTypeEnum.FCSSQ.getKey())) {
                 //双色球
+                makeUp = JSONUtil.toList(placeOrderDTO.getSchemeDetails(), PermutationVO.class);
+            } else if (type.equals(LotteryOrderTypeEnum.FCQLC.getKey())) {
+                //七乐彩
+                makeUp = JSONUtil.toList(placeOrderDTO.getSchemeDetails(), PermutationVO.class);
+            } else if (type.equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
+                //快乐8 选一”、“选二”、“选三”、“选四”、“选五”、“选六”、“选七”、“选八”、“选九”和“选十”十种玩法
                 makeUp = JSONUtil.toList(placeOrderDTO.getSchemeDetails(), PermutationVO.class);
             }
             list.addAll(makeUp);

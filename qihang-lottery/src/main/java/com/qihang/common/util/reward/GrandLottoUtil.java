@@ -20,21 +20,16 @@ public class GrandLottoUtil {
     public static List<String> calculationSsq(List<GrandLottoObjDTO> redListDTO, List<GrandLottoObjDTO> blueListDTO) {
         List<String> danList = collectDanSSQ(redListDTO);
         List<String> redList = collectNumberSSQ(redListDTO);
-        List<String> weiList = collectNumberSSQ(blueListDTO);
         List<String> reList = new ArrayList<>();
-        //最大前区胆只有5个。
-        if (danList.size() > 5) {
+        //胆只有6个。
+        if (danList.size() > 6) {
             return new ArrayList<>();
         }
-        if (danList.size() + redList.size() > 25) {
+        if (danList.size() + redList.size() > 16) {
             return new ArrayList<>();
         }
-        if (weiList.size() < 0 || weiList.size() > 16) {
-            return new ArrayList<>();
-        }
-
         List<String> frontList = new ArrayList<>();
-        int maxSelected = 6 - danList.size();
+        int maxSelected = 7 - danList.size();
         List<String> redStringList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(danList)) {
             List<List<String>> combine = CombinationUtil.getCombinations(redList.toArray(new String[0]), maxSelected);
@@ -58,12 +53,49 @@ public class GrandLottoUtil {
             frontList.add(StringUtils.join(balls, ","));
         });
 
-        for (String weiNumber : weiList) {
-            for (String frontNumber : frontList) {
-                reList.add(frontNumber + "," + weiNumber);
-            }
+        return frontList;
+    }
+
+    /*
+        七乐彩最多可以选择16个红球，胆最多不能超过6个。
+         */
+    public static List<String> calculationQLC(List<GrandLottoObjDTO> redListDTO) {
+        List<String> danList = collectDanSSQ(redListDTO);
+        List<String> redList = collectNumberSSQ(redListDTO);
+        List<String> reList = new ArrayList<>();
+        //胆只有6个。
+        if (danList.size() > 6) {
+            return new ArrayList<>();
         }
-        return reList;
+        if (danList.size() + redList.size() > 16) {
+            return new ArrayList<>();
+        }
+        List<String> frontList = new ArrayList<>();
+        int maxSelected = 7 - danList.size();
+        List<String> redStringList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(danList)) {
+            List<List<String>> combine = CombinationUtil.getCombinations(redList.toArray(new String[0]), maxSelected);
+            String danString = StringUtils.join(danList, ",");
+            combine.stream().forEach(item -> {
+                redStringList.add(danString + "," + StringUtils.join(item, ","));
+            });
+        } else {
+            List<List<String>> combine = CombinationUtil.getCombinations(redList.toArray(new String[0]), maxSelected);
+            combine.stream().forEach(item -> {
+                redStringList.add(StringUtils.join(item, ","));
+            });
+        }
+        //排序号码
+        redStringList.forEach(p -> {
+            String[] ballString = StringUtils.splitByWholeSeparatorPreserveAllTokens(p, ",");
+            List<String> balls = Arrays.asList(ballString);
+            balls.sort((a, b) -> {
+                return a.compareTo(b);
+            });
+            frontList.add(StringUtils.join(balls, ","));
+        });
+
+        return frontList;
     }
 
     private static List<String> collectNumberSSQ(List<GrandLottoObjDTO> redListDTO) {
