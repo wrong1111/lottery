@@ -85,6 +85,21 @@ public class GrandLottoServiceImpl implements IGrandLottoService {
             }
             grandLottoVO.setPermutationList(permutationList);
             return grandLottoVO;
+        } else if ("23".equals(grandLotto.getType())) {
+            PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, LotteryOrderTypeEnum.FCSSQ.getKey()).orderByDesc(PermutationAwardDO::getCreateTime).last("limit 1"));
+            //获取对应的下单号码
+            List<String> list = GrandLottoUtil.calculationKL8(grandLotto.getRedList(), grandLotto.getType());
+            grandLottoVO.setNotes(list.size());
+            List<PermutationVO> permutationList = new ArrayList<>();
+            for (String s : list) {
+                PermutationVO permutationVO = new PermutationVO();
+                permutationVO.setContent(s);
+                permutationVO.setMode(LotteryOrderTypeEnum.FCQLC.getValue());
+                permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
+                permutationList.add(permutationVO);
+            }
+            grandLottoVO.setPermutationList(permutationList);
+            return grandLottoVO;
         }
         return grandLottoVO;
     }

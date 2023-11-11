@@ -23,4 +23,7 @@ public class GrandLottoDTO implements Serializable {
 
     @ApiModelProperty(value = "类型", notes = "24 双色球")
     String type;
+
+    @ApiModelProperty(value = "玩法", notes = "10 快乐8选10 9 快乐8选9")
+    String model;
 }

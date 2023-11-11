@@ -93,8 +93,8 @@ public class StaticScheduleTask {
      爬虫
      体彩，福彩每日开奖类
      */
-    @Scheduled(cron = "0 0/10 20,21,22 * * ?")
-    // @Scheduled(cron = "0 0/1 * * * ?")
+    //@Scheduled(cron = "0 0/10 21,22 * * ?")
+    @Scheduled(cron = "0 0/10 * * * ?")
     private void configureProcessorTasks() {
         //执行爬虫
         log.info(" 开奖 爬虫定时任务 configureProcessorTasks {}   触发时间【{}】", taskConfig.getDay(), DateUtil.now());

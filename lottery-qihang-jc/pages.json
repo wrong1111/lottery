@@ -241,6 +241,10 @@
 		}, {
 			"path": "pages/ssq/openPrize",
 			"style": {}
+		},
+		{
+			"path" : "pages/kl8/kl8",
+			"style" : {}
 		}
 
 	],

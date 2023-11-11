@@ -98,6 +98,48 @@ public class GrandLottoUtil {
         return frontList;
     }
 
+    /*
+     快乐8 最多16个号码
+     */
+    public static List<String> calculationKL8(List<GrandLottoObjDTO> redListDTO, String model) {
+        int maxNumber = Integer.valueOf(model);
+        List<String> danList = collectDanSSQ(redListDTO);
+        List<String> redList = collectNumberSSQ(redListDTO);
+        //胆只有6个。
+        if (danList.size() > 6) {
+            return new ArrayList<>();
+        }
+        if (danList.size() + redList.size() > 16) {
+            return new ArrayList<>();
+        }
+        List<String> frontList = new ArrayList<>();
+        int maxSelected = maxNumber - danList.size();
+        List<String> redStringList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(danList)) {
+            List<List<String>> combine = CombinationUtil.getCombinations(redList.toArray(new String[0]), maxSelected);
+            String danString = StringUtils.join(danList, ",");
+            combine.stream().forEach(item -> {
+                redStringList.add(danString + "," + StringUtils.join(item, ","));
+            });
+        } else {
+            List<List<String>> combine = CombinationUtil.getCombinations(redList.toArray(new String[0]), maxSelected);
+            combine.stream().forEach(item -> {
+                redStringList.add(StringUtils.join(item, ","));
+            });
+        }
+        //排序号码
+        redStringList.forEach(p -> {
+            String[] ballString = StringUtils.splitByWholeSeparatorPreserveAllTokens(p, ",");
+            List<String> balls = Arrays.asList(ballString);
+            balls.sort((a, b) -> {
+                return a.compareTo(b);
+            });
+            frontList.add(StringUtils.join(balls, ","));
+        });
+
+        return frontList;
+    }
+
     private static List<String> collectNumberSSQ(List<GrandLottoObjDTO> redListDTO) {
         return redListDTO.stream().filter(item -> !item.getIsGallbladder()).map(item -> item.getNum()).collect(Collectors.toList());
     }

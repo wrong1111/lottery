@@ -271,6 +271,10 @@
 					uni.navigateTo({
 						url: "/pages/qlc/qlc"
 					});
+				}else if (item.name == "快乐8") {
+					uni.navigateTo({
+						url: "/pages/kl8/kl8"
+					});
 				}else {
 					uni.showToast({
 						title: '敬请期待',
