@@ -71,8 +71,10 @@ public enum PayOrderTypeEnum {
     FCSSQ_REFUND("35", "双色球退票"),
     FCKL8("36", "下单快乐8"),
     FCKL8_AWARD("37", "快乐8派奖"),
-    FCKL8_REFUND("38", "快乐8退票");
-
+    FCKL8_REFUND("38", "快乐8退票"),
+    FCQLC("39", "下单七乐彩"),
+    FCQLC_AWARD("40", "七乐彩派奖"),
+    FCQLC_REFUND("41", "七乐彩退票");
     private String key;
     private String value;
 }

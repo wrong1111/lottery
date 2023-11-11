@@ -163,6 +163,7 @@ task:
   hour: false
   match: false
   minute: false
+  omit: false
 #============== 腾讯云相关配置 ===================
 
 tencent:

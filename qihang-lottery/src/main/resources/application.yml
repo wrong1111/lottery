@@ -5,3 +5,4 @@ task:
   hour: true
   match: true
   minute: true
+  omit: true

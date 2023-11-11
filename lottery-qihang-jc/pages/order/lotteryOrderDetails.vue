@@ -158,35 +158,64 @@
 				</uni-table>
 			</uni-card>
 			<uni-card is-shadow v-if="lotteryOrder.type == 22">
-							<view>
-								<span class="title">{{lotteryOrder.ballName}}</span>
-								<p style="display: flex;justify-content: flex-end;align-items: center;">
-									<u-tag :text="lotteryOrder.notes+'注'" type="error"></u-tag>
-									<u-tag :text="lotteryOrder.times +'倍'" style="margin-left: 10px;"></u-tag>
-								</p>
-							</view>
-							<uni-table stripe emptyText="暂无更多数据">
-								<!-- 表头行 -->
-								<uni-tr>
-									<uni-th width="15" align="center">期号</uni-th>
-									<uni-th width="65" align="center">投注内容</uni-th>
-									<uni-th width="65" align="center">赛果</uni-th>
-								</uni-tr>
-								<!-- 表格数据行 -->
-								<uni-tr v-for="(record,index) in lotteryOrder.recordList" :key="index">
-									<uni-td align="center">{{record.stageNumber}}</uni-td>
-									<uni-td align="center">
-										<span v-for="(c,index) in record.ten">
-											{{c.num}}
-											<span style="color: #FF3F43;" v-if="c.isGallbladder">[胆]</span>
-											<span v-if="index<record.ten.length-1">,</span>
-										</span>
-									</uni-td>
-									<uni-td align="center">{{record.reward}}</uni-td>
-								</uni-tr>
-							</uni-table>
-						</uni-card>
-				
+				<view>
+					<span class="title">{{lotteryOrder.ballName}}</span>
+					<p style="display: flex;justify-content: flex-end;align-items: center;">
+						<u-tag :text="lotteryOrder.notes+'注'" type="error"></u-tag>
+						<u-tag :text="lotteryOrder.times +'倍'" style="margin-left: 10px;"></u-tag>
+					</p>
+				</view>
+				<uni-table stripe emptyText="暂无更多数据">
+					<!-- 表头行 -->
+					<uni-tr>
+						<uni-th width="15" align="center">期号</uni-th>
+						<uni-th width="65" align="center">投注内容</uni-th>
+						<uni-th width="65" align="center">赛果</uni-th>
+					</uni-tr>
+					<!-- 表格数据行 -->
+					<uni-tr v-for="(record,index) in lotteryOrder.recordList" :key="index">
+						<uni-td align="center">{{record.stageNumber}}</uni-td>
+						<uni-td align="center">
+							<span v-for="(c,index) in record.ten">
+								{{c.num}}
+								<span style="color: #FF3F43;" v-if="c.isGallbladder">[胆]</span>
+								<span v-if="index<record.ten.length-1">,</span>
+							</span>
+						</uni-td>
+						<uni-td align="center">{{record.reward}}</uni-td>
+					</uni-tr>
+				</uni-table>
+			</uni-card>
+			<!-- 快乐8 -->
+			<uni-card is-shadow v-if="lotteryOrder.type == 23">
+				<view>
+					<span class="title">{{lotteryOrder.ballName}}</span>
+					<p style="display: flex;justify-content: flex-end;align-items: center;">
+						<u-tag :text="lotteryOrder.notes+'注'" type="error"></u-tag>
+						<u-tag :text="lotteryOrder.times +'倍'" style="margin-left: 10px;"></u-tag>
+					</p>
+				</view>
+				<uni-table stripe emptyText="暂无更多数据">
+					<!-- 表头行 -->
+					<uni-tr>
+						<uni-th width="15" align="center">期号</uni-th>
+						<uni-th width="65" align="center">投注内容</uni-th>
+						<uni-th width="65" align="center">赛果</uni-th>
+					</uni-tr>
+					<!-- 表格数据行 -->
+					<uni-tr v-for="(record,index) in lotteryOrder.recordList" :key="index">
+						<uni-td align="center">{{record.stageNumber}}</uni-td>
+						<uni-td align="center">
+							<span v-for="(c,index) in record.individual">
+								{{c.num}}
+								<span style="color: #FF3F43;" v-if="c.isGallbladder">[胆]</span>
+								<span v-if="index<record.individual.length-1">,</span>
+							</span>
+						</uni-td>
+						<uni-td align="center">{{record.reward}}</uni-td>
+					</uni-tr>
+				</uni-table>
+			</uni-card>
 			<uni-card is-shadow v-if="lotteryOrder.type=='0'">
 				<view v-if="lotteryOrder.documentaryFlag&&!lotteryOrder.openFlag&&!lotteryOrder.isEnd"
 					style="display: flex;flex-direction: column;justify-content: center;align-items: center;color: grey;font-size: 20px;">
@@ -504,7 +533,7 @@
 
 			<!-- 方案详情，展示 schemeDetails-->
 			<uni-card class="phone"
-				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type!=3 && lotteryOrder.type!=21 &&lotteryOrder.type!=4&&lotteryOrder.type!=5&&lotteryOrder.type!=8&&lotteryOrder.type!=24&& lotteryOrder.type!=22">
+				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type!=3 && lotteryOrder.type!=21 &&lotteryOrder.type!=4&&lotteryOrder.type!=5&&lotteryOrder.type!=8&&lotteryOrder.type!=24&& lotteryOrder.type!=22&& lotteryOrder.type!=23">
 				<p>
 					<view class="title">方案详情</view>
 					<uni-table border stripe emptyText="暂无更多数据" class="make">
@@ -559,14 +588,16 @@
 			</uni-card>
 
 			<uni-card class="phone"
-				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type==3 ||lotteryOrder.type ==21||lotteryOrder.type==4||lotteryOrder.type==5||lotteryOrder.type==8||lotteryOrder.type==24||lotteryOrder.type==22">
+				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type==3 ||lotteryOrder.type ==21||lotteryOrder.type==4||lotteryOrder.type==5||lotteryOrder.type==8||lotteryOrder.type==24||lotteryOrder.type==22||lotteryOrder.type==23">
 				<p>
 					<view class="title">方案详情</view>
 					<uni-table border stripe emptyText="暂无更多数据" class="make">
 						<!-- 表头行 -->
 						<uni-tr>
 							<uni-th width="20px" align="center">期号</uni-th>
-							<uni-th align="center" width="30px" v-if="lotteryOrder.type==3 || lotteryOrder.type ==21">过关</uni-th>
+							<uni-th align="center" width="30px"
+								v-if="lotteryOrder.type==3 || lotteryOrder.type ==21">过关</uni-th>
+							<uni-th align="center" width="30px" v-if="lotteryOrder.type==23">玩法</uni-th>
 							<uni-th align="center" width="80px">中奖组合</uni-th>
 							<uni-th align="center" width="30px">倍数</uni-th>
 							<uni-th align="center" width="120px">预测奖金</uni-th>
@@ -577,6 +608,9 @@
 								<uni-td align="center">{{item.stageNumber}}</uni-td>
 								<uni-td align="center" v-if="lotteryOrder.type==3||lotteryOrder.type==21">
 									{{item.mode|formatMode}}
+								</uni-td>
+								<uni-td align="center" v-if="lotteryOrder.type==23">
+									{{item.mode|formatMode23}}
 								</uni-td>
 								<uni-td align="center">
 									{{item.content}}
@@ -676,6 +710,29 @@
 					return "组三复式";
 				}
 			},
+			formatMode23(mode) {
+				if (mode == "10") {
+					return "选十";
+				} else if (mode == "9") {
+					return "选九";
+				} else if (mode == "8") {
+					return "选八";
+				} else if (mode == "7") {
+					return "选七";
+				} else if (mode == "6") {
+					return "选六";
+				} else if (mode == "5") {
+					return "选五";
+				} else if (mode == "4") {
+					return "选四";
+				} else if (mode == "3") {
+					return "选三";
+				} else if (mode == "2") {
+					return "选二";
+				} else if (mode == "1") {
+					return "选一";
+				}
+			},
 			//格式化日期
 			formatDate(data, that) {
 				if (data != null && data != undefined) {
@@ -740,8 +797,10 @@
 					if (res.schemeDetails != null && res.schemeDetails != undefined && res.schemeDetails != "") {
 						this.lotteryOrder.schemeDetails = JSON.parse(this.lotteryOrder.schemeDetails)
 						//过滤掉数字彩 
-						if (this.lotteryOrder.type != 3 &&this.lotteryOrder.type != 21&& this.lotteryOrder.type != 4 && this.lotteryOrder.type !=
-							5 && this.lotteryOrder.type != 8 && this.lotteryOrder.type!=24 && this.lotteryOrder.type!=22) {
+						if (this.lotteryOrder.type != 3 && this.lotteryOrder.type != 21 && this.lotteryOrder
+							.type != 4 && this.lotteryOrder.type !=
+							5 && this.lotteryOrder.type != 8 && this.lotteryOrder.type != 24 && this.lotteryOrder
+							.type != 22 && this.lotteryOrder != 23) {
 							this.lotteryOrder.schemeDetails.map((item, index) => {
 								item.forecastBonus = parseFloat((item.forecastBonus / item.notes) * this
 									.lotteryOrder.times).toFixed(2)
@@ -781,7 +840,7 @@
 					})
 					//处理排列3的组三和组六的字符串转数组
 					//wyong edit 
-					if (this.lotteryOrder.type == "3" ||this.lotteryOrder.type =="21") {
+					if (this.lotteryOrder.type == "3" || this.lotteryOrder.type == "21") {
 						this.lotteryOrder.recordList.map(item => {
 							if (item.mode == "1" || item.mode == "2") {
 								item.individual = JSON.parse(item.individual)
@@ -789,7 +848,8 @@
 						})
 					}
 					//处理大乐透 ,双色球,七乐彩
-					if (this.lotteryOrder.type == "8" || this.lotteryOrder.type =="24" || this.lotteryOrder.type =="22") {
+					if (this.lotteryOrder.type == "8" || this.lotteryOrder.type == "24" || this.lotteryOrder
+						.type == "22" || this.lotteryOrder.type == "23") {
 						this.lotteryOrder.recordList.map(item => {
 							item.ten = JSON.parse(item.ten)
 							item.individual = JSON.parse(item.individual)

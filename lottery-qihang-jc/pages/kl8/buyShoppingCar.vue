@@ -1,7 +1,7 @@
 <template>
 	<view class="box">
 
-		<nav-bar :title="'七乐彩'" :back="true"></nav-bar>
+		<nav-bar :title="'快乐8'" :back="true"></nav-bar>
 		<div class="shoppingCar_wrap">
 			<div class="shoppingCar_content">
 				<div class="shoppingCar_add">
@@ -14,14 +14,6 @@
 						<div class="selected_left">
 							<div class="selected_text">
 								<div class="selected_num">
-									</span>
-									<div class="content" v-for="b in arr.ten">
-										<p v-if="b.isGallbladder" style="font-size: 12px;">
-											{{'胆'+b.num}}
-										</p>
-										<p v-else>{{b.num}}</p>
-									</div>
-									<span class="vertical" v-if="arr.ten!=null">|
 									</span>
 									<div style="background-color: #007BED;" class="content" v-for="c in arr.individual">
 										<p v-if="c.isGallbladder" style="font-size: 12px;">
@@ -62,7 +54,7 @@
 		<u-modal title="投注确认" :show="confirmIsShow" :zoom="false" confirmText="投注" showCancelButton
 			confirmColor="#FF3F43" @confirm="betting" @cancel="() => confirmIsShow = false">
 			<view class="tip">
-				<p>[七乐彩]</p>
+				<p>[快乐8]</p>
 				<p>第{{issueNo}}期</p>
 				<p>共{{acount}}注，您需要支付{{total}}元</p>
 			</view>
@@ -84,16 +76,18 @@
 				total: 0,
 				acount: 0,
 				times: 1,
-				issueNo: ""
+				issueNo: "",
+				mode:''
 			}
 		},
 		onLoad(option) {
 			if (option.obj != undefined) {
 				let obj = JSON.parse(decodeURIComponent(option.obj));
+				console.log(' kl8 =>',obj)
 				this.calculation(obj);
 			}
 			//当前期号
-			getIssueNo("22").then(res => {
+			getIssueNo("23").then(res => {
 				this.issueNo = res.stageNumber
 			})
 		},
@@ -101,7 +95,7 @@
 			//投注
 			betting() {
 				uni.showLoading();
-				let data = uni.getStorageSync('qlc');
+				let data = uni.getStorageSync('kl8');
 				if (data.length <= 0) {
 					uni.showToast({
 						title: '至少选择一注',
@@ -125,7 +119,7 @@
 					if(item.schemeDetails==undefined){
 						let map=[];
 						map.push({
-							"mode":"0",
+							"mode":this.mode,
 							"stageNumber":this.issueNo,
 							"content":item.ten.map(item=>item.num).join(','),
 							"forecastBonus":null
@@ -137,7 +131,7 @@
 						this.$set(item, 'schemeDetails',JSON.stringify(item.schemeDetails))
 					}
 				})
-				place(data, "22").then(res => {
+				place(data, "23").then(res => {
 					if (res.success) {
 						uni.showToast({
 							title: '下单成功',
@@ -160,7 +154,8 @@
 			},
 			//计算
 			calculation(obj) {
-				let data = uni.getStorageSync('qlc');
+				let data = uni.getStorageSync('kl8');
+				this.mode = obj.mode
 				let isRepeat = false
 				if (data.length > 0) {
 					data.map(item => {
@@ -174,7 +169,7 @@
 					if (!isRepeat) {
 						//如果不是重复的继续叠加
 						data.unshift(obj)
-						uni.setStorageSync("qlc", data)
+						uni.setStorageSync("kl8", data)
 					}
 					//赋值
 					this.placeData = data
@@ -186,7 +181,7 @@
 				} else {
 					//第一次为空的时候写入到本地缓存
 					this.placeData.push(obj)
-					uni.setStorageSync("qlc", this.placeData)
+					uni.setStorageSync("kl8", this.placeData)
 					this.total = obj.total;
 					this.acount = obj.notes;
 				}
@@ -196,24 +191,24 @@
 				this.total = 0;
 				this.acount = 0;
 				let uid = Math.ceil(Math.random() * 9999999999999999)
-				let numberArr = this.randomFromZero(30, 7);
+				let numberArr = this.randomFromZero(80, parseInt(this.mode));
 				let data1 = [];
 				numberArr.sort((a,b)=>a-b)
-				//组装排3数据
+				//组装数据
 				for (var i = 0; i < numberArr.length; i++) {
 					data1.push({
 						num: numberArr[i],
-						active: false,
+						active: true,
 						isGallbladder: false
 					})
 				}
 				let obj = {
 					uid: uid,
-					mode: 0,
+					mode: this.mode,
 					notes: 1,
 					total: 2,
-					individual:[],
-					ten: data1,
+					individual:data1,
+					ten: [],
 				}
 				this.calculation(obj);
 			},
@@ -242,7 +237,7 @@
 			},
 			//删除
 			del(uid) {
-				let data = uni.getStorageSync('qlc');
+				let data = uni.getStorageSync('kl8');
 				//重新计算总价和总注数
 				data.map(item => {
 					if (item.uid == uid) {
@@ -257,7 +252,7 @@
 				//重新赋值
 				this.placeData = data
 				//写入缓存
-				uni.setStorageSync("qlc", data)
+				uni.setStorageSync("kl8", data)
 			},
 			numberChange(item) {
 				this.total = this.acount * item.value * 2
@@ -265,14 +260,14 @@
 			},
 			back() {
 				uni.navigateTo({
-					url: "/pages/qlc/qlc",
+					url: "/pages/kl8/kl8",
 					animationType: 'pop-in',
 					animationDuration: 200
 				})
 			},
 			//清空
 			clean() {
-				uni.removeStorageSync("qlc")
+				uni.removeStorageSync("kl8")
 				this.placeData = []
 				this.total = 0;
 				this.acount = 0;

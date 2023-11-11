@@ -245,6 +245,13 @@
 		{
 			"path" : "pages/kl8/kl8",
 			"style" : {}
+		},
+		{
+			"path": "pages/kl8/buyShoppingCar",
+			"style": {}
+		}, {
+			"path": "pages/kl8/openPrize",
+			"style": {}
 		}
 
 	],

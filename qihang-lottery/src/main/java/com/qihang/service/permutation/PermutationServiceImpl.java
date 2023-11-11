@@ -200,7 +200,8 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
                 makeUp = JSONUtil.toList(placeOrderDTO.getSchemeDetails(), PermutationVO.class);
             } else if (type.equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
                 //快乐8 选一”、“选二”、“选三”、“选四”、“选五”、“选六”、“选七”、“选八”、“选九”和“选十”十种玩法
-                makeUp = JSONUtil.toList(placeOrderDTO.getSchemeDetails(), PermutationVO.class);
+                //前端直接传过来的，需要 自己拆分成单注
+                makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), permutationAward.getStageNumber() + 1, placeOrderDTO.getTimes(), placeOrderDTO.getIndividual().toArray());
             }
             list.addAll(makeUp);
         }
@@ -321,6 +322,9 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
                         bonus = GrandLottoUtil.award(JSONUtil.toList(permutationDO.getTen(), GrandLottoObjDTO.class), JSONUtil.toList(permutationDO.getIndividual(), GrandLottoObjDTO.class), permutationAward.getReward(), permutationAward.getMoneyAward().split(",")[0], permutationAward.getMoneyAward().split(",")[1]);
                         flag = !bonus.equals(0L) ? true : false;
                     }
+
+                    //TODO 开奖算法
+                    //wyong edit
                     if (flag) {
                         price += bonus * permutationDO.getTimes();
                     }
@@ -356,6 +360,12 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             //wyong edit 福彩3D退标
         } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FC3D.getKey())) {
             type = PayOrderTypeEnum.FC3D_REFUND.getKey();
+        } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FCKL8.getKey())) {
+            type = PayOrderTypeEnum.FCKL8_REFUND.getKey();
+        } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FCQLC.getKey())) {
+            type = PayOrderTypeEnum.FCQLC_REFUND.getKey();
+        } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FCSSQ.getKey())) {
+            type = PayOrderTypeEnum.FCSSQ_REFUND.getKey();
         }
         payOrder.setType(type);
         payOrder.setState(PayOrderStateEnum.PAYMENT.getKey());

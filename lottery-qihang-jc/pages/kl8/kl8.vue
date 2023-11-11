@@ -16,7 +16,7 @@
 				<div class="fc">
 					<view
 						style="display: flex;justify-content: space-between;align-items: center;width: 95%;margin: 0 auto;">
-						<p class="tips"><span class="shake"></span>选择<span>10</span>个号码，中奖<span>5000000</span>元</p>
+						<p class="tips"><span class="shake"></span>选择<span>{{item.model}}</span>个号码，中奖<span>{{item.money}}</span>元</p>
 						<u-checkbox-group @change="checkChange" size="15" shape="square" placement="column"
 							style="margin-left: 20px;">
 							<u-checkbox labelSize="14" activeColor="#FF3F43" :label="'显示遗漏'">
@@ -25,16 +25,16 @@
 					</view>
 					<ul>
 						<p>号码</p>
-						<li @click="check(1,1,index)" v-for="(item,index) in ge" :class="item.active?'active':''">
-							{{item.num}}<span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
+						<li @click="check(1,1,index)" v-for="(itm,index) in ge" :class="itm.active?'active':''">
+							{{itm.num}}<span style="font-size: 15px;" v-if="itm.isGallbladder">胆</span>
 							<view v-if="omitData.record!=undefined&&omiIsShow"
 								style="color: #A5A5A5;font-size: 13px;margin-top: -8px;">
 								{{omitData.record[index]}}
 							</view>
 							<u-checkbox-group shape="square" @change="checkboxChange($event,index,1)"
-								:disabled="redLength>=dan&&item.isGallbladder==false">
-								<u-checkbox activeColor="#FF3F43" :name="item.isGallbladder"
-									:checked="item.isGallbladder">
+								:disabled="redLength>=item.dan&&itm.isGallbladder==false">
+								<u-checkbox activeColor="#FF3F43" :name="itm.isGallbladder"
+									:checked="itm.isGallbladder">
 								</u-checkbox>
 							</u-checkbox-group>
 						</li>
@@ -66,7 +66,8 @@
 				total: 0,
 				acount: 0,
 				issueNo: "",
-				dan:9,
+				dan: 9,
+				item: {},
 				//tab2选项
 				tabs: [{
 					name: '选十',
@@ -92,44 +93,60 @@
 				mode: [{
 						name: '选十',
 						model: '10',
-						dan:9,
-						num:16,
+						dan: 9,
+						money:'最高500万'
 					}, {
 						name: '选九',
-						model: '9'
+						model: '9',
+						dan: 8,
+						money:'300000'
 					}, {
 						name: '选八',
-						model: '8'
+						model: '8',
+						dan: 7,
+						money:'50000'
 					}, {
 						name: '选七',
-						model: '7'
+						model: '7',
+						dan: 6,
+						money:'10000'
 					}, {
 						name: '选六',
-						model: '6'
+						model: '6',
+						dan: 5,
+						money:'3000'
 					},
 					{
 						name: '选五',
-						model: '5'
+						model: '5',
+						dan: 4,
+						money:'1000'
 					}, {
 						name: '选四',
-						model: '4'
+						model: '4',
+						dan: 3,
+						money:'100'
 					}, {
 						name: '选三',
-						model: '3'
+						model: '3',
+						dan: 2,
+						money:'53'
 					}, {
 						name: '选二',
-						model: '2'
+						model: '2',
+						dan: 1,
+						money:'19'
 					}, {
 						name: '选一',
-						model: '1'
+						model: '1',
+						dan: 0,
+						money:'4.6'
 					}
 				],
-				directlyElectedGentle: [],
 				ge: [],
-				groupGentle: [],
-				groupGentleArr: [],
 				omitData: {},
-				omiIsShow: false,
+				omiIsShow: false
+
 			}
 		},
 		components: {
@@ -140,15 +157,15 @@
 		},
 		methods: {
 			combinationCount(n, m) {
-			  // 边界情况
-			  if (m === 0 || n === m) {
-			    return 1;
-			  } else if (m > n) {
-			    return 0;
-			  }
-			
-			  // 递归计算组合数
-			  return combinationCount(n-1, m - 1) + combinationCount(n-1, m);
+				// 边界情况
+				if (m === 0 || n === m) {
+					return 1;
+				} else if (m > n) {
+					return 0;
+				}
+
+				// 递归计算组合数
+				return combinationCount(n - 1, m - 1) + combinationCount(n - 1, m);
 			},
 			checkChange(item) {
 				if (item[0] == "") {
@@ -158,16 +175,29 @@
 				}
 			},
 			checkboxChange(item, index, type) {
-				 this.ge[index].isGallbladder = !this.ge[index].isGallbladder;
-				 this.gallbladderStatistics(type);
-				 if (item[0] != undefined) {
-				 	if (type == 1) {
-				 		this.ge[index].active = true;
-				 	}  
-				 }
+				this.ge[index].isGallbladder = !this.ge[index].isGallbladder;
+				this.gallbladderStatistics(type);
+				if (item[0] != undefined) {
+					if (type == 1) {
+						this.ge[index].active = true;
+					}
+				}
+				this.calculate(type)
 			},
-			calculate(type) {
 
+			calculate(type) {
+				//是否需要 checkbox不能点击
+				const dan = this.ge.filter(v => {
+					return v.isGallbladder
+				}).length
+				this.redLength = dan
+				this.gearr = this.ge.filter(v => {
+					return v.active
+				})
+				// 选择数量-胆数量 组合就是多少注
+				this.acount = this.globalUtil.math(this.gearr.length - dan, parseInt(this.item.model) - dan)
+				this.total = this.acount * 2;
+				//console.log('  calculate ', this.redLength, this.item.dan)
 			},
 			gallbladderStatistics(type) {
 				let s2 = this.ge.filter(item => {
@@ -181,7 +211,7 @@
 				if (data != "") {
 					uni.showModal({
 						title: '玩家切换提醒',
-						content: '不支持直选和组选的混合投注，切换玩法将清空已选择号码，是否仍要切换',
+						content: '不支持混合投注，切换玩法将清空已选择号码，是否仍要切换',
 						success: (res => {
 							if (res.confirm) {
 								uni.removeStorageSync("kl8")
@@ -208,6 +238,8 @@
 					}
 				})
 				this.initNumber()
+				this.item = this.mode[0]
+				console.log(' init ',this.item)
 			},
 			initNumber() {
 				//初始化80个号码
@@ -228,17 +260,14 @@
 				switch (type) {
 					case 1:
 						this.ge[index].active = !this.ge[index].active;
-						this.gearr = this.ge.filter(v => {
-							return v.active
-						})
-						this.dan = this.ge.filter(v=>{
-							return v.active && v.isGallbladder
-						}).length
-						
-						this.acount = this.globalUtil.math(this.gearr.length, 10)
+						//如果是已经选中的checkbox，也需要 取消
+						if (this.ge[index].isGallbladder) {
+							this.ge[index].isGallbladder = !this.ge[index].isGallbladder
+						}
+						this.calculate(type)
 						break
 				}
-				this.total = this.acount * 2;
+
 			},
 
 			clear() {
@@ -247,12 +276,9 @@
 					v.isGallbladder = false
 				});
 				this.redLength = 0;
-				this.blueLength = 0;
 				this.total = 0
 				this.acount = 0
 				this.gearr = []
-				this.directlyElectedGentleArr = []
-				this.groupGentleArr = []
 			},
 			//tab切换事件
 			changeSelectBall(item, type) {
@@ -260,156 +286,29 @@
 				this.zindex = item.index
 				this.current = item.index
 				this.clear();
-			},
-			//机选
-			randomSelect() {
-				this.clear();
-				if (this.zindex == 0 && this.current == 0) {
-					let numberArr = this.globalUtil.randomFromZero(10, 3);
-					this.bai[numberArr[0]].active = true
-					this.shi[numberArr[1]].active = true
-					this.ge[numberArr[2]].active = true
-					this.shiarr = this.shi.filter(v => {
-						return v.active
-					})
-					this.baiarr = this.bai.filter(v => {
-						return v.active
-					})
-					this.gearr = this.ge.filter(v => {
-						return v.active
-					})
-					this.acount = this.globalUtil.math(this.baiarr.length, 1) * this.globalUtil.math(this.shiarr.length,
-						1) * this.globalUtil.math(
-						this.gearr.length, 1)
-				} else if (this.zindex == 1 && this.current == 0) {
-					let numberArr = this.globalUtil.randomFromZero(28, 1);
-					this.directlyElectedGentle[numberArr[0]].active = true
-					this.directlyElectedGentleArr = this.directlyElectedGentle.filter(v => {
-						return v.active
-					})
-					this.acount = this.directlyElectedGentle[numberArr[0]].pour;
-				} else if (this.zindex == 0 && this.current == 1) {
-					let numberArr = this.globalUtil.randomFromZero(10, 2);
-					for (var i = 0; i < numberArr.length; i++) {
-						this.san[numberArr[i]].active = true
-					}
-					this.sanarr = this.san.filter(v => {
-						return v.active
-					});
-					this.acount = this.globalUtil.math(this.sanarr.length, 2) * 2;
-				} else if (this.zindex == 1 && this.current == 1) {
-					let numberArr = this.globalUtil.randomFromZero(10, 3);
-					for (var i = 0; i < numberArr.length; i++) {
-						this.liu[numberArr[i]].active = true;
-					}
-					this.liuarr = this.liu.filter(v => {
-						return v.active
-					});
-					this.acount = this.globalUtil.math(this.liuarr.length, 3);
-				} else if (this.zindex == 2 && this.current == 1) {
-					let numberArr = this.globalUtil.randomFromZero(26, 1);
-					this.groupGentle[numberArr[0]].active = true
-					this.groupGentleArr = this.groupGentle.filter(v => {
-						return v.active
-					})
-					this.acount = this.groupGentle[numberArr[0]].pour;
-				} else if (this.zindex == 3 && this.current == 1) {
-					let numberArr = this.globalUtil.randomFromZero(10, 2);
-					this.shi[numberArr[0]].active = true
-					this.ge[numberArr[1]].active = true
-					this.shiarr = this.shi.filter(v => {
-						return v.active
-					})
-					this.gearr = this.ge.filter(v => {
-						return v.active
-					})
-					this.acount = this.globalUtil.math(this.shiarr.length,
-						1) * this.globalUtil.math(
-						this.gearr.length, 1)
-				}
-				this.total = this.acount * 2;
+				this.item = this.mode[item.index]
+				console.log(' tab change ', this.mode[item.index])
 			},
 			sure() {
-				if (this.total == 0) {
-					this.randomSelect();
-					return;
-				}
-				if (this.total == '每位至少选择1个不同的号码') {
+				if (this.acount < 1) {
 					uni.showToast({
-						title: '每位至少选择1个不同的号码',
+						title: '请至少选择一注号码',
 						icon: 'none'
 					});
 					return;
 				}
-				let data;
+				console.log(' sure item ',this.item)
 				//随机数id用户传到购物车进行去重处理
 				let uid = Math.ceil(Math.random() * 9999999999999999)
-				if (this.zindex == 0 && this.current == 0) {
-					data = {
-						uid: uid,
-						mode: 0,
-						notes: this.acount,
-						total: this.total,
-						individual: this.gearr.map(v => {
-							return v.num
-						}),
-						ten: this.shiarr.map(v => {
-							return v.num
-						}),
-						hundred: this.baiarr.map(v => {
-							return v.num
-						})
-					}
-				} else if (this.zindex == 1 && this.current == 0) {
-					data = {
-						uid: uid,
-						mode: 3,
-						notes: this.acount,
-						total: this.total,
-						individual: this.directlyElectedGentleArr.map(v => {
-							return v.num
-						}),
-					}
-				} else if (this.zindex == 0 && this.current == 1) {
-					data = {
-						uid: uid,
-						mode: 1,
-						notes: this.acount,
-						total: this.total,
-						individual: this.sanarr
-					}
-				} else if (this.zindex == 1 && this.current == 1) {
-					data = {
-						uid: uid,
-						mode: 2,
-						notes: this.acount,
-						total: this.total,
-						individual: this.liuarr
-					}
-				} else if (this.zindex == 2 && this.current == 1) {
-					data = {
-						uid: uid,
-						mode: 4,
-						notes: this.acount,
-						total: this.total,
-						individual: this.groupGentleArr.map(v => {
-							return v.num
-						})
-					}
-				} else if (this.zindex == 3 && this.current == 1) {
-					data = {
-						uid: uid,
-						mode: 5,
-						notes: this.acount,
-						total: this.total,
-						individual: this.gearr.map(v => {
-							return v.num
-						}),
-						ten: this.shiarr.map(v => {
-							return v.num
-						}),
-					}
+				let data = {
+					uid: uid,
+					mode: this.item.model,
+					notes: this.acount,
+					total: this.total,
+					individual: this.gearr,
+					ten: []
 				}
+				console.log(' sure ',data)
 				uni.navigateTo({
 					url: "/pages/kl8/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data)),
 					animationType: 'pop-in',

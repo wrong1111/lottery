@@ -5,8 +5,15 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.qihang.common.util.CombinationUtil;
 import com.qihang.controller.permutation.app.vo.PermutationVO;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,7 +35,7 @@ public class PermutationUtil {
 
     /**
      * 数字彩组合
-     *
+     * <p>
      * 入库处理逻辑
      *
      * @param type        类型 排列3 排列5 七星彩 福彩3D
@@ -262,10 +269,86 @@ public class PermutationUtil {
                     }
                 }
             }
+        } else if (type.equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
+            /*
+            [
+              {
+                "num": "03",
+                "active": false,
+                "isGallbladder": false
+              }
+            ]
+             */
+
+            List<String> danList = new ArrayList<>();
+            List<String> redList = new ArrayList<>();
+
+            for (Object[] objArys : args) {
+                for (Object obj : objArys) {
+                    Map<String, Object> map = (Map<String, Object>) obj;
+                    Permutation p = new Permutation();
+                    p.setNum(map.get("num").toString());
+                    p.setActive((Boolean) map.get("active"));
+                    p.setIsGallbladder((Boolean) map.get("isGallbladder"));
+                    if (p.isGallbladder) {
+                        danList.add(p.getNum());
+                    } else {
+                        redList.add(p.getNum());
+                    }
+                }
+            }
+
+            List<String> combineResultList = new ArrayList<>();
+            int selectedBall = Integer.valueOf(mode);//玩法就是选几个球。
+            List<List<String>> combineList = CombinationUtil.getCombinations(redList.toArray(new String[0]), selectedBall - danList.size());
+            if (!CollectionUtils.isEmpty(danList)) {
+                String danString = StringUtils.join(danList.toArray(), ",");
+                combineList.stream().forEach(p -> {
+                    String tmp = StringUtils.join(p, ",") + "," + danString;
+                    List<String> sortedList = Arrays.stream(StringUtils.splitByWholeSeparatorPreserveAllTokens(tmp, ",")).sorted().collect(Collectors.toList());
+                    combineResultList.add(StringUtils.join(sortedList, ","));
+                });
+            } else {
+                combineList.stream().forEach(p -> {
+                    combineResultList.add(StringUtils.join(p.stream().sorted().collect(Collectors.toList()), ","));
+                });
+            }
+            combineResultList.forEach(p -> {
+                PermutationVO permutation = new PermutationVO();
+                permutation.setMode(mode);
+                permutation.setContent(p);
+                permutation.setStageNumber(stageNumber);
+                permutation.setForecastBonus(BigDecimal.valueOf(Double.valueOf(AWARD_LEVEL_MONEY.get(type + "-" + mode))));
+                list.add(permutation);
+            });
+
         }
         return list;
     }
 
+    public static Map<String, String> AWARD_LEVEL_MONEY = new HashMap<>();
+
+    static {
+        AWARD_LEVEL_MONEY.put("23-10", "浮动奖");
+        AWARD_LEVEL_MONEY.put("23-9", "300000");
+        AWARD_LEVEL_MONEY.put("23-8", "50000");
+        AWARD_LEVEL_MONEY.put("23-7", "10000");
+        AWARD_LEVEL_MONEY.put("23-6", "3000");
+        AWARD_LEVEL_MONEY.put("23-5", "1000");
+        AWARD_LEVEL_MONEY.put("23-4", "100");
+        AWARD_LEVEL_MONEY.put("23-3", "53");
+        AWARD_LEVEL_MONEY.put("23-2", "19");
+        AWARD_LEVEL_MONEY.put("23-1", "4.6");
+
+    }
+
+    @NoArgsConstructor
+    @Data
+    static class Permutation {
+        String num;
+        Boolean active;
+        Boolean isGallbladder;
+    }
 
     /**
      * 排列三 组六开奖算法
