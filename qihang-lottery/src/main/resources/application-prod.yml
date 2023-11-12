@@ -183,10 +183,13 @@ tencent:
 
 #chromedriver 驱动路径 ,生产用firefox /www/bet/chromedriver
 webdriver:
+  type: firefox
   chrome:
     driver:
-      path: firefox
-
+      path:
+  firefox:
+    driver:
+      path: D:\\work\\chromedriver\\geckodriver.exe
 #支付宝支付配置
 alipay:
   #app_id: 2021003157618556
