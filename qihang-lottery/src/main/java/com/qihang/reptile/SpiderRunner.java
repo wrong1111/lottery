@@ -4,6 +4,9 @@ import com.qihang.constant.CrawlingAddressConstant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Spider;
+import us.codecraft.webmagic.downloader.AbstractDownloader;
+import us.codecraft.webmagic.downloader.selenium.FirefoxDownload;
+import us.codecraft.webmagic.downloader.selenium.FirefoxDownloader;
 import us.codecraft.webmagic.downloader.selenium.SeleniumDownloader;
 import us.codecraft.webmagic.scheduler.BloomFilterDuplicateRemover;
 import us.codecraft.webmagic.scheduler.QueueScheduler;
@@ -16,11 +19,10 @@ public class SpiderRunner {
     @Resource
     LotteryPipeline lotteryPipeline;
 
-    @Value("${webdriver.chrome.driver.path}")
-    private String chromeDriverPath;
 
     @Resource
-    FirefoxDownload firefoxDownload;
+    AbstractDownloader downloader;
+
 
     /*
      比赛 赛事
@@ -38,11 +40,12 @@ public class SpiderRunner {
                 )
                 //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
                 // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
-                .setDownloader(firefoxDownload).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
+                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
     }
 
     /*
         遗漏 七星彩，排列3，排列5，大乐透
+        us.codecraft.webmagic.downloader.selenium
         */
     public void runOmit() {
         Spider.create(new LotteryProcessor()).addUrl(
@@ -53,7 +56,7 @@ public class SpiderRunner {
                 )
                 //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
                 // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
-                .setDownloader(new SeleniumDownloader(chromeDriverPath)).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
+                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
 
     }
 
@@ -73,7 +76,7 @@ public class SpiderRunner {
                 )
                 //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
                 // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
-                .setDownloader(new SeleniumDownloader(chromeDriverPath)).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
+                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
     }
 
     public void run() {
@@ -109,6 +112,6 @@ public class SpiderRunner {
                 )
                 //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
                 // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
-                .setDownloader(new SeleniumDownloader(chromeDriverPath)).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
+                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
     }
 }

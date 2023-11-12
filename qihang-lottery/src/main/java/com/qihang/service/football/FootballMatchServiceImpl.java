@@ -81,7 +81,9 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
     public CommonListVO<FootballVO> footballMatchList() {
         CommonListVO<FootballVO> commonList = new CommonListVO<>();
         List<FootballVO> footballList = new ArrayList<>();
-        List<FootballMatchDO> footballWinEvenLoseDist = footballMatchMapper.selectList(new QueryWrapper<FootballMatchDO>().lambda().eq(FootballMatchDO::getState, BettingStateEnum.YES.getKey()));
+        //小于当前时间 的也不能投注了，
+        //wyong edit 2023-11-12
+        List<FootballMatchDO> footballWinEvenLoseDist = footballMatchMapper.selectList(new QueryWrapper<FootballMatchDO>().lambda().eq(FootballMatchDO::getState, BettingStateEnum.YES.getKey()).gt(FootballMatchDO::getDeadline,new Date()));
         Map<String, List<FootballMatchDO>> map = footballWinEvenLoseDist.stream().collect(Collectors.groupingBy(FootballMatchDO::getStartTime));
         //对map的key进行排序
         map = map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));

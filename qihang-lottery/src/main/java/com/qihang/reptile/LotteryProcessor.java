@@ -15,17 +15,11 @@ import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
-import us.codecraft.webmagic.Spider;
-import us.codecraft.webmagic.downloader.selenium.SeleniumDownloader;
 import us.codecraft.webmagic.processor.PageProcessor;
-import us.codecraft.webmagic.scheduler.BloomFilterDuplicateRemover;
-import us.codecraft.webmagic.scheduler.QueueScheduler;
 import us.codecraft.webmagic.selector.Html;
 import us.codecraft.webmagic.selector.Selectable;
 

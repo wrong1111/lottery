@@ -77,7 +77,8 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
     public CommonListVO<BasketballVO> basketballMatchList() {
         CommonListVO<BasketballVO> commonList = new CommonListVO<>();
         List<BasketballVO> basketballList = new ArrayList<>();
-        List<BasketballMatchDO> basketballMatchList = basketballMatchMapper.selectList(new QueryWrapper<BasketballMatchDO>().lambda().eq(BasketballMatchDO::getState, BettingStateEnum.YES.getKey()));
+        //大于当前时间 wyong 23-11-12
+        List<BasketballMatchDO> basketballMatchList = basketballMatchMapper.selectList(new QueryWrapper<BasketballMatchDO>().lambda().eq(BasketballMatchDO::getState, BettingStateEnum.YES.getKey()).gt(BasketballMatchDO::getDeadline,new Date()));
         Map<String, List<BasketballMatchDO>> map = basketballMatchList.stream().collect(Collectors.groupingBy(BasketballMatchDO::getStartTime));
         //对map的key进行排序
         map = map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));

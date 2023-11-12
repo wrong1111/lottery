@@ -66,7 +66,8 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
     public CommonListVO<BeiDanVO> beiDanMatchList() {
         CommonListVO<BeiDanVO> commonList = new CommonListVO<>();
         List<BeiDanVO> beiDanList = new ArrayList<>();
-        List<BeiDanMatchDO> beiDanMatchDataList = beiDanMatchMapper.selectList(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getState, BettingStateEnum.YES.getKey()));
+        //小于当前时间 不展示
+        List<BeiDanMatchDO> beiDanMatchDataList = beiDanMatchMapper.selectList(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getState, BettingStateEnum.YES.getKey()).gt(BeiDanMatchDO::getDeadline,new Date()));
         Map<String, List<BeiDanMatchDO>> map = beiDanMatchDataList.stream().collect(Collectors.groupingBy(BeiDanMatchDO::getStartTime));
         //对map的key进行排序
         map = map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
