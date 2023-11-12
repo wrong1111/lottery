@@ -181,11 +181,11 @@ tencent:
     sign_name: 小九最稳预测公众号
 
 
-#chromedriver 驱动路径
+#chromedriver 驱动路径 ,生产用firefox
 webdriver:
   chrome:
     driver:
-      path: /www/bet/chromedriver
+      path: firefox
 
 #支付宝支付配置
 alipay:
