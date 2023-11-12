@@ -84,7 +84,7 @@
 				shi: [],
 				redLength: 0,
 				blueLength: 0,
-				schemeDetails:[]
+				schemeDetails: []
 			}
 		},
 		components: {
@@ -119,31 +119,31 @@
 					this.omiIsShow = false;
 				}
 			},
-			 
-			checkOverMaxNumber(){
-				 const shiNumber = this.shi.filter(v=>{
-				 	return v.active
-				 }).length
-				 if(shiNumber>=25){
-				 		uni.showModal({
-				 			title:'双色球前区最多支持25个号码',
-				 			icon:'none'
-				 		})
-				 	return false
-				 }
+
+			checkOverMaxNumber() {
+				const shiNumber = this.shi.filter(v => {
+					return v.active
+				}).length
+				if (shiNumber >= 25) {
+					uni.showModal({
+						title: '双色球前区最多支持25个号码',
+						icon: 'none'
+					})
+					return false
+				}
 				// console.log(' shiNumber >>>> ',shiNumber)
-				 return true
+				return true
 			},
 			//胆选
 			checkboxChange(item, index, type) {
-				if(!this.checkOverMaxNumber()){
+				if (!this.checkOverMaxNumber()) {
 					return
 				}
 				if (type == 1) {
 					this.shi[index].isGallbladder = !this.shi[index].isGallbladder;
 					this.gallbladderStatistics(type);
 				} else if (type == 2) {
-					
+
 					this.ge[index].isGallbladder = !this.ge[index].isGallbladder;
 					this.gallbladderStatistics(type);
 				}
@@ -160,15 +160,15 @@
 				this.shiarr = this.shi.filter(v => {
 					return v.active
 				})
-				 
+
 				if (this.shiarr.length >= 6 && this.gearr.length >= 1) {
 					calculation({
 						redList: this.shiarr,
 						blueList: this.gearr,
-						type:24
+						type: 24
 					}).then(res => {
 						this.acount = res.notes;
-						this.schemeDetails=res.permutationList
+						this.schemeDetails = res.permutationList
 						this.total = this.acount * 2;
 					})
 				} else {
@@ -206,7 +206,7 @@
 			check(type, wei = 0, index) {
 				switch (type) {
 					case 1:
-						if(!this.checkOverMaxNumber()){
+						if (!this.checkOverMaxNumber()) {
 							return
 						}
 						if (wei == 1) {
@@ -225,15 +225,15 @@
 						this.shiarr = this.shi.filter(v => {
 							return v.active
 						})
-					 
+
 						if (this.shiarr.length >= 6 && this.gearr.length >= 1) {
 							calculation({
 								redList: this.shiarr,
 								blueList: this.gearr,
-								type:24
+								type: 24
 							}).then(res => {
 								this.acount = res.notes;
-								this.schemeDetails=res.permutationList
+								this.schemeDetails = res.permutationList
 								this.total = this.acount * 2;
 							})
 						} else {
@@ -267,25 +267,25 @@
 					let j = numberArr[i];
 					this.shi[j].active = true;
 				}
-				let numArr = this.globalUtil.randomFromZero(16, 1);
-				for (var i = 0; i < numArr.length; i++) {
-					let j = numArr[i];
-					this.ge[j].active = true;
-				}
 				this.shiarr = this.shi.filter(v => {
 					return v.active
 				})
+
+				let numArr = this.globalUtil.randomFromZero(16, 1);
+				this.ge[numArr[0]].active = true
+
 				this.gearr = this.ge.filter(v => {
 					return v.active
 				})
-				if (this.shiarr.length >=6 && this.gearr.length >= 1) {
+
+				if (this.shiarr.length >= 6 && this.gearr.length >= 1) {
 					calculation({
 						redList: this.shiarr,
 						blueList: this.gearr,
-						type:24
+						type: 24
 					}).then(res => {
 						this.acount = res.notes;
-						this.schemeDetails=res.permutationList
+						this.schemeDetails = res.permutationList
 						this.total = this.acount * 2;
 					})
 				} else {
@@ -306,7 +306,7 @@
 					notes: this.acount,
 					total: this.total,
 					//方案组合
-					schemeDetails:this.schemeDetails,
+					schemeDetails: this.schemeDetails,
 					individual: this.gearr,
 					ten: this.shiarr,
 				}

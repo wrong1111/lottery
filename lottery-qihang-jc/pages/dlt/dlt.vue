@@ -256,7 +256,8 @@
 				if (this.shiarr.length >= 5 && this.gearr.length >= 2) {
 					calculation({
 						redList: this.shiarr,
-						blueList: this.gearr
+						blueList: this.gearr,
+						type:8
 					}).then(res => {
 						this.acount = res.notes;
 						this.schemeDetails=res.permutationList

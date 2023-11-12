@@ -15,19 +15,11 @@
 							<div class="selected_text">
 								<div class="selected_num">
 									</span>
-									<div class="content" v-for="b in arr.ten">
+									<div class="content" v-for="b in arr.individual">
 										<p v-if="b.isGallbladder" style="font-size: 12px;">
 											{{'胆'+b.num}}
 										</p>
 										<p v-else>{{b.num}}</p>
-									</div>
-									<span class="vertical" v-if="arr.ten!=null">|
-									</span>
-									<div style="background-color: #007BED;" class="content" v-for="c in arr.individual">
-										<p v-if="c.isGallbladder" style="font-size: 12px;">
-											{{'胆'+c.num}}
-										</p>
-										<p v-else>{{c.num}}</p>
 									</div>
 								</div>
 								<div class="selected_count">
@@ -212,8 +204,8 @@
 					mode: 0,
 					notes: 1,
 					total: 2,
-					individual:[],
-					ten: data1,
+					individual:data1,
+					ten:[] ,
 				}
 				this.calculation(obj);
 			},

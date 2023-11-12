@@ -197,6 +197,7 @@
 				this.acount = 0;
 				let uid = Math.ceil(Math.random() * 9999999999999999)
 				let numberArr = this.randomFromZero(33, 6);
+				numberArr.sort()
 				let numArr = this.randomFromZero(16, 1);
 				let data1 = [];
 				//组装排3数据

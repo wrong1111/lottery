@@ -177,10 +177,10 @@
 					<uni-tr v-for="(record,index) in lotteryOrder.recordList" :key="index">
 						<uni-td align="center">{{record.stageNumber}}</uni-td>
 						<uni-td align="center">
-							<span v-for="(c,index) in record.ten">
+							<span v-for="(c,index) in record.individual">
 								{{c.num}}
 								<span style="color: #FF3F43;" v-if="c.isGallbladder">[胆]</span>
-								<span v-if="index<record.ten.length-1">,</span>
+								<span v-if="index<record.individual.length-1">,</span>
 							</span>
 						</uni-td>
 						<uni-td align="center">{{record.reward}}</uni-td>

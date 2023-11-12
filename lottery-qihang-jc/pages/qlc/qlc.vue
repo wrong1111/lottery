@@ -243,8 +243,8 @@
 					total: this.total,
 					//方案组合
 					schemeDetails:this.schemeDetails,
-					individual: [],
-					ten: this.shiarr,
+					individual: this.shiarr,
+					ten: [],
 				}
 				uni.navigateTo({
 					url: "/pages/qlc/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data)),
