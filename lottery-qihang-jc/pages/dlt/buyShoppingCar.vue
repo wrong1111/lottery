@@ -127,7 +127,7 @@
 						map.push({
 							"mode":"大乐透",
 							"stageNumber":this.issueNo,
-							"content":item.ten.join(',')+","+item.individual.join(','),
+							"content":item.ten.map(item=>item.num).join(',')+","+item.individual.map(item=>item.num).join(','),
 							"forecastBonus":null
 						})
 						//转成字符串json
