@@ -28,7 +28,7 @@
 			</view>
 		</view>
 		<view class="body">
-			<!-- 福彩3D WYONG EDIT-->
+			<!-- 福彩3D 21 排列3 WYONG EDIT-->
 			<uni-card is-shadow v-if="lotteryOrder.type=='3' ||lotteryOrder.type =='21'  ">
 				<view>
 					<span class="title">{{lotteryOrder.ballName}}</span>
@@ -66,7 +66,7 @@
 				</uni-table>
 
 			</uni-card>
-
+			<!-- 排列5 4 -->
 			<uni-card is-shadow v-if="lotteryOrder.type=='4'">
 				<view>
 					<span class="title">{{lotteryOrder.ballName}}</span>
@@ -93,7 +93,7 @@
 					</uni-tr>
 				</uni-table>
 			</uni-card>
-
+			<!-- 七星彩 5 -->
 			<uni-card is-shadow v-if="lotteryOrder.type=='5'">
 				<view>
 					<span class="title">{{lotteryOrder.ballName}}</span>
@@ -121,7 +121,7 @@
 					</uni-tr>
 				</uni-table>
 			</uni-card>
-
+			<!-- 双色球24 大乐透 8 -->
 			<uni-card is-shadow v-if="lotteryOrder.type=='8' ||lotteryOrder.type == 24">
 				<view>
 					<span class="title">{{lotteryOrder.ballName}}</span>
@@ -157,6 +157,7 @@
 					</uni-tr>
 				</uni-table>
 			</uni-card>
+			<!-- 七乐彩 22-->
 			<uni-card is-shadow v-if="lotteryOrder.type == 22">
 				<view>
 					<span class="title">{{lotteryOrder.ballName}}</span>
@@ -216,6 +217,8 @@
 					</uni-tr>
 				</uni-table>
 			</uni-card>
+
+			<!-- 竞彩足球 0-->
 			<uni-card is-shadow v-if="lotteryOrder.type=='0'">
 				<view v-if="lotteryOrder.documentaryFlag&&!lotteryOrder.openFlag&&!lotteryOrder.isEnd"
 					style="display: flex;flex-direction: column;justify-content: center;align-items: center;color: grey;font-size: 20px;">
@@ -295,7 +298,7 @@
 					</uni-table>
 				</view>
 			</uni-card>
-
+			<!-- 竞彩篮球 1-->
 			<uni-card is-shadow v-if="lotteryOrder.type=='1'">
 				<view v-if="lotteryOrder.documentaryFlag&&!lotteryOrder.openFlag&&!lotteryOrder.isEnd"
 					style="display: flex;flex-direction: column;justify-content: center;align-items: center;color: grey;font-size: 20px;">
@@ -372,7 +375,7 @@
 					</uni-table>
 				</view>
 			</uni-card>
-
+			<!-- 北京单场 2-->
 			<uni-card is-shadow v-if="lotteryOrder.type=='2'">
 				<view>
 					<span class="title">{{lotteryOrder.ballName}}</span>
@@ -395,6 +398,7 @@
 						</uni-row>
 					</p>
 				</view>
+
 				<uni-table stripe emptyText="暂无更多数据">
 					<!-- 表头行 -->
 					<uni-tr>
@@ -474,6 +478,7 @@
 				</uni-table>
 			</uni-card>
 
+			<!-- 足球14场 6 任九 7-->
 			<uni-card is-shadow v-if="lotteryOrder.type=='6'||lotteryOrder.type=='7'">
 				<view>
 					<span class="title">{{lotteryOrder.ballName}}</span>
@@ -531,7 +536,7 @@
 				</uni-table>
 			</uni-card>
 
-			<!-- 方案详情，展示 schemeDetails-->
+			<!-- 竞赛方案详情，展示 schemeDetails-->
 			<uni-card class="phone"
 				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type!=3 && lotteryOrder.type!=21 &&lotteryOrder.type!=4&&lotteryOrder.type!=5&&lotteryOrder.type!=8&&lotteryOrder.type!=24&& lotteryOrder.type!=22&& lotteryOrder.type!=23">
 				<p>
@@ -586,7 +591,7 @@
 					</uni-table>
 				</p>
 			</uni-card>
-
+			<!-- 数字彩 详情 展示 schemeDeatils -->
 			<uni-card class="phone"
 				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type==3 ||lotteryOrder.type ==21||lotteryOrder.type==4||lotteryOrder.type==5||lotteryOrder.type==8||lotteryOrder.type==24||lotteryOrder.type==22||lotteryOrder.type==23">
 				<p>
@@ -595,9 +600,7 @@
 						<!-- 表头行 -->
 						<uni-tr>
 							<uni-th width="20px" align="center">期号</uni-th>
-							<uni-th align="center" width="30px"
-								v-if="lotteryOrder.type==3 || lotteryOrder.type ==21">过关</uni-th>
-							<uni-th align="center" width="30px" v-if="lotteryOrder.type==23">玩法</uni-th>
+							<uni-th align="center" width="30px" v-if="lotteryOrder.type==3 ||lotteryOrder.type ==21 ||lotteryOrder.type==23">玩法</uni-th>
 							<uni-th align="center" width="80px">中奖组合</uni-th>
 							<uni-th align="center" width="30px">倍数</uni-th>
 							<uni-th align="center" width="120px">预测奖金</uni-th>
@@ -609,6 +612,7 @@
 								<uni-td align="center" v-if="lotteryOrder.type==3||lotteryOrder.type==21">
 									{{item.mode|formatMode}}
 								</uni-td>
+								<!-- 快乐8-->
 								<uni-td align="center" v-if="lotteryOrder.type==23">
 									{{item.mode|formatMode23}}
 								</uni-td>
@@ -619,7 +623,7 @@
 									{{lotteryOrder.times}}
 								</uni-td>
 								<uni-td align="center"
-									v-if="lotteryOrder.type==3||lotteryOrder.type==4 ||lotteryOrder.type==21">{{item.forecastBonus}}</uni-td>
+									v-if="lotteryOrder.type==3||lotteryOrder.type==4 ||lotteryOrder.type==21||lotteryOrder.type ==23">{{item.forecastBonus}}</uni-td>
 								<uni-td align="center" v-else>
 									浮动奖金以官网出奖为准
 								</uni-td>
@@ -634,10 +638,10 @@
 				<view class="uni-body">创建时间：{{lotteryOrder.createTime|formatDate(that)}}</view>
 				<view class="uni-body">出票时间：{{lotteryOrder.ticketingTime|formatDate(that)}}</view>
 				<view class="uni-body" v-if="lotteryOrder.type=='2'">提示：赔率以最后出奖的赔率为准</view>
-				<view class="uni-body" v-else>提示：赔率以实际出票的赔率为准</view>
-				<!-- <view class="uni-body">提示：中奖金额以实际出奖金额的为准</view> -->
+				<view class="uni-body" v-else-if="lotteryOrder.type=='0'|| lotteryOrder.type=='1' ||lotteryOrder.type=='6' || lotteryOrder.type=='7' ">提示：赔率以实际出票的赔率为准</view>
+				<view class="uni-body" v-else>提示：中奖金额以实际出奖金额的为准</view>
 			</uni-card>
-
+			<!-- 彩票出票照片-->
 			<uni-card class="phone" v-if="lotteryOrder.bill!=undefined">
 				<p>
 					<view class="title">彩票照片</view>
@@ -795,12 +799,12 @@
 				getLotteryOrderById(id).then(res => {
 					this.lotteryOrder = res;
 					if (res.schemeDetails != null && res.schemeDetails != undefined && res.schemeDetails != "") {
-						this.lotteryOrder.schemeDetails = JSON.parse(this.lotteryOrder.schemeDetails)
+						this.lotteryOrder.schemeDetails = JSON.parse(res.schemeDetails)
 						//过滤掉数字彩 
 						if (this.lotteryOrder.type != 3 && this.lotteryOrder.type != 21 && this.lotteryOrder
 							.type != 4 && this.lotteryOrder.type !=
 							5 && this.lotteryOrder.type != 8 && this.lotteryOrder.type != 24 && this.lotteryOrder
-							.type != 22 && this.lotteryOrder != 23) {
+							.type != 22 && this.lotteryOrder.type != 23) {
 							this.lotteryOrder.schemeDetails.map((item, index) => {
 								item.forecastBonus = parseFloat((item.forecastBonus / item.notes) * this
 									.lotteryOrder.times).toFixed(2)
