@@ -181,7 +181,7 @@ tencent:
     sign_name: 小九最稳预测公众号
 
 
-#chromedriver 驱动路径 ,生产用firefox
+#chromedriver 驱动路径 ,生产用firefox /www/bet/chromedriver
 webdriver:
   chrome:
     driver:

@@ -58,6 +58,10 @@
             <artifactId>webmagic-core</artifactId>
             <version>${webmagic.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+        </dependency>
         <!--   参数校验     -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

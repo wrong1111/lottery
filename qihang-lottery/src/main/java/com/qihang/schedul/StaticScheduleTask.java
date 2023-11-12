@@ -13,6 +13,7 @@ import com.qihang.mapper.beidan.BeiDanMatchMapper;
 import com.qihang.mapper.football.FootballMatchMapper;
 import com.qihang.mapper.winburden.WinBurdenMatchMapper;
 import com.qihang.reptile.LotteryProcessor;
+import com.qihang.reptile.SpiderRunner;
 import com.qihang.service.basketball.IBasketballMatchService;
 import com.qihang.service.beidan.IBeiDanMatchService;
 import com.qihang.service.football.IFootballMatchService;
@@ -68,6 +69,10 @@ public class StaticScheduleTask {
     @Resource
     TaskConfig taskConfig;
 
+
+    @Resource
+    SpiderRunner spiderRunner;
+
     /**
      * 处理订单没出票采用邮件通知
      */
@@ -85,7 +90,7 @@ public class StaticScheduleTask {
         //执行爬虫
         log.info("遗漏 爬虫定时任务 configureProcessorOmitTasks  {}  触发时间【{}】", taskConfig.getOmit(), DateUtil.now());
         if (taskConfig.getOmit()) {
-            lotteryProcessor.runOmit();
+            spiderRunner.runOmit();
         }
     }
 
@@ -99,7 +104,7 @@ public class StaticScheduleTask {
         //执行爬虫
         log.info(" 开奖 爬虫定时任务 configureProcessorTasks {}   触发时间【{}】", taskConfig.getDay(), DateUtil.now());
         if (taskConfig.getDay()) {
-            lotteryProcessor.runDay();
+            spiderRunner.runDay();
         }
     }
 
@@ -111,7 +116,7 @@ public class StaticScheduleTask {
         //执行爬虫
         log.info("赛事 爬虫定时任务 configureProcessorMatchTasks  {}  触发时间【{}】", taskConfig.getHour(), DateUtil.now());
         if (taskConfig.getHour()) {
-            lotteryProcessor.runHour();
+            spiderRunner.runHour();
         }
     }
 
@@ -123,7 +128,7 @@ public class StaticScheduleTask {
         //执行爬虫
         log.info("爬虫定时任务 configureProcessorMiuteTasks  {} 触发时间【{}】", taskConfig.getMinute(), DateUtil.now());
         if (taskConfig.getMinute()) {
-            lotteryProcessor.run();
+            spiderRunner.run();
         }
     }
 

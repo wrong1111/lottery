@@ -2,10 +2,12 @@ package com.qihang.controller.schedule.admin;
 
 import com.qihang.common.vo.BaseVO;
 import com.qihang.reptile.LotteryProcessor;
+import com.qihang.reptile.SpiderRunner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import us.codecraft.webmagic.Spider;
 
 import javax.annotation.Resource;
 
@@ -15,7 +17,7 @@ import javax.annotation.Resource;
 public class NomalScheduleController {
 
     @Resource
-    private LotteryProcessor lotteryProcessor;
+    private SpiderRunner spiderRunner;
 
     @RequestMapping("run")
     public BaseVO runday(@RequestParam String type) {
@@ -23,22 +25,22 @@ public class NomalScheduleController {
             //runday
             case "1":
                 log.info(" >>>> 手动触发 runday start ");
-                lotteryProcessor.runDay();
+                spiderRunner.runDay();
                 log.info(">>>> 手动触发 runday end ");
                 break;
             case "2":
                 log.info(" >>>> 手动触发 runOmit start ");
-                lotteryProcessor.runOmit();
+                spiderRunner.runOmit();
                 log.info(">>>> 手动触发 runday end ");
                 break;
             case "3":
                 log.info(" >>>> 手动触发 runHour start ");
-                lotteryProcessor.runHour();
+                spiderRunner.runHour();
                 log.info(">>>> 手动触发 runHour end ");
                 break;
             case "4":
                 log.info(" >>>> 手动触发 run start ");
-                lotteryProcessor.run();
+                spiderRunner.run();
                 log.info(">>>> 手动触发 run end ");
                 break;
             default:
