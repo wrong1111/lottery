@@ -63,7 +63,7 @@ public class PermutationUtil {
                             permutation.setMode(mode);
                             permutation.setContent(args[0][i] + "," + args[1][j] + "," + args[2][k]);
                             permutation.setStageNumber(stageNumber);
-                            permutation.setForecastBonus(new BigDecimal(price1 * times).setScale(2, RoundingMode.HALF_UP));
+                            permutation.setForecastBonus(String.valueOf(price1 * times));
                             list.add(permutation);
                         }
                     }
@@ -124,7 +124,7 @@ public class PermutationUtil {
                     permutation.setMode(mode);
                     permutation.setContent(str);
                     permutation.setStageNumber(stageNumber);
-                    permutation.setForecastBonus(new BigDecimal(price2 * times).setScale(2, RoundingMode.HALF_UP));
+                    permutation.setForecastBonus(String.valueOf(price2 * times));
                     list.add(permutation);
                 }
             } else if (mode.equals("2")) {
@@ -169,7 +169,7 @@ public class PermutationUtil {
                         permutation.setMode(mode);
                         permutation.setContent(str);
                         permutation.setStageNumber(stageNumber);
-                        permutation.setForecastBonus(new BigDecimal(price3 * times).setScale(2, RoundingMode.HALF_UP));
+                        permutation.setForecastBonus(String.valueOf(price3 * times));
                         list.add(permutation);
                     }
                 } else {
@@ -187,7 +187,7 @@ public class PermutationUtil {
                                     permutation.setMode(mode);
                                     permutation.setContent(JSONUtil.parseObj(args[0][i]).getStr("num") + "," + JSONUtil.parseObj(args[0][j]).getStr("num") + "," + JSONUtil.parseObj(args[0][k]).getStr("num"));
                                     permutation.setStageNumber(stageNumber);
-                                    permutation.setForecastBonus(new BigDecimal(price3 * times).setScale(2, RoundingMode.HALF_UP));
+                                    permutation.setForecastBonus(String.valueOf(price3 * times));
                                     list.add(permutation);
                                 }
                             }
@@ -200,7 +200,7 @@ public class PermutationUtil {
                     permutation.setMode(mode);
                     permutation.setContent(args[0][i] + "");
                     permutation.setStageNumber(stageNumber);
-                    permutation.setForecastBonus(new BigDecimal(price1 * times).setScale(2, RoundingMode.HALF_UP));
+                    permutation.setForecastBonus(String.valueOf(price1 * times));
                     list.add(permutation);
                 }
             } else if (mode.equals("4")) {
@@ -209,7 +209,7 @@ public class PermutationUtil {
                     permutation.setMode(mode);
                     permutation.setContent(args[0][i] + "");
                     permutation.setStageNumber(stageNumber);
-                    permutation.setForecastBonus(new BigDecimal(price2 * times).setScale(2, RoundingMode.HALF_UP));
+                    permutation.setForecastBonus(String.valueOf(price2 * times));
                     list.add(permutation);
                 }
             } else if (mode.equals("5")) {
@@ -220,7 +220,7 @@ public class PermutationUtil {
                             permutation.setMode(mode);
                             permutation.setContent(args[0][i] + "," + args[0][i] + "," + args[1][j]);
                             permutation.setStageNumber(stageNumber);
-                            permutation.setForecastBonus(new BigDecimal(price2 * times).setScale(2, RoundingMode.HALF_UP));
+                            permutation.setForecastBonus(String.valueOf(price2 * times));
                             list.add(permutation);
                         }
                     }
@@ -240,7 +240,7 @@ public class PermutationUtil {
                                 permutation.setMode(mode);
                                 permutation.setContent(args[0][g] + "," + args[1][h] + "," + args[2][i] + "," + args[3][j] + "," + args[4][k]);
                                 permutation.setStageNumber(stageNumber);
-                                permutation.setForecastBonus(new BigDecimal(price4 * times).setScale(2, RoundingMode.HALF_UP));
+                                permutation.setForecastBonus(String.valueOf(price4 * times));
                                 list.add(permutation);
                             }
                         }
@@ -318,7 +318,7 @@ public class PermutationUtil {
                 permutation.setMode(mode);
                 permutation.setContent(p);
                 permutation.setStageNumber(stageNumber);
-                permutation.setForecastBonus(BigDecimal.valueOf(Double.valueOf(AWARD_LEVEL_MONEY.get(type + "-" + mode))));
+                permutation.setForecastBonus(AWARD_LEVEL_MONEY.get(type + "-" + mode));
                 list.add(permutation);
             });
 

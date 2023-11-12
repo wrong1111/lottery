@@ -139,6 +139,7 @@ exclude:
     - /app/shop/list
     - /sys/user/token/*
     - /app/domain/query
+    - /sch/run
 
 ##=======指定上传使用的是 s3 oss对象存储还是本机存储  #####
 

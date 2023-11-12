@@ -27,5 +27,5 @@ public class PermutationVO implements Serializable {
     private String mode;
 
     @ApiModelProperty(value = "预测奖金（保留小数点后2位）")
-    private BigDecimal forecastBonus;
+    private String forecastBonus;
 }

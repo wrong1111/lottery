@@ -126,6 +126,8 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             payOrder.setType(PayOrderTypeEnum.FCSSQ.getKey());
         } else if (type.equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
             payOrder.setType(PayOrderTypeEnum.FCKL8.getKey());
+        }else if (type.equals(LotteryOrderTypeEnum.FCQLC.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.FCQLC.getKey());
         }
         payOrder.setUserId(userId);
         payOrder.setPayType(PayTypeEnum.APP.getKey());

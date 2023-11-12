@@ -21,6 +21,7 @@ public class GrandLottoUtil {
         List<String> danList = collectDanSSQ(redListDTO);
         List<String> redList = collectNumberSSQ(redListDTO);
         List<String> reList = new ArrayList<>();
+        List<String> blueList = collectNumberSSQ(blueListDTO);
         //胆只有6个。
         if (danList.size() > 6) {
             return new ArrayList<>();
@@ -29,7 +30,7 @@ public class GrandLottoUtil {
             return new ArrayList<>();
         }
         List<String> frontList = new ArrayList<>();
-        int maxSelected = 7 - danList.size();
+        int maxSelected = 6 - danList.size();
         List<String> redStringList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(danList)) {
             List<List<String>> combine = CombinationUtil.getCombinations(redList.toArray(new String[0]), maxSelected);
@@ -43,16 +44,17 @@ public class GrandLottoUtil {
                 redStringList.add(StringUtils.join(item, ","));
             });
         }
-        //排序号码
-        redStringList.forEach(p -> {
-            String[] ballString = StringUtils.splitByWholeSeparatorPreserveAllTokens(p, ",");
-            List<String> balls = Arrays.asList(ballString);
-            balls.sort((a, b) -> {
-                return a.compareTo(b);
+        blueList.stream().forEach(p -> {
+            redStringList.forEach(p1 -> {
+                //排序号码
+                String[] ballString = StringUtils.splitByWholeSeparatorPreserveAllTokens(p1, ",");
+                List<String> balls = Arrays.asList(ballString);
+                balls.sort((a, b) -> {
+                    return a.compareTo(b);
+                });
+                frontList.add(StringUtils.join(balls, ",") + "," + p);
             });
-            frontList.add(StringUtils.join(balls, ","));
         });
-
         return frontList;
     }
 
