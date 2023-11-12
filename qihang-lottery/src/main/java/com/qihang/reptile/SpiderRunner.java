@@ -1,13 +1,9 @@
 package com.qihang.reptile;
 
 import com.qihang.constant.CrawlingAddressConstant;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.downloader.AbstractDownloader;
-import us.codecraft.webmagic.downloader.selenium.FirefoxDownload;
-import us.codecraft.webmagic.downloader.selenium.FirefoxDownloader;
-import us.codecraft.webmagic.downloader.selenium.SeleniumDownloader;
 import us.codecraft.webmagic.scheduler.BloomFilterDuplicateRemover;
 import us.codecraft.webmagic.scheduler.QueueScheduler;
 
@@ -98,7 +94,7 @@ public class SpiderRunner {
                         , CrawlingAddressConstant.URL15 //北单分析
 //                        , CrawlingAddressConstant.URL16 //排列5开奖
 //                        , CrawlingAddressConstant.URL17 //七星彩开奖
-                        , CrawlingAddressConstant.URL18 //胜负彩比赛
+//                        , CrawlingAddressConstant.URL18 //胜负彩比赛
                         , CrawlingAddressConstant.URL19 //胜负彩开奖
 //                        , CrawlingAddressConstant.URL20 //大乐透开奖
 //                        , CrawlingAddressConstant.URL21 //数字彩 遗漏排列3

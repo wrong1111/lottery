@@ -186,10 +186,10 @@ webdriver:
   type: firefox
   chrome:
     driver:
-      path:
+      path: /www/bet/chromedriver
   firefox:
     driver:
-      path: D:\\work\\chromedriver\\geckodriver.exe
+      path: /www/bet/geckodriver
 #支付宝支付配置
 alipay:
   #app_id: 2021003157618556
