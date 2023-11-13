@@ -1,9 +1,12 @@
 package com.qihang.reptile;
 
 import com.qihang.constant.CrawlingAddressConstant;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.downloader.AbstractDownloader;
+import us.codecraft.webmagic.downloader.selenium.FirefoxDownloader;
+import us.codecraft.webmagic.downloader.selenium.SeleniumDownloader;
 import us.codecraft.webmagic.scheduler.BloomFilterDuplicateRemover;
 import us.codecraft.webmagic.scheduler.QueueScheduler;
 
@@ -19,6 +22,26 @@ public class SpiderRunner {
     @Resource
     AbstractDownloader downloader;
 
+    @Value("${webdriver.type}")
+    String webdriverType;
+
+    @Value("${webdriver.chrome.driver.path}")
+    private String chromeDriverPath;
+
+    @Value("${webdriver.firefox.driver.path}")
+    String firefoxDriverPath;
+
+
+    public AbstractDownloader downloaderA() {
+        switch (webdriverType) {
+            case "chrome":
+                return new SeleniumDownloader(chromeDriverPath);
+            case "firefox":
+                return new FirefoxDownloader(firefoxDriverPath);
+            default:
+                throw new RuntimeException("未设置 爬虫使用的浏览器驱动");
+        }
+    }
 
     Spider spider = Spider.create(new LotteryProcessor())
             //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
@@ -42,7 +65,7 @@ public class SpiderRunner {
 //                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
 //                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
 //                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
-        spider.addUrl(
+        spider.setDownloader(downloaderA()).addUrl(
                 CrawlingAddressConstant.URL1 //足彩比赛
                 , CrawlingAddressConstant.URL4 // 篮彩比赛
                 , CrawlingAddressConstant.URL8 //北京单场
@@ -69,7 +92,7 @@ public class SpiderRunner {
 //                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
 //                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
 
-        spider.addUrl(
+        spider.setDownloader(downloaderA()).addUrl(
                 CrawlingAddressConstant.URL21 //数字彩 遗漏排列3
                 , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
                 , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
@@ -93,9 +116,9 @@ public class SpiderRunner {
 //                )
 //                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
 //                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
-//                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
+//                .setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
 
-        spider.addUrl(
+        spider.setDownloader(downloaderA()).addUrl(
                 CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
                 , CrawlingAddressConstant.URL_SSQ // 双色球 开奖
                 , CrawlingAddressConstant.URL_KL8 // 快乐8 开奖
@@ -107,16 +130,18 @@ public class SpiderRunner {
         ).runAsync();
     }
 
+
     public void run() {
         Spider.create(new LotteryProcessor()).addUrl(
-//                CrawlingAddressConstant.URL3 //足彩对局分析
-//                , CrawlingAddressConstant.URL5 //篮球对局分析
-//                , CrawlingAddressConstant.URL6 //足球开奖
-//                , CrawlingAddressConstant.URL7 //篮球开奖
-//                , CrawlingAddressConstant.URL14 //篮球单关查询
-//                , CrawlingAddressConstant.URL15 //北单分析
-                CrawlingAddressConstant.URL19 //胜负彩开奖
-        ).setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
+                CrawlingAddressConstant.URL3 //足彩对局分析
+                , CrawlingAddressConstant.URL5 //篮球对局分析
+                , CrawlingAddressConstant.URL6 //足球开奖
+                , CrawlingAddressConstant.URL7 //篮球开奖
+                , CrawlingAddressConstant.URL14 //篮球单关查询
+                , CrawlingAddressConstant.URL15 //北单分析
+                , CrawlingAddressConstant.URL19 //胜负彩开奖
+        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
+
 //        Spider.create(new LotteryProcessor()).addUrl(
 ////                        CrawlingAddressConstant.URL1 //足彩比赛
 ////                        , CrawlingAddressConstant.URL2 //排列三出奖

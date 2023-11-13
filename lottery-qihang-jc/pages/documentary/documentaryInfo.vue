@@ -87,7 +87,53 @@
 							</view>
 							<view v-else>
 								<!-- 下注内容 -->
-								<uni-card is-shadow v-if="documentaryData.name=='竞彩足球'">
+								<uni-card is-shadow v-if="documentaryData.name=='足球14场'||documentaryData.name=='任选九'">
+									<view>
+										<span class="title">{{documentaryData.name}}</span>
+										<p style="display: flex;justify-content: flex-end;align-items: center;">
+											<uni-row>
+												<uni-col :span="12">
+													<u-tag :text="documentaryData.notes+'注'" type="error"></u-tag>
+													<u-tag :text="documentaryData.times +'倍'"
+														style="margin-left: 10px;">
+													</u-tag>
+												</uni-col>
+											</uni-row>
+										</p>
+									</view>
+									<uni-table stripe emptyText="暂无更多数据">
+										<!-- 表头行 -->
+										<uni-tr>
+											<uni-th width="50" align="center">场次</uni-th>
+											<uni-th width="70" align="center">主队/客队</uni-th>
+											<uni-th width="50" align="center">投注内容</uni-th>
+											<uni-th width="60" align="center">赛果</uni-th>
+										</uni-tr>
+										<!-- 表格数据行 -->
+										<uni-tr v-for="(record,index) in documentaryData.ballInfoList" :key="index">
+											<uni-td width="50" align="center">{{record.number}}</uni-td>
+											<uni-td width="70" align="center">{{record.homeTeam}}
+												<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}"><br>
+													VS </span>
+												<br>{{record.visitingTeam}}
+											</uni-td>
+											<uni-td width="50" align="center">
+												<span :style="notLet.describe==record.award[0]?'color:#FF3F43':''"
+													v-for="(notLet,index) in record.content.notLetOddsList"
+													v-if="notLet.active">
+													{{notLet.describe}}({{notLet.odds}})<span
+														v-if="record.content.notLetOddsList.length-index>1">,</span>
+												</span>
+											</uni-td>
+											 <uni-td width="50" align="center">
+											 	<span v-if="record.award!=undefined">
+											 		{{record.award[index]}}
+											 	</span>
+											 </uni-td>
+										</uni-tr>
+									</uni-table>
+								</uni-card>
+								<uni-card is-shadow v-if="documentaryData.name=='北京单场'">
 									<view>
 										<span class="title">{{documentaryData.name}}</span>
 										<p style="display: flex;justify-content: flex-end;align-items: center;">
@@ -118,51 +164,49 @@
 											<uni-th width="50" align="center">场次</uni-th>
 											<uni-th width="70" align="center">主队/客队</uni-th>
 											<uni-th width="50" align="center">投注内容</uni-th>
-											<uni-th width="60" align="center">赛果(全/半)</uni-th>
+											<uni-th width="60" align="center">赛果</uni-th>
 										</uni-tr>
 										<!-- 表格数据行 -->
 										<uni-tr v-for="(record,index) in documentaryData.ballInfoList" :key="index">
 											<uni-td width="50" align="center">{{record.number}}</uni-td>
 											<uni-td width="70" align="center">{{record.homeTeam}}
-												<span class="rangqiu"
-													:class="{rangqiuBlue:record.letBall < 0}"><br> ({{record.letBall}}) </span>
+												<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}"><br>
+													({{record.letBall}}) </span>
 												<br>{{record.visitingTeam}}
 											</uni-td>
 											<uni-td width="50" align="center">
-												<!-- notLet.describe==record.award[0] 如果选择的和中奖的结果一样标记为红色 -->
 												<span :style="notLet.describe==record.award[0]?'color:#FF3F43':''"
-													v-for="(notLet,index) in record.content.notLetOddsList"
+													v-for="(notLet,index) in record.content.letOddsList"
 													v-if="notLet.active">
 													{{notLet.describe}}({{notLet.odds}})<span
-														v-if="record.content.notLetOddsList.length-index>1">,</span>
-												</span>
-												<span v-if="record.content.notLetOddsList.length>0">|</span>
-												<br>
-
-												<span :style="record.halfFullCourt!=undefined&&lets.describe==(Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)>Number(record.halfFullCourt.split(',')[1].split(':')[1])?'胜'
-													:Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)<Number(record.halfFullCourt.split(',')[1].split(':')[1])?'负'
-													:'平')?'color:#FF3F43':''" v-for="(lets,index) in record.content.letOddsList" v-if="lets.active">
-													让{{lets.describe}}({{lets.odds}})<span
 														v-if="record.content.letOddsList.length-index>1">,</span>
 												</span>
-												<span v-if="record.content.letOddsList.length>0">|</span>
-												<br>
+												<!-- notLet.describe==record.award[0] 如果选择的和中奖的结果一样标记为红色 -->
+												<span :style="notLet.describe==record.award[1]?'color:#FF3F43':''"
+													v-for="(notLet,index) in record.content.oddEvenOdds"
+													v-if="notLet.active">
+													{{notLet.describe}}({{notLet.odds}})<span
+														v-if="record.content.oddEvenOdds.length-index>1">,</span>
+												</span>
+												<span v-if="record.content.oddEvenOdds.length>0">|<br></span>
+												
+												 
 												<span :style="goal.describe==record.award[2]?'color:#FF3F43':''"
 													v-for="(goal,index) in record.content.goalOddsList"
 													v-if="goal.active">
 													{{goal.describe}}({{goal.odds}})<span
 														v-if="record.content.goalOddsList.length-index>1">,</span>
 												</span>
-												<span v-if="record.content.goalOddsList.length>0">|</span>
-												<br>
+												<span v-if="record.content.goalOddsList.length>0">|<br></span>
+												
 												<span :style="half.describe==record.award[3]?'color:#FF3F43':''"
 													v-for="(half,index) in record.content.halfWholeOddsList"
 													v-if="half.active">
 													{{half.describe}}({{half.odds}})<span
 														v-if="record.content.halfWholeOddsList.length-index>1">,</span>
 												</span>
-												<span v-if="record.content.halfWholeOddsList.length>0">|</span>
-												<br>
+												<span v-if="record.content.halfWholeOddsList.length>0">|<br></span>
+												
 												<span :style="score.describe==record.award[4]?'color:#FF3F43':''"
 													v-for="(score,index) in record.content.scoreOddsList"
 													v-if="score.active">
@@ -170,10 +214,105 @@
 														v-if="record.content.scoreOddsList.length-index>1">,</span>
 													<br>
 												</span>
-												<span v-if="record.content.scoreOddsList.length>0">|</span>
-												<br>
+												<span v-if="record.content.scoreOddsList.length>0">|<br></span>
+												
 											</uni-td>
 											<uni-td width="50" align="center">
+												<span v-if="record.halfFullCourt!=undefined">
+													{{record.halfFullCourt.split(',')[1]}}<br>半{{record.halfFullCourt.split(',')[0]}}
+												</span>
+											</uni-td>
+										</uni-tr>
+									</uni-table>
+								</uni-card>
+								
+								<uni-card is-shadow v-if="documentaryData.name=='竞彩足球'">
+									<view>
+										<span class="title">{{documentaryData.name}}</span>
+										<p style="display: flex;justify-content: flex-end;align-items: center;">
+											<uni-row>
+												<uni-col :span="documentaryData.pssTypeList.length<=2?12:24">
+													<u-tag :text="documentaryData.notes+'注'" type="error"></u-tag>
+													<u-tag :text="documentaryData.times +'倍'"
+														style="margin-left: 10px;">
+													</u-tag>
+												</uni-col>
+												<uni-col :span="6" :key="index"
+													v-for="(item,index) in documentaryData.pssTypeList">
+													<u-tag v-if="item==1" :borderColor="index|mapTagColor"
+														:bgColor="index|mapTagColor" text="单关"
+														:style="documentaryData.pssTypeList.length==1?'margin-left: 35px;':'margin-left: 10px;'">
+													</u-tag>
+													<u-tag v-else :borderColor="index|mapTagColor"
+														:bgColor="index|mapTagColor" :text="item+'串一'"
+														:style="documentaryData.pssTypeList.length==1?'margin-left: 35px;':'margin-left: 10px;'">
+													</u-tag>
+												</uni-col>
+											</uni-row>
+										</p>
+									</view>
+									<uni-table stripe emptyText="暂无更多数据">
+										<!-- 表头行 -->
+										<uni-tr>
+											<uni-th width="40" align="center">场次</uni-th>
+											<uni-th width="70" align="center">主队/客队</uni-th>
+											<uni-th width="70" align="center">投注内容</uni-th>
+											<uni-th width="60" align="center">赛果(全/半)</uni-th>
+										</uni-tr>
+										<!-- 表格数据行 -->
+										<uni-tr v-for="(record,index) in documentaryData.ballInfoList" :key="index">
+											<uni-td width="40" align="center">{{record.number}}</uni-td>
+											<uni-td width="70" align="center">{{record.homeTeam}}
+												<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}"><br>
+													({{record.letBall}}) </span>
+												<br>{{record.visitingTeam}}
+											</uni-td>
+											<uni-td width="70" align="center">
+												<!-- notLet.describe==record.award[0] 如果选择的和中奖的结果一样标记为红色 -->
+												<span :style="notLet.describe==record.award[0]?'color:#FF3F43':''"
+													v-for="(notLet,index) in record.content.notLetOddsList"
+													v-if="notLet.active">
+													{{notLet.describe}}({{notLet.odds}})<span
+														v-if="record.content.notLetOddsList.length-index>1">,<br></span>
+												</span>
+												<span v-if="record.content.notLetOddsList.length>0">|<br></span>
+											
+
+												<span :style="record.halfFullCourt!=undefined&&lets.describe==(Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)>Number(record.halfFullCourt.split(',')[1].split(':')[1])?'胜'
+													:Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)<Number(record.halfFullCourt.split(',')[1].split(':')[1])?'负'
+													:'平')?'color:#FF3F43':''" v-for="(lets,index) in record.content.letOddsList" v-if="lets.active">
+													让{{lets.describe}}({{lets.odds}})<span
+														v-if="record.content.letOddsList.length-index>1">,<br></span>
+												</span>
+												<span v-if="record.content.letOddsList.length>0">|<br></span>
+												
+												<span :style="goal.describe==record.award[2]?'color:#FF3F43':''"
+													v-for="(goal,index) in record.content.goalOddsList"
+													v-if="goal.active">
+													{{goal.describe}}({{goal.odds}})<span
+														v-if="record.content.goalOddsList.length-index>1">,<br></span>
+												</span>
+												<span v-if="record.content.goalOddsList.length>0">|<br></span>
+												
+												<span :style="half.describe==record.award[3]?'color:#FF3F43':''"
+													v-for="(half,index) in record.content.halfWholeOddsList"
+													v-if="half.active">
+													{{half.describe}}({{half.odds}})<span
+														v-if="record.content.halfWholeOddsList.length-index>1">,<br></span>
+												</span>
+												<span v-if="record.content.halfWholeOddsList.length>0">|<br></span>
+												
+												<span :style="score.describe==record.award[4]?'color:#FF3F43':''"
+													v-for="(score,index) in record.content.scoreOddsList"
+													v-if="score.active">
+													{{score.describe}}({{score.odds}})<span
+														v-if="record.content.scoreOddsList.length-index>1">,<br></span>
+													<br>
+												</span>
+												<span v-if="record.content.scoreOddsList.length>0">|<br></span>
+												
+											</uni-td>
+											<uni-td width="60" align="center">
 												<span v-if="record.halfFullCourt!=undefined">
 													{{record.halfFullCourt.split(',')[1]}}<br>半{{record.halfFullCourt.split(',')[0]}}
 												</span>
@@ -290,7 +429,8 @@
 				</view>
 			</view>
 		</view>
-		<view v-if="documentaryData.endTime>0" style="position: fixed; left: 0px; right: 0px; bottom: 0px; background-color: white; padding: 10px;">
+		<view v-if="documentaryData.endTime>0"
+			style="position: fixed; left: 0px; right: 0px; bottom: 0px; background-color: white; padding: 10px;">
 			<view style="display: flex; align-items: center;justify-content: flex-end;margin-right: 10px;">
 				投<u-number-box @change="valChange"></u-number-box>倍
 			</view>
@@ -436,6 +576,7 @@
 				this.documentaryId = id;
 				queryDocumentaryById(id, uid).then(res => {
 					this.documentaryData = res;
+					console.log(' 合买详情页 documentaryInfo ==》', this.documentaryData)
 					this.price = this.documentaryData.riseThrowPrice
 					if (this.documentaryData.documentaryUserList.length <= 0) {
 						this.tabsList[1].name = "跟单次数（0）"
@@ -452,7 +593,7 @@
 								','))
 						} else {
 							//考虑比赛结果还没有出的话设置一个默认值，防止报错
-							var moren = [0, 0, 0, 0, 0]
+							var moren = ['', '', '', '', '','','','','','','','','','']
 							this.$set(this.documentaryData.ballInfoList[idx], "award", moren)
 						}
 						if (item.bonusOdds != null) {
@@ -460,7 +601,7 @@
 								.split(','))
 						} else {
 							//考虑比赛结果还没有出的话设置一个默认值，防止报错
-							var moren = ["", "", "", "", ""]
+							var moren = ['', '', '', '', '','','','','','','','','','']
 							this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", moren)
 						}
 					})

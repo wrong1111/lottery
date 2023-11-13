@@ -139,6 +139,8 @@ class WebDriverPool {
             FirefoxOptions options = new FirefoxOptions();
             //wyong edit 不调起firefox浏览器
             options.setHeadless(true);
+            //禁用页面js
+            options.setCapability("javascript.enabled", false);
             mDriver = new FirefoxDriver(options);
         } else if (driver.equals(DRIVER_CHROME)) {
             ChromeOptions options = new ChromeOptions();

@@ -13,6 +13,7 @@ import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.basketball.dto.BasketballMatchDTO;
+import com.qihang.controller.beidan.dto.BeiDanMatchDTO;
 import com.qihang.controller.documentary.app.dto.CreateDocumentaryDTO;
 import com.qihang.controller.documentary.app.dto.CreateDocumentaryUserDTO;
 import com.qihang.controller.documentary.app.vo.*;
@@ -21,6 +22,7 @@ import com.qihang.controller.order.app.lottery.vo.BallInfoVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.controller.racingball.app.vo.RacingBallOrderVO;
+import com.qihang.controller.winburden.dto.WinBurdenMatchDTO;
 import com.qihang.domain.ballgame.BallGameDO;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
@@ -645,7 +647,33 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
                 ballInfo.setHalfFullCourt(basketballMatchDO.getHalfFullCourt());
                 ballInfo.setLetBall(basketballMatch.getCedePoints());
                 ballInfoList.add(ballInfo);
+            } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SINGLE.getKey())) {
+                BeiDanMatchDTO beiDanMatchDTO = JSONUtil.toBean(racingBall.getContent(), BeiDanMatchDTO.class);
+                BeiDanMatchDO beiDanMatchDO = beiDanMatchMapper.selectById(beiDanMatchDTO.getId());
+                ids.add(beiDanMatchDO.getId());
+                ballInfo.setHomeTeam(beiDanMatchDTO.getHomeTeam());
+                ballInfo.setVisitingTeam(beiDanMatchDTO.getVisitingTeam());
+                ballInfo.setNumber(beiDanMatchDTO.getNumber());
+                ballInfo.setAward(beiDanMatchDO.getAward());
+                ballInfo.setContent(racingBall.getContent());
+                ballInfo.setHalfFullCourt(beiDanMatchDO.getHalfFullCourt());
+                ballInfo.setLetBall(beiDanMatchDTO.getLetBall());
+                ballInfoList.add(ballInfo);
+            } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey()) ||
+                    StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey())) {
+                WinBurdenMatchDTO winBurdenMatch = JSONUtil.toBean(racingBall.getContent(), WinBurdenMatchDTO.class);
+                WinBurdenMatchDO winBurdenMatchDO = winBurdenMatchMapper.selectById(winBurdenMatch.getId());
+                ids.add(winBurdenMatch.getId());
+                ballInfo.setHomeTeam(winBurdenMatch.getHomeTeam());
+                ballInfo.setVisitingTeam(winBurdenMatch.getVisitingTeam());
+                ballInfo.setNumber(winBurdenMatch.getNumber());
+                ballInfo.setAward(winBurdenMatchDO.getAward());
+                ballInfo.setContent(racingBall.getContent());
+                ballInfo.setHalfFullCourt("");
+                ballInfo.setLetBall("");
+                ballInfoList.add(ballInfo);
             }
+            //TODO 下注跟单
         }
         //投注比赛内容
         documentaryById.setBallInfoList(ballInfoList);
@@ -658,18 +686,27 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
             //按截止时间升序
             footballMatchList = footballMatchList.stream().sorted(Comparator.comparing(FootballMatchDO::getDeadline)).collect(Collectors.toList());
             endTime = footballMatchList.get(0).getDeadline();
-            BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, LotteryOrderTypeEnum.FOOTBALL.getValue())).get(0);
-            name = ballGameDO.getName();
-            url = ballGameDO.getUrl();
+
         } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.BASKETBALL.getKey())) {
             List<BasketballMatchDO> basketballMatchList = basketballMatchMapper.selectBatchIds(ids);
             //按截止时间升序
             basketballMatchList = basketballMatchList.stream().sorted(Comparator.comparing(BasketballMatchDO::getDeadline)).collect(Collectors.toList());
             endTime = basketballMatchList.get(0).getDeadline();
-            BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, LotteryOrderTypeEnum.BASKETBALL.getValue())).get(0);
-            name = ballGameDO.getName();
-            url = ballGameDO.getUrl();
+        } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.SINGLE.getKey())) {
+            List<BeiDanMatchDO> beiDanMatchDOS = beiDanMatchMapper.selectBatchIds(ids);
+            beiDanMatchDOS = beiDanMatchDOS.stream().sorted(Comparator.comparing(BeiDanMatchDO::getDeadline)).collect(Collectors.toList());
+            endTime = beiDanMatchDOS.get(0).getDeadline();
+
+        } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey())
+                || lotteryOrder.getType().equals(LotteryOrderTypeEnum.REN_JIU.getKey())) {
+            List<WinBurdenMatchDO> winBurdenMatchDOS = winBurdenMatchMapper.selectBatchIds(ids);
+            winBurdenMatchDOS = winBurdenMatchDOS.stream().sorted(Comparator.comparing(WinBurdenMatchDO::getDeadline)).collect(Collectors.toList());
+            endTime = winBurdenMatchDOS.get(0).getDeadline();
         }
+        BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, LotteryOrderTypeEnum.valueOFS(lotteryOrder.getType()).getValue())).get(0);
+        name = ballGameDO.getName();
+        url = ballGameDO.getUrl();
+        //TODO 下注跟单
         //截止时间
         documentaryById.setDeadline(endTime);
         //logo
