@@ -33,4 +33,8 @@ public class CreateDocumentaryDTO implements Serializable {
     @ApiModelProperty(value = "佣金")
     @NotNull(message = "佣金不能为空")
     private Integer commission;
+
+    @ApiModelProperty(value = "彩种")
+    @NotNull(message = "彩种不能为空")
+    Integer type;
 }

@@ -63,6 +63,7 @@
 							@change="numberChange">
 						</u-number-box>倍
 					</view>
+					<button size="mini" type="button" @tap="documentary">发起跟单</button>
 					<button class="buyFooter_buyBtn" type="button" @tap="confirmIsShow=true">提交</button>
 				</div>
 			</div>
@@ -122,6 +123,15 @@
 			this.init(this.selectItem);
 		},
 		methods: {
+			//发起合买设置
+			documentary() {
+				this.calculationParam.notes = this.notes
+				this.calculationParam.forecast = this.maxPrice
+				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.averageOptimizationList)
+				uni.navigateTo({
+					url: "pages/documentary/place?obj=" + encodeURIComponent(JSON.stringify(this.calculationParam))
+				});
+			},
 			//删除比赛
 			close(idx) {
 				//必须14场比赛
@@ -214,7 +224,7 @@
 				this.price = this.notes * item.value * 2
 				this.times = item.value
 				this.calculationParam.multiple = item.value
-				this.calculationFootball();
+				this.calculationWinBurden();
 			},
 		}
 	}

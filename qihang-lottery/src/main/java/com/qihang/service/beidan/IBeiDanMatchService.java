@@ -8,6 +8,8 @@ import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
 
+import java.util.List;
+
 /**
  * @author bright
  * @since 2022-11-02
@@ -38,4 +40,6 @@ public interface IBeiDanMatchService extends IService<BeiDanMatchDO> {
      * @return
      */
     BaseVO award();
+
+    List<BeiDanMatchDO> selectBatchIds(List<Integer> targetIds);
 }

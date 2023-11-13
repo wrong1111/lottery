@@ -13,6 +13,7 @@ import com.qihang.domain.omit.OmitDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
 import com.qihang.enumeration.ball.BettingStateEnum;
+import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import com.qihang.service.basketball.IBasketballMatchService;
 import com.qihang.service.beidan.IBeiDanMatchService;
 import com.qihang.service.football.IFootballMatchService;
@@ -21,10 +22,13 @@ import com.qihang.service.permutation.IPermutationAwardService;
 import com.qihang.service.permutation.IPermutationService;
 import com.qihang.service.winburden.IWinBurdenMatchService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import us.codecraft.webmagic.ResultItems;
 import us.codecraft.webmagic.Task;
 import us.codecraft.webmagic.pipeline.Pipeline;
@@ -33,6 +37,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author: bright
@@ -365,6 +370,28 @@ public class LotteryPipeline implements Pipeline {
                     winBurdenMatch.setMoneyAward(winBurdenMatchDO.getMoneyAward());
                     winBurdenMatchService.updateById(winBurdenMatch);
                 }
+            }
+            if (!CollectionUtils.isEmpty(winBurdenMatchList)) {
+                //存储爬取到的开奖结果
+                List<String> lastList = winBurdenMatchList.stream()
+                        .map(item -> "胜".equals(item.getAward()) ? "3" : ("平".equals(item.getAward()) ? "1" : ("负".equals(item.getAward()) ? "0" : "-")))
+                        .collect(Collectors.toList());
+
+                log.info(" 胜负彩开奖 ： {} 场 ", lastList);
+                PermutationAwardDO permutationAward = new PermutationAwardDO();
+                permutationAward.setStageNumber(Integer.valueOf(winBurdenMatchList.get(0).getIssueNo()));
+                permutationAward.setType(LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey());
+                permutationAward.setCreateTime(new Date());
+                permutationAward.setReward(StringUtils.join(lastList, ","));
+                PermutationAwardDO permutationAwardDO = permutationAwardService.getOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getStageNumber, permutationAward.getStageNumber()).eq(PermutationAwardDO::getType, permutationAward.getType()));
+                if (ObjectUtil.isNotNull(permutationAwardDO)) {
+                    permutationAwardDO.setReward(permutationAward.getReward());
+                    permutationAwardDO.setUpdateTime(new Date());
+                    permutationAwardService.updateById(permutationAwardDO);
+                    return;
+                }
+                permutationAwardService.save(permutationAward);
+
             }
         } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL21)
                 || ObjectUtil.equal(url, CrawlingAddressConstant.URL22)

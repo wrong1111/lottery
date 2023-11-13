@@ -23,6 +23,7 @@ import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.controller.racingball.app.vo.RacingBallOrderVO;
 import com.qihang.domain.ballgame.BallGameDO;
 import com.qihang.domain.basketball.BasketballMatchDO;
+import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.documentary.DocumentaryDO;
 import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.follow.FollowDO;
@@ -31,6 +32,7 @@ import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.order.PayOrderDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.user.UserDO;
+import com.qihang.domain.winburden.WinBurdenMatchDO;
 import com.qihang.enumeration.error.ErrorCodeEnum;
 import com.qihang.enumeration.follow.FollowEnum;
 import com.qihang.enumeration.order.lottery.LotteryOrderStateEnum;
@@ -40,6 +42,7 @@ import com.qihang.enumeration.order.pay.PayOrderTypeEnum;
 import com.qihang.enumeration.order.pay.PayTypeEnum;
 import com.qihang.mapper.ballgame.BallGameMapper;
 import com.qihang.mapper.basketball.BasketballMatchMapper;
+import com.qihang.mapper.beidan.BeiDanMatchMapper;
 import com.qihang.mapper.documentary.DocumentaryMapper;
 import com.qihang.mapper.documentary.DocumentaryUserMapper;
 import com.qihang.mapper.follow.FollowMapper;
@@ -48,8 +51,11 @@ import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
+import com.qihang.mapper.winburden.WinBurdenMatchMapper;
 import com.qihang.service.basketball.IBasketballMatchService;
+import com.qihang.service.beidan.IBeiDanMatchService;
 import com.qihang.service.football.IFootballMatchService;
+import com.qihang.service.winburden.IWinBurdenMatchService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,6 +99,12 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
     private FootballMatchMapper footballMatchMapper;
 
     @Resource
+    BeiDanMatchMapper beiDanMatchMapper;
+
+    @Resource
+    WinBurdenMatchMapper winBurdenMatchMapper;
+
+    @Resource
     private BallGameMapper ballGameMapper;
 
     @Resource
@@ -106,6 +118,13 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
 
     @Resource
     private PayOrderMapper payOrderMapper;
+
+
+    @Resource
+    IBeiDanMatchService beiDanMatchService;
+
+    @Resource
+    IWinBurdenMatchService winBurdenMatchService;
 
 
     @Override
@@ -448,18 +467,28 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
                         //按截止时间升序
                         footballMatchList = footballMatchList.stream().sorted(Comparator.comparing(FootballMatchDO::getDeadline)).collect(Collectors.toList());
                         endTime = footballMatchList.get(0).getDeadline();
-                        BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, LotteryOrderTypeEnum.FOOTBALL.getValue())).get(0);
-                        name = ballGameDO.getName();
-                        url = ballGameDO.getUrl();
+
                     } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.BASKETBALL.getKey())) {
                         List<BasketballMatchDO> basketballMatchList = basketballMatchMapper.selectBatchIds(ids);
                         //按截止时间升序
                         basketballMatchList = basketballMatchList.stream().sorted(Comparator.comparing(BasketballMatchDO::getDeadline)).collect(Collectors.toList());
                         endTime = basketballMatchList.get(0).getDeadline();
-                        BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, LotteryOrderTypeEnum.BASKETBALL.getValue())).get(0);
-                        name = ballGameDO.getName();
-                        url = ballGameDO.getUrl();
+
+                    } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.SINGLE.getKey())) {
+                        List<BeiDanMatchDO> beiDanMatchDOS = beiDanMatchMapper.selectBatchIds(ids);
+                        //按截止时间升序
+                        beiDanMatchDOS = beiDanMatchDOS.stream().sorted(Comparator.comparing(BeiDanMatchDO::getDeadline)).collect(Collectors.toList());
+                        endTime = beiDanMatchDOS.get(0).getDeadline();
+                    } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || lotteryOrder.getType().equals(LotteryOrderTypeEnum.REN_JIU.getKey())) {
+                        List<WinBurdenMatchDO> winBurdenMatchDOS = winBurdenMatchMapper.selectBatchIds(ids);
+                        //按截止时间升序
+                        winBurdenMatchDOS = winBurdenMatchDOS.stream().sorted(Comparator.comparing(WinBurdenMatchDO::getDeadline)).collect(Collectors.toList());
+                        endTime = winBurdenMatchDOS.get(0).getDeadline();
                     }
+                    String names = LotteryOrderTypeEnum.valueOFS(lotteryOrder.getType()).getValue();
+                    BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, names)).get(0);
+                    name = ballGameDO.getName();
+                    url = ballGameDO.getUrl();
                     //判断时间是否在下单之内
                     Date date = new Date();
                     if (date.compareTo(endTime) < 0) {
@@ -470,7 +499,11 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
                         documentary.setNickname(userDO.getNickname());
                         documentary.setAvatar(userDO.getAvatar());
                         documentary.setDescribe(documentaryDO.getDescribe());
-                        documentary.setRemuneration(lotteryOrder.getForecast().divide(lotteryOrder.getPrice(), 2, RoundingMode.HALF_UP));
+                        if (lotteryOrder.getForecast() != null) {
+                            documentary.setRemuneration(lotteryOrder.getForecast().divide(lotteryOrder.getPrice(), 2, RoundingMode.HALF_UP));
+                        } else {
+                            documentary.setRemuneration(BigDecimal.ZERO);
+                        }
                         documentary.setEndTime(endTime.getTime() - date.getTime());
                         documentary.setName(name);
                         documentary.setUrl(url);

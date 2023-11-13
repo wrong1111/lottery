@@ -70,7 +70,7 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
         CommonListVO<WinBurdenVO> commonList = new CommonListVO<>();
         List<WinBurdenVO> winBurdenList = new ArrayList<>();
         //小于当前时间的，不展示
-        List<WinBurdenMatchDO> winBurdenMatchList = winBurdenMatchMapper.selectList(new QueryWrapper<WinBurdenMatchDO>().lambda().eq(WinBurdenMatchDO::getState, BettingStateEnum.YES.getKey()));
+        List<WinBurdenMatchDO> winBurdenMatchList = winBurdenMatchMapper.selectList(new QueryWrapper<WinBurdenMatchDO>().lambda().eq(WinBurdenMatchDO::getState, BettingStateEnum.YES.getKey()).gt(WinBurdenMatchDO::getDeadline,new Date()));
         Map<String, List<WinBurdenMatchDO>> map = winBurdenMatchList.stream().collect(Collectors.groupingBy(WinBurdenMatchDO::getIssueNo));
         Integer id = 0;
         for (Map.Entry<String, List<WinBurdenMatchDO>> entry : map.entrySet()) {

@@ -4,6 +4,7 @@
 		<div>
 			<div class="padding" style="display: flex;justify-content: space-around;align-items: center;">
 				<u-button @click="continues" style="width: 40%;" color="#FF3F43" text="添加赛事"></u-button>
+				<u-button @click="documentary" style="width: 40%;" color="#FF3F43" text="发起跟单"></u-button>
 			</div>
 			<div class="padding">
 				<div class="scheme-box">
@@ -174,6 +175,15 @@
 			this.init(this.selectItem, this.flag);
 		},
 		methods: {
+			//发起合买设置
+			documentary() {
+				this.calculationParam.notes = this.notes
+				this.calculationParam.forecast = this.maxPrice
+				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.averageOptimizationList)
+				uni.navigateTo({
+					url: "pages/documentary/place?obj=" + encodeURIComponent(JSON.stringify(this.calculationParam))
+				});
+			},
 			//删除比赛
 			close(idx) {
 				//刪除数据后需要重新计算金额

@@ -299,6 +299,12 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
         return new BaseVO();
     }
 
+    @Override
+    public List<BeiDanMatchDO> selectBatchIds(List<Integer> targetIds) {
+
+        return null;
+    }
+
 
     private void addRecord(LotteryOrderDO lotteryOrder, Integer tenantId) {
         PayOrderDO payOrder = new PayOrderDO();

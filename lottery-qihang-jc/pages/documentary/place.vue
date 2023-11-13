@@ -1,48 +1,48 @@
 <template>
 	<view class="box">
-		
-			<nav-bar :title="'发起跟单'" :back="true"></nav-bar>
+
+		<nav-bar :title="'发起跟单'" :back="true"></nav-bar>
+		<view
+			style="background-color: white; margin: 20px 15px; padding: 10px; border-radius: 10px; line-height: 40px;">
 			<view
-				style="background-color: white; margin: 20px 15px; padding: 10px; border-radius: 10px; line-height: 40px;">
-				<view
-					style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgb(238, 238, 238);">
-					<text><span>投注彩种</span></text>
-					<text style="color: red;"><span>{{calculationParam.type=='0'?'竞彩足球':'竞彩篮球'}}</span></text>
-				</view>
-				<view style="display: flex; justify-content: space-between; align-items: center;">
-					<text><span>订单金额</span></text>
-					<text
-						style="color: red;"><span>{{calculationParam.multiple * calculationParam.notes * 2}}元</span></text>
-				</view>
+				style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgb(238, 238, 238);">
+				<text><span>投注彩种</span></text>
+				<text style="color: red;"><span>{{getLotteryName(calculationParam.type)}}</span></text>
 			</view>
-			<view
-				style="background-color: white; margin: -10px 15px 0px; padding: 10px; border-radius: 10px; line-height: 40px;">
-				<view style="display: flex; justify-content: space-between; align-items: center;">
-					<text><span>是否公开</span></text>
-					<u-radio-group v-model="documentaryParam.state">
-						<u-radio activeColor="#FF3F43" :customStyle="{marginLeft: '20px'}" v-for="(item, index) in list"
-							:key="index" :name="item.value" :label="item.name">
-						</u-radio>
-					</u-radio-group>
-				</view>
-				<view style="display: flex; justify-content: space-between; align-items: center;">
-					<text><span>佣金</span></text>
-					<u-radio-group v-model="documentaryParam.commission">
-						<u-radio activeColor="#FF3F43" :customStyle="{marginLeft: '16px'}"
-							v-for="(item, index) in stationList" :key="index" :name="item.value" :label="item.name">
-						</u-radio>
-					</u-radio-group>
-				</view>
-				<view style="width: 100%;">
-					<u-textarea v-model="documentaryParam.describe" height="140"
-						style="background-color: rgb(241, 241, 241); width: 100%; border-radius: 15px; padding: 5px;">
-					</u-textarea>
-				</view>
+			<view style="display: flex; justify-content: space-between; align-items: center;">
+				<text><span>订单金额</span></text>
+				<text
+					style="color: red;"><span>{{calculationParam.multiple * calculationParam.notes * 2}}元</span></text>
 			</view>
-			<view style="position: fixed; bottom: 10px; right: 5%; width: 90%;">
-				<u-button color="#FF3F43" text="确认发单" style="border-radius: 10px;" @click="confirm"></u-button>
+		</view>
+		<view
+			style="background-color: white; margin: -10px 15px 0px; padding: 10px; border-radius: 10px; line-height: 40px;">
+			<view style="display: flex; justify-content: space-between; align-items: center;">
+				<text><span>是否公开</span></text>
+				<u-radio-group v-model="documentaryParam.state">
+					<u-radio activeColor="#FF3F43" :customStyle="{marginLeft: '20px'}" v-for="(item, index) in list"
+						:key="index" :name="item.value" :label="item.name">
+					</u-radio>
+				</u-radio-group>
 			</view>
-		
+			<view style="display: flex; justify-content: space-between; align-items: center;">
+				<text><span>佣金</span></text>
+				<u-radio-group v-model="documentaryParam.commission">
+					<u-radio activeColor="#FF3F43" :customStyle="{marginLeft: '16px'}"
+						v-for="(item, index) in stationList" :key="index" :name="item.value" :label="item.name">
+					</u-radio>
+				</u-radio-group>
+			</view>
+			<view style="width: 100%;">
+				<u-textarea v-model="documentaryParam.describe" height="140"
+					style="background-color: rgb(241, 241, 241); width: 100%; border-radius: 15px; padding: 5px;">
+				</u-textarea>
+			</view>
+		</view>
+		<view style="position: fixed; bottom: 10px; right: 5%; width: 90%;">
+			<u-button color="#FF3F43" text="确认发单" style="border-radius: 10px;" @click="confirm"></u-button>
+		</view>
+
 	</view>
 </template>
 
@@ -52,6 +52,7 @@
 	} from '@/api/racingball.js'
 	import {
 		createDocumentary,
+		getLottery,
 	} from '@/api/documentary.js'
 	export default {
 		data() {
@@ -60,7 +61,8 @@
 					lotteryOrderId: "",
 					state: "1",
 					describe: "没有华丽的宣言,只有最稳的红单",
-					commission: 5
+					commission: 5,
+					type: ''
 				},
 				calculationParam: {
 					basketballMatchList: [],
@@ -96,10 +98,15 @@
 		onLoad(option) {
 			let obj = JSON.parse(decodeURIComponent(option.obj));
 			this.calculationParam = obj
+			console.log(' 合买页，收到参数=>',obj,this.calculationParam)
 		},
 		methods: {
+			getLotteryName(type) {
+				return getLottery(type)
+			},
 			confirm() {
-				if(this.calculationParam.multiple*this.calculationParam.notes*2<200){
+				console.log(" 跟单信息 ==》",this.calculationParam)
+				if (this.calculationParam.multiple * this.calculationParam.notes * 2 < 200) {
 					uni.showToast({
 						title: '发布跟单最低200起投',
 						icon: 'none'
@@ -112,6 +119,7 @@
 					if (res.success) {
 						//创建跟单数据
 						this.documentaryParam.lotteryOrderId = res.id;
+						this.documentaryParam.type = this.calculationParam.type
 						createDocumentary(this.documentaryParam).then(response => {
 							if (response.success) {
 								//标识为已经下单了

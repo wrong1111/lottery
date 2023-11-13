@@ -62,4 +62,10 @@ public class DocumentaryDO implements Serializable {
      */
     private Date updateTime;
 
+    /*
+     彩种
+     */
+    @TableField(value = "`type`")
+    Integer type;
+
 }

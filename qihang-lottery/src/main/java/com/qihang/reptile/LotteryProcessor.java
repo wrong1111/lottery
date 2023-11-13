@@ -499,6 +499,8 @@ public class LotteryProcessor implements PageProcessor {
                     winBurdenMatch.setAward("平");
                 } else if ("0".equals(str)) {
                     winBurdenMatch.setAward("负");
+                } else {
+                    winBurdenMatch.setAward("-");
                 }
                 winBurdenMatch.setMoneyAward(
                         html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().replaceAll(",", "") + ","
