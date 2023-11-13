@@ -137,8 +137,8 @@ public class FirefoxDownloader extends AbstractDownloader implements Closeable {
 
     @Override
     public void close() throws IOException {
-//        if (webDriverPool != null) {
-//            webDriverPool.closeAll();
-//        }
+        if (webDriverPool != null) {
+            webDriverPool.closeAll();
+        }
     }
 }
