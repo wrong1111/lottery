@@ -162,8 +162,8 @@ s3:
 
 ###################本地存储 #########
 local:
-  file_path: /www/static
-  url: http://139.199.175.124:48090/static
+  file_path: /www/statics
+  url: http://139.199.175.124:48090/statics
   ##local 本机存储，s3 oss对象存储
   type: local
 #============== 腾讯云相关配置 ===================
