@@ -183,7 +183,7 @@ tencent:
 
 #chromedriver 驱动路径
 webdriver:
-  type: chrome
+  type: firefox
   chrome:
     driver:
       path: D:\\work\\chromedriver\\chromedriver.exe

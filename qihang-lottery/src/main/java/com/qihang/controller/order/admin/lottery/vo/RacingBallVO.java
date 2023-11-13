@@ -42,4 +42,5 @@ public class  RacingBallVO implements Serializable {
     @ApiModelProperty(value = "更新时间")
     private Date updateTime;
 
+
 }

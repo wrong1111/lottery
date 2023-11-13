@@ -125,8 +125,8 @@
 											<uni-td width="50" align="center">{{record.number}}</uni-td>
 											<uni-td width="70" align="center">{{record.homeTeam}}
 												<span class="rangqiu"
-													:class="{rangqiuBlue:record.letBall < 0}">({{record.letBall}})</span>
-												<br> VS <br>{{record.visitingTeam}}
+													:class="{rangqiuBlue:record.letBall < 0}"><br> ({{record.letBall}}) </span>
+												<br>{{record.visitingTeam}}
 											</uni-td>
 											<uni-td width="50" align="center">
 												<!-- notLet.describe==record.award[0] 如果选择的和中奖的结果一样标记为红色 -->

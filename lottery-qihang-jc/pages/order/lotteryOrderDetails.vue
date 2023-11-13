@@ -261,8 +261,8 @@
 							<uni-td align="center">{{record.number}}</uni-td>
 							<uni-td align="center">{{record.homeTeam}}
 								<span class="rangqiu"
-									:class="{rangqiuBlue:record.letBall < 0}">({{record.letBall}})</span>
-								<br> VS <br>{{record.visitingTeam}}
+									:class="{rangqiuBlue:record.letBall < 0}"><br> ({{record.letBall}})</span>
+								 <br>{{record.visitingTeam}}
 							</uni-td>
 							<uni-td align="center">
 								<!-- notLet.describe==record.award[0] 如果选择的和中奖的结果一样标记为红色 -->
@@ -341,8 +341,8 @@
 							<uni-td align="center">{{record.number}}</uni-td>
 							<uni-td align="center">{{record.visitingTeam}}
 								<span class="rangqiu"
-									:class="{rangqiuBlue:record.letBall < 0}">({{record.letBall}})</span>
-								<br> VS <br>{{record.homeTeam}}
+									:class="{rangqiuBlue:record.letBall < 0}"><br> ({{record.letBall}})</span>
+								 <br>{{record.homeTeam}}
 							</uni-td>
 							<uni-td align="center">
 								<span :style="winNegative.describe==record.award[0]?'color:#FF3F43':''"
@@ -411,8 +411,8 @@
 					<uni-tr v-for="(record,index) in lotteryOrder.ballInfoList" :key="index">
 						<uni-td align="center">{{record.number}}</uni-td>
 						<uni-td align="center">{{record.homeTeam}}
-							<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}">({{record.letBall}})</span>
-							<br> VS <br>{{record.visitingTeam}}
+							<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}"><br> ({{record.letBall}})</span>
+							 <br>{{record.visitingTeam}}
 						</uni-td>
 						<uni-td align="center">
 							<span :style="record.halfFullCourt!=undefined&&lets.describe==(Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)>Number(record.halfFullCourt.split(',')[1].split(':')[1])?'胜'

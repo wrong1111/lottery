@@ -53,6 +53,7 @@ import com.qihang.service.football.IFootballMatchService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -138,6 +139,10 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
             UserDO user = userMapper.selectById(documentary.getUserId());
             UserRankingVO userRanking = new UserRankingVO();
             BeanUtils.copyProperties(user, userRanking);
+            //设置默认值
+            userRanking.setLianHongCount(0);
+            userRanking.setTotalPrice(BigDecimal.ZERO);
+            userRanking.setWincCount(0);
             //根据用户id查询这个用户发布的跟单列表
             List<DocumentaryDO> list = documentaryMapper.selectList(new QueryWrapper<DocumentaryDO>().lambda().eq(DocumentaryDO::getUserId, documentary.getUserId()));
             //查询他的投注信息
@@ -175,15 +180,21 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
             orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().in(LotteryOrderDO::getId, ids).orderByDesc(LotteryOrderDO::getCreateTime).last("limit 30"));
             Integer lianHongCount = 0;
             List<Integer> lianHongList = new ArrayList<>();
-            for (LotteryOrderDO lotteryOrderDO : orderList) {
-                if (lotteryOrderDO.getState().equals(LotteryOrderStateEnum.WAITING_AWARD.getKey()) || lotteryOrderDO.getState().equals(LotteryOrderStateEnum.ALREADY_AWARD.getKey())) {
-                    lianHongCount++;
-                } else {
-                    lianHongCount = 0;
+            if (!CollectionUtils.isEmpty(orderList)) {
+                for (LotteryOrderDO lotteryOrderDO : orderList) {
+                    if (lotteryOrderDO.getState().equals(LotteryOrderStateEnum.WAITING_AWARD.getKey()) || lotteryOrderDO.getState().equals(LotteryOrderStateEnum.ALREADY_AWARD.getKey())) {
+                        lianHongCount++;
+                    } else {
+                        lianHongCount = 0;
+                    }
+                    lianHongList.add(lianHongCount);
                 }
-                lianHongList.add(lianHongCount);
+                if (!CollectionUtils.isEmpty(lianHongList)) {
+                    userRanking.setLianHongCount(lianHongList.stream().max(Integer::compareTo).get());
+                } else {
+                    userRanking.setLianHongCount(0);
+                }
             }
-            userRanking.setLianHongCount(lianHongList.stream().max(Integer::compareTo).get());
             lianHongUserList.add(userRanking);
 
             userRanking.setTotalPrice(totalPrice);

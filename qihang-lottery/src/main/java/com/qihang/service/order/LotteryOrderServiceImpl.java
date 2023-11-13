@@ -2,6 +2,7 @@ package com.qihang.service.order;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -66,6 +67,8 @@ import com.qihang.mapper.user.UserMapper;
 import com.qihang.mapper.winburden.WinBurdenMatchMapper;
 import com.qihang.mapper.withdrawal.WithdrawalMapper;
 import com.qihang.service.shop.IShopService;
+import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -307,6 +310,11 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         return lotteryOrderVO;
     }
 
+    final String LINE_SPILTER = " | ";
+
+    /*
+     后台 订单查询
+     */
     @Override
     public CommonListVO<LotteryOrderQueryVO> getAdminLotteryOrderPage(LotteryOrderQueryDTO lotteryOrderQuery) {
         CommonListVO<LotteryOrderQueryVO> commonList = new CommonListVO<>();
@@ -346,6 +354,9 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                     || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SEVEN_STAR.getKey())
                     || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.GRAND_LOTTO.getKey())
                     || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FC3D.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FCKL8.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FCQLC.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FCSSQ.getKey())
             ) {
                 List<RacingBallVO> ballList = new ArrayList<>();
                 //排列3组装数据
@@ -356,37 +367,83 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                     racingBall.setTimes(permutation.getTimes());
                     racingBall.setType(permutation.getMode());
                     racingBall.setNo(permutation.getStageNumber().toString());
-                    String str = "|";
-                    if (permutation.getType().equals(LotteryOrderTypeEnum.SEVEN_STAR.getKey())) {
-                        if (StrUtil.isNotBlank(permutation.getHundredMyriad())) {
-                            str += permutation.getHundredMyriad() + "|";
+                    String str = "";
+                    //排列3，排列5，七星彩，福彩3D，对排位敏感的。
+                    if (permutation.getType().equals(LotteryOrderTypeEnum.ARRAY.getKey())) {
+                        if (StrUtil.isNotBlank(permutation.getHundred())) {
+                            str += permutation.getHundred() + LINE_SPILTER;
                         }
-                        if (StrUtil.isNotBlank(permutation.getTenMyriad())) {
-                            str += permutation.getTenMyriad() + "|";
+                        if (StrUtil.isNotBlank(permutation.getTen())) {
+                            str += permutation.getTen() + LINE_SPILTER;
                         }
-                    }
-                    if (permutation.getType().equals(LotteryOrderTypeEnum.ARRANGE.getKey())
+                        if (StrUtil.isNotBlank(permutation.getIndividual())) {
+                            str += permutation.getIndividual();
+                        }
+                        if (permutation.getMode().equals("1") || permutation.getMode().equals("2")) {
+                            List<BallState> ballStateList = JSONUtil.toList(permutation.getIndividual(), BallState.class);
+                            str = getBallAll(ballStateList);
+                        } else if (permutation.getMode().equals("3")) {
+                            str = permutation.getIndividual();
+                        }
+                    } else if (permutation.getType().equals(LotteryOrderTypeEnum.ARRANGE.getKey())
                             || permutation.getType().equals(LotteryOrderTypeEnum.SEVEN_STAR.getKey())
                             || permutation.getType().equals(LotteryOrderTypeEnum.FC3D.getKey())
                     ) {
+
+                        if (StrUtil.isNotBlank(permutation.getHundredMyriad())) {
+                            str += permutation.getHundredMyriad() + LINE_SPILTER;
+                        }
+                        if (StrUtil.isNotBlank(permutation.getTenMyriad())) {
+                            str += permutation.getTenMyriad() + LINE_SPILTER;
+                        }
                         if (StrUtil.isNotBlank(permutation.getMyriad())) {
-                            str += permutation.getMyriad() + "|";
+                            str += permutation.getMyriad() + LINE_SPILTER;
                         }
                         if (StrUtil.isNotBlank(permutation.getKilo())) {
-                            str += permutation.getKilo() + "|";
+                            str += permutation.getKilo() + LINE_SPILTER;
                         }
-                    }
-                    if (StrUtil.isNotBlank(permutation.getHundred())) {
-                        str += permutation.getHundred() + "|";
-                    }
-                    if (StrUtil.isNotBlank(permutation.getTen())) {
-                        str += permutation.getTen() + "|";
-                    }
-                    if (StrUtil.isNotBlank(permutation.getIndividual())) {
-                        str += permutation.getIndividual() + "|";
-                    }
-                    if (permutation.getMode().equals("1") || permutation.getMode().equals("2")) {
-                        str = permutation.getIndividual();
+                        if (StrUtil.isNotBlank(permutation.getHundred())) {
+                            str += permutation.getHundred() + LINE_SPILTER;
+                        }
+                        if (StrUtil.isNotBlank(permutation.getTen())) {
+                            str += permutation.getTen() + LINE_SPILTER;
+                        }
+                        if (StrUtil.isNotBlank(permutation.getIndividual())) {
+                            str += permutation.getIndividual();
+                        }
+                        //七星彩 MODE=0
+                        //福彩3D 组三
+                        if (permutation.getType().equals(LotteryOrderTypeEnum.FC3D.getKey()) && "1".equals(permutation.getMode())) {
+                            List<BallState> tenList = JSONUtil.toList(permutation.getIndividual(), BallState.class);
+                            str = getBallAll(tenList);
+                        } else if (permutation.getType().equals(LotteryOrderTypeEnum.FC3D.getKey()) && "2".equals(permutation.getMode())) {
+                            List<BallState> tenList = JSONUtil.toList(permutation.getIndividual(), BallState.class);
+                            str = getBallAll(tenList);
+                        }
+                    } else if (permutation.getType().equals(LotteryOrderTypeEnum.GRAND_LOTTO.getKey())
+                            || permutation.getType().equals(LotteryOrderTypeEnum.FCSSQ.getKey())) {
+                        //大乐透 8 ，双色球 24 分前后区，并且有胆拖存在
+                        str = "";
+                        if (StringUtils.isNotBlank(permutation.getTen())) {
+                            List<BallState> tenList = JSONUtil.toList(permutation.getTen(), BallState.class);
+                            str = getBallAll(tenList);
+                        }
+                        if (StringUtils.isNotBlank(permutation.getIndividual())) {
+                            str += LINE_SPILTER;
+                            List<BallState> ballStateList = JSONUtil.toList(permutation.getIndividual(), BallState.class);
+                            String ball = getBallAll(ballStateList);
+                            if (StringUtils.isNotBlank(ball)) {
+                                str += ball;
+                            }
+                        }
+
+                        //七乐彩
+                    } else if (permutation.getType().equals(LotteryOrderTypeEnum.FCQLC.getKey())) {
+                        List<BallState> ballStateList = JSONUtil.toList(permutation.getIndividual(), BallState.class);
+                        str = getBallAll(ballStateList);
+                    } else if (permutation.getType().equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
+                        List<BallState> ballStateList = JSONUtil.toList(permutation.getIndividual(), BallState.class);
+                        str = getBallAll(ballStateList);
                     }
                     racingBall.setContent(str);
                     racingBall.setReward(permutation.getReward());
@@ -429,6 +486,24 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         }
         commonList.setVoList(lotteryOrderQueryList);
         return commonList;
+    }
+
+
+    public String getBallAll(List<BallState> states) {
+        return states.stream()
+                .map((item) -> item.isGallbladder ? item.num + "[胆]" : item.num)
+                .collect(Collectors.joining(","));
+    }
+
+    @Data
+    private class BallState {
+        String num;
+        Boolean isGallbladder;
+        Boolean active;
+
+        public boolean isGallbladder() {
+            return isGallbladder;
+        }
     }
 
     @Override

@@ -39,7 +39,7 @@ public interface IPermutationService extends IService<PermutationDO> {
 
     /**
      * 计算用户中奖结果
-     *
+     * 开奖入口方法
      * @param permutationAward
      * @return
      */

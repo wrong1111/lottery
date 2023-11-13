@@ -53,6 +53,31 @@ public class LocalUtil {
         return "";
     }
 
+    public String saveFile(InputStream is, String path, String filename) {
+        try {
+            byte[] by = new byte[1024];
+            int len = -1;
+            String root = this.filePath;
+            int idx = filename.indexOf(".");
+            String filePath = "/" + path + "/" + builderName(filename.substring(idx));
+            File saveFile = new File(root + filePath);
+            saveFile.getParentFile().mkdirs();
+            if (!saveFile.exists()) {
+                saveFile.createNewFile();
+            }
+            OutputStream outputStream = new FileOutputStream(saveFile);
+            while ((len = is.read(by)) != -1) {
+                outputStream.write(by, 0, len);
+            }
+            //文件访问路径
+            String address = url + filePath;
+            return address;
+        } catch (Exception e) {
+
+        }
+        return "";
+    }
+
     /**
      * 前端上传文件
      *
@@ -61,7 +86,7 @@ public class LocalUtil {
      */
     public String upload(MultipartFile files) {
         try {
-            return saveFile(files.getInputStream(), "font");
+            return saveFile(files.getInputStream(), "font", files.getOriginalFilename());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

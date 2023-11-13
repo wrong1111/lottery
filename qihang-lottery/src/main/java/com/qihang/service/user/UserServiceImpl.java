@@ -63,6 +63,7 @@ import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.realm.SysDomainMapper;
 import com.qihang.mapper.user.UserMapper;
 import com.qihang.mapper.withdrawal.WithdrawalMapper;
+import com.qihang.service.upload.IUploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -642,6 +643,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         return new BaseVO();
     }
 
+    @Resource
+    IUploadService uploadService;
+
     @Override
     public BaseVO addUser(UserAddDTO userAdd) {
         UserDO user = userMapper.selectOne(new QueryWrapper<UserDO>().lambda().eq(UserDO::getPhone, userAdd.getPhone()));
@@ -664,9 +668,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         userDO.setUpdateTime(new Date());
         SysDomainDO sysDomain = sysDomainMapper.selectOne(null);
         InputStream is = QrCodeUtil.generate(sysDomain.getAppUrl() + "/#/pages/user/register?uid=" + uid);
-        String codeUrl = s3Util.upload(is);
+        String codeUrl = uploadService.upload(is);
         userDO.setQrCode(codeUrl);
-        userDO.setAvatar("https://ppm-pics-resource.s3.us-east-1.amazonaws.com/cms/QQ截图20230324020824.png");
+        userDO.setAvatar(sysDomain.getAppUrl() + "/static/default1.jpg");
         userMapper.insert(userDO);
         return new BaseVO();
     }

@@ -244,7 +244,6 @@
 					//方案组合
 					schemeDetails:this.schemeDetails,
 					individual: this.shiarr,
-					ten: [],
 				}
 				uni.navigateTo({
 					url: "/pages/qlc/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data)),

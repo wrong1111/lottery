@@ -80,13 +80,14 @@
 					<ul>
 						<p>选号</p>
 						<li @click="check(3,1,index)" v-for="(item,index) in san" :class="item.active?'active':''">
-							{{item.num}}<span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
+							{{item.num}}
+							<!-- <span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
 							<u-checkbox-group shape="square" @change="checkboxChange($event,index,1)"
 								:disabled="redLength>=1&&item.isGallbladder==false">
 								<u-checkbox activeColor="#FF3F43" :name="item.isGallbladder"
 									:checked="item.isGallbladder">
 								</u-checkbox>
-							</u-checkbox-group>
+							</u-checkbox-group> -->
 						</li>
 					</ul>
 				</div>
@@ -95,13 +96,14 @@
 					<ul>
 						<p>选号</p>
 						<li @click="check(4,2,index)" v-for="(item,index) in liu" :class="item.active?'active':''">
-							{{item.num}}<span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
+							{{item.num}}
+							<!-- <span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
 							<u-checkbox-group shape="square" @change="checkboxChange($event,index,2)"
 								:disabled="blueLength>=2&&item.isGallbladder==false">
 								<u-checkbox activeColor="#FF3F43" :name="item.isGallbladder"
 									:checked="item.isGallbladder">
 								</u-checkbox>
-							</u-checkbox-group>
+							</u-checkbox-group> -->
 						</li>
 					</ul>
 				</div>
