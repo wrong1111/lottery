@@ -1,6 +1,16 @@
 import request from '@/util/ajax'
 
 
+/*
+发起跟单
+
+*/
+export function documentaryDigit(data){
+	uni.navigateTo({
+		url: "pages/documentary/placeDigit/placeDigit?obj=" + encodeURIComponent(JSON.stringify(data))
+	});
+}
+
 /**
  * 排列下单
  * @param {Object} data

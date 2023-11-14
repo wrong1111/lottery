@@ -76,9 +76,9 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
     @Transactional(rollbackFor = Exception.class)
     public BaseVO placeOrder(List<PlaceOrderDTO> placeList, Integer userId, String type) {
         int hour = DateUtil.hour(new Date(), true);
-        if (hour >= 21 && hour <= 22) {
-            return new BaseVO(false, ErrorCodeEnum.E082.getKey(), ErrorCodeEnum.E082.getValue());
-        }
+//        if (hour >= 21 && hour <= 22) {
+//            return new BaseVO(false, ErrorCodeEnum.E082.getKey(), ErrorCodeEnum.E082.getValue());
+//        }
         PlaceOrderVO placeOrder = new PlaceOrderVO();
         //计算需要下注的金额
         BigDecimal price = new BigDecimal(0);
@@ -105,7 +105,11 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             user.setGold(user.getGold().subtract(price));
             userMapper.updateById(user);
         }
-        logUtil.record(LotteryOrderTypeEnum.valueOFS(type).getValue() + "下单,下单金额【" + price + "】");
+        // 1.先查询出奖的最后一条数据从而得出这次买的是第几期
+        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).orderByDesc(PermutationAwardDO::getCreateTime).last("limit 1"));
+        Integer stageNumber = permutationAward.getStageNumber() + 1;
+
+        logUtil.record(LotteryOrderTypeEnum.valueOFS(type).getValue() + "下单,下单金额【" + price + "】,期号[" + stageNumber + "]");
         //添加钱包消费记录
         PayOrderDO payOrder = new PayOrderDO();
         payOrder.setOrderId(OrderNumberGenerationUtil.getOrderId());
@@ -126,7 +130,7 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             payOrder.setType(PayOrderTypeEnum.FCSSQ.getKey());
         } else if (type.equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
             payOrder.setType(PayOrderTypeEnum.FCKL8.getKey());
-        }else if (type.equals(LotteryOrderTypeEnum.FCQLC.getKey())) {
+        } else if (type.equals(LotteryOrderTypeEnum.FCQLC.getKey())) {
             payOrder.setType(PayOrderTypeEnum.FCQLC.getKey());
         }
         payOrder.setUserId(userId);
@@ -134,8 +138,7 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
         payOrder.setPrice(price);
         payOrderMapper.insert(payOrder);
 
-        // 1.先查询出奖的最后一条数据从而得出这次买的是第几期
-        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).orderByDesc(PermutationAwardDO::getCreateTime).last("limit 1"));
+
         //批量添加投注数据
         List<Integer> ids = new ArrayList<>();
 
@@ -147,7 +150,7 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             PermutationDO permutation = new PermutationDO();
             permutation.setUserId(userId);
             permutation.setMode(placeOrderDTO.getMode());
-            permutation.setStageNumber(permutationAward.getStageNumber() + 1);
+            permutation.setStageNumber(stageNumber);
             permutation.setHundredMyriad(StrUtil.join(",", placeOrderDTO.getHundredMyriad()));
             permutation.setTenMyriad(StrUtil.join(",", placeOrderDTO.getTenMyriad()));
             permutation.setMyriad(StrUtil.join(",", placeOrderDTO.getMyriad()));
@@ -179,18 +182,18 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             if (type.equals(LotteryOrderTypeEnum.ARRAY.getKey()) || type.equals(LotteryOrderTypeEnum.FC3D.getKey())) {
                 //排列3
                 if (placeOrderDTO.getMode().equals("0")) {
-                    makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), permutationAward.getStageNumber() + 1, placeOrderDTO.getTimes(), placeOrderDTO.getHundred().toArray(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
+                    makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), stageNumber, placeOrderDTO.getTimes(), placeOrderDTO.getHundred().toArray(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
                 } else if (placeOrderDTO.getMode().equals("1") || placeOrderDTO.getMode().equals("2") || placeOrderDTO.getMode().equals("3") || placeOrderDTO.getMode().equals("4")) {
-                    makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), permutationAward.getStageNumber() + 1, placeOrderDTO.getTimes(), placeOrderDTO.getIndividual().toArray());
+                    makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), stageNumber, placeOrderDTO.getTimes(), placeOrderDTO.getIndividual().toArray());
                 } else if (placeOrderDTO.getMode().equals("5")) {
-                    makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), permutationAward.getStageNumber() + 1, placeOrderDTO.getTimes(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
+                    makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), stageNumber, placeOrderDTO.getTimes(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
                 }
             } else if (type.equals(LotteryOrderTypeEnum.ARRANGE.getKey())) {
                 //排列5
-                makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), permutationAward.getStageNumber() + 1, placeOrderDTO.getTimes(), placeOrderDTO.getMyriad().toArray(), placeOrderDTO.getKilo().toArray(), placeOrderDTO.getHundred().toArray(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
+                makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), stageNumber, placeOrderDTO.getTimes(), placeOrderDTO.getMyriad().toArray(), placeOrderDTO.getKilo().toArray(), placeOrderDTO.getHundred().toArray(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
             } else if (type.equals(LotteryOrderTypeEnum.SEVEN_STAR.getKey())) {
                 //七星彩
-                makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), permutationAward.getStageNumber() + 1, placeOrderDTO.getTimes(), placeOrderDTO.getHundredMyriad().toArray(), placeOrderDTO.getTenMyriad().toArray(), placeOrderDTO.getMyriad().toArray(), placeOrderDTO.getKilo().toArray(), placeOrderDTO.getHundred().toArray(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
+                makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), stageNumber, placeOrderDTO.getTimes(), placeOrderDTO.getHundredMyriad().toArray(), placeOrderDTO.getTenMyriad().toArray(), placeOrderDTO.getMyriad().toArray(), placeOrderDTO.getKilo().toArray(), placeOrderDTO.getHundred().toArray(), placeOrderDTO.getTen().toArray(), placeOrderDTO.getIndividual().toArray());
             } else if (type.equals(LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
                 //大乐透
                 makeUp = JSONUtil.toList(placeOrderDTO.getSchemeDetails(), PermutationVO.class);
@@ -203,7 +206,7 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             } else if (type.equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
                 //快乐8 选一”、“选二”、“选三”、“选四”、“选五”、“选六”、“选七”、“选八”、“选九”和“选十”十种玩法
                 //前端直接传过来的，需要 自己拆分成单注
-                makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), permutationAward.getStageNumber() + 1, placeOrderDTO.getTimes(), placeOrderDTO.getIndividual().toArray());
+                makeUp = PermutationUtil.makeUp(type, placeOrderDTO.getMode(), stageNumber, placeOrderDTO.getTimes(), placeOrderDTO.getIndividual().toArray());
             }
             list.addAll(makeUp);
         }
@@ -217,6 +220,7 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
         order.setSchemeDetails(JSONUtil.toJsonStr(list));
         order.setCreateTime(new Date());
         order.setUpdateTime(new Date());
+        order.setStageNumber(stageNumber);
         orderMapper.insert(order);
         placeOrder.setId(order.getId());
         return placeOrder;

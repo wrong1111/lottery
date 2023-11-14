@@ -35,6 +35,62 @@ export function getLottery(type) {
 	return lotteryName
 
 }
+export function decisionSport(type) {
+	switch (type) {
+		case "0":
+		case "1":
+		case "2":
+		case "6":
+		case "7":
+			return true
+		default:
+			return false
+	}
+
+}
+
+export function getPlayType(lotid, mode) {
+	if (23 == lotid) {
+		return playType23(mode)
+	}
+	if (mode == "0") {
+		return "直选";
+	} else if (mode == "1") {
+		return "组三";
+	} else if (mode == "2") {
+		return "组六";
+	} else if (mode == "3") {
+		return "直选和值";
+	} else if (mode == "4") {
+		return "组选和值";
+	} else if (mode == "5") {
+		return "组三复式";
+	}
+}
+
+export function playType23(mode) {
+	if (mode == "10") {
+		return "选十"
+	} else if (mode == "9") {
+		return "选九"
+	} else if (mode == "8") {
+		return "选八"
+	} else if (mode == "7") {
+		return "选七"
+	} else if (mode == "6") {
+		return "选六"
+	} else if (mode == "5") {
+		return "选五"
+	} else if (mode == "4") {
+		return "选四"
+	} else if (mode == "3") {
+		return "选三"
+	} else if (mode == "2") {
+		return "选二"
+	} else if (mode == "1") {
+		return "选一"
+	}
+}
 /**
  * 跟单排行榜
  */

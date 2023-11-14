@@ -86,7 +86,54 @@
 								<text>截止时间 {{documentaryData.deadline|formatDate(that)}}</text>
 							</view>
 							<view v-else>
-								<!-- 下注内容 -->
+								<!-- 下注内容  非竞猜展示 -->
+								<uni-card is-shadow v-if="!documentaryData.issport">
+									<view>
+										<span class="title">{{documentaryData.name}}</span>
+										<p style="display: flex;justify-content: flex-end;align-items: center;">
+											<uni-row>
+												<uni-col :span="12">
+													<u-tag :text="documentaryData.notes+'注'" type="error"></u-tag>
+													<u-tag :text="documentaryData.times +'倍'"
+														style="margin-left: 10px;">
+													</u-tag>
+												</uni-col>
+											</uni-row>
+										</p>
+									</view>
+									<uni-table stripe emptyText="暂无更多数据">
+										<!-- 表头行 -->
+										<uni-tr>
+											<uni-th width="50" align="center">期 号</uni-th>
+											<uni-th width="70" align="center">玩法</uni-th>
+											<uni-th width="70" align="center">投注内容</uni-th>
+										</uni-tr>
+										<!-- 表格数据行 -->
+										<uni-tr v-for="(record,index) in documentaryData.permutationList" :key="index">
+											<uni-td width="50" align="center">
+												<div style="display: flex;width: 100%;">
+													<div style="font-size: 14px;">
+														{{record.stageNumber}}
+													</div>
+													<!-- <div class="content" v-if="record.isGallbladder">
+														<p>胆</p>
+													</div> -->
+												</div>
+											</uni-td>
+											<uni-td width="70" align="center">
+												{{playTypes(documentaryData.lotId,record.mode)}}
+											</uni-td>
+											<uni-td width="70" align="center">
+												<span v-if="record.isArray">
+													{{ showContent(record)}}
+												</span>
+												<span v-if="!record.isArray">
+													{{ showContent(record)}}
+												</span>
+											</uni-td>
+										</uni-tr>
+									</uni-table>
+								</uni-card>
 								<uni-card is-shadow v-if="documentaryData.name=='足球14场'||documentaryData.name=='任选九'">
 									<view>
 										<span class="title">{{documentaryData.name}}</span>
@@ -106,18 +153,26 @@
 										<uni-tr>
 											<uni-th width="50" align="center">场次</uni-th>
 											<uni-th width="70" align="center">主队/客队</uni-th>
-											<uni-th width="50" align="center">投注内容</uni-th>
-											<uni-th width="60" align="center">赛果</uni-th>
+											<uni-th width="70" align="center">投注内容</uni-th>
 										</uni-tr>
 										<!-- 表格数据行 -->
 										<uni-tr v-for="(record,index) in documentaryData.ballInfoList" :key="index">
-											<uni-td width="50" align="center">{{record.number}}</uni-td>
+											<uni-td width="50" align="center">
+												<div style="display: flex;width: 100%;">
+													<div style="font-size: 14px;">
+														{{record.number}}
+													</div>
+													<div class="content" v-if="record.isGallbladder">
+														<p>胆</p>
+													</div>
+												</div>
+											</uni-td>
 											<uni-td width="70" align="center">{{record.homeTeam}}
 												<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}"><br>
 													VS </span>
 												<br>{{record.visitingTeam}}
 											</uni-td>
-											<uni-td width="50" align="center">
+											<uni-td width="70" align="center">
 												<span :style="notLet.describe==record.award[0]?'color:#FF3F43':''"
 													v-for="(notLet,index) in record.content.notLetOddsList"
 													v-if="notLet.active">
@@ -125,11 +180,6 @@
 														v-if="record.content.notLetOddsList.length-index>1">,</span>
 												</span>
 											</uni-td>
-											 <uni-td width="50" align="center">
-											 	<span v-if="record.award!=undefined">
-											 		{{record.award[index]}}
-											 	</span>
-											 </uni-td>
 										</uni-tr>
 									</uni-table>
 								</uni-card>
@@ -189,8 +239,8 @@
 														v-if="record.content.oddEvenOdds.length-index>1">,</span>
 												</span>
 												<span v-if="record.content.oddEvenOdds.length>0">|<br></span>
-												
-												 
+
+
 												<span :style="goal.describe==record.award[2]?'color:#FF3F43':''"
 													v-for="(goal,index) in record.content.goalOddsList"
 													v-if="goal.active">
@@ -198,7 +248,7 @@
 														v-if="record.content.goalOddsList.length-index>1">,</span>
 												</span>
 												<span v-if="record.content.goalOddsList.length>0">|<br></span>
-												
+
 												<span :style="half.describe==record.award[3]?'color:#FF3F43':''"
 													v-for="(half,index) in record.content.halfWholeOddsList"
 													v-if="half.active">
@@ -206,7 +256,7 @@
 														v-if="record.content.halfWholeOddsList.length-index>1">,</span>
 												</span>
 												<span v-if="record.content.halfWholeOddsList.length>0">|<br></span>
-												
+
 												<span :style="score.describe==record.award[4]?'color:#FF3F43':''"
 													v-for="(score,index) in record.content.scoreOddsList"
 													v-if="score.active">
@@ -215,7 +265,7 @@
 													<br>
 												</span>
 												<span v-if="record.content.scoreOddsList.length>0">|<br></span>
-												
+
 											</uni-td>
 											<uni-td width="50" align="center">
 												<span v-if="record.halfFullCourt!=undefined">
@@ -225,7 +275,7 @@
 										</uni-tr>
 									</uni-table>
 								</uni-card>
-								
+
 								<uni-card is-shadow v-if="documentaryData.name=='竞彩足球'">
 									<view>
 										<span class="title">{{documentaryData.name}}</span>
@@ -276,7 +326,7 @@
 														v-if="record.content.notLetOddsList.length-index>1">,<br></span>
 												</span>
 												<span v-if="record.content.notLetOddsList.length>0">|<br></span>
-											
+
 
 												<span :style="record.halfFullCourt!=undefined&&lets.describe==(Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)>Number(record.halfFullCourt.split(',')[1].split(':')[1])?'胜'
 													:Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)<Number(record.halfFullCourt.split(',')[1].split(':')[1])?'负'
@@ -285,7 +335,7 @@
 														v-if="record.content.letOddsList.length-index>1">,<br></span>
 												</span>
 												<span v-if="record.content.letOddsList.length>0">|<br></span>
-												
+
 												<span :style="goal.describe==record.award[2]?'color:#FF3F43':''"
 													v-for="(goal,index) in record.content.goalOddsList"
 													v-if="goal.active">
@@ -293,7 +343,7 @@
 														v-if="record.content.goalOddsList.length-index>1">,<br></span>
 												</span>
 												<span v-if="record.content.goalOddsList.length>0">|<br></span>
-												
+
 												<span :style="half.describe==record.award[3]?'color:#FF3F43':''"
 													v-for="(half,index) in record.content.halfWholeOddsList"
 													v-if="half.active">
@@ -301,7 +351,7 @@
 														v-if="record.content.halfWholeOddsList.length-index>1">,<br></span>
 												</span>
 												<span v-if="record.content.halfWholeOddsList.length>0">|<br></span>
-												
+
 												<span :style="score.describe==record.award[4]?'color:#FF3F43':''"
 													v-for="(score,index) in record.content.scoreOddsList"
 													v-if="score.active">
@@ -310,7 +360,7 @@
 													<br>
 												</span>
 												<span v-if="record.content.scoreOddsList.length>0">|<br></span>
-												
+
 											</uni-td>
 											<uni-td width="60" align="center">
 												<span v-if="record.halfFullCourt!=undefined">
@@ -460,11 +510,17 @@
 <script>
 	import {
 		queryDocumentaryById,
-		createDocumentaryUser
+		createDocumentaryUser,
+		getLottery,
+		decisionSport,
+		getPlayType,
 	} from '@/api/documentary.js'
 	import {
 		addRelationship
 	} from '@/api/follow.js'
+	import {
+		documentaryDigit
+	} from '../../api/pailie';
 	export default {
 		data() {
 			return {
@@ -528,6 +584,35 @@
 			},
 		},
 		methods: {
+			showContent(row) {
+				let result = ''
+				if (row.hundredMyriad) {
+					result += row.hundredMyriad + ' | '
+				}
+				if (row.tenMyriad) {
+					result += row.tenMyriad + ' | '
+				}
+				if (row.myriad) {
+					result += row.myriad + ' | '
+				}
+				if (row.kilo) {
+					result += row.kilo + ' | '
+				}
+				if (row.hundred) {
+					result += row.hundred + ' | '
+				}
+				if (row.ten) {
+					result += row.ten + ' | '
+				}
+				if (row.individual) {
+					result += row.individual
+				}
+				return result
+
+			},
+			playTypes(lotid, mode) {
+				return getPlayType(lotid, mode)
+			},
 			queryInfo(id) {
 				uni.navigateTo({
 					url: "/pages/documentary/homePage?uid=" + id
@@ -583,28 +668,63 @@
 					}
 					//设置跟单人数
 					this.tabsList[1].badge.value = this.documentaryData.documentaryUserList.length
-					//将字符串转对象
-					this.documentaryData.ballInfoList.map((item, idx) => {
-						this.$set(this.documentaryData.ballInfoList[idx], "content", JSON.parse(item
-							.content))
-						//將比賽结果转换成数组，并返回
-						if (item.award != null) {
-							this.$set(this.documentaryData.ballInfoList[idx], "award", item.award.split(
-								','))
-						} else {
-							//考虑比赛结果还没有出的话设置一个默认值，防止报错
-							var moren = ['', '', '', '', '','','','','','','','','','']
-							this.$set(this.documentaryData.ballInfoList[idx], "award", moren)
-						}
-						if (item.bonusOdds != null) {
-							this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", item.bonusOdds
-								.split(','))
-						} else {
-							//考虑比赛结果还没有出的话设置一个默认值，防止报错
-							var moren = ['', '', '', '', '','','','','','','','','','']
-							this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", moren)
-						}
-					})
+
+					//竞赛类的对阵信息才会有ballInfoList,数字彩种的才会有 permutationList
+					//将字符串转对象 此处的type是否已经截止，0 可以跟单 1不可以跟单
+					if (decisionSport(this.documentaryData.lotId)) {
+						this.documentaryData.issport = true
+						this.documentaryData.ballInfoList.map((item, idx) => {
+							this.$set(this.documentaryData.ballInfoList[idx], "content", JSON.parse(item
+								.content))
+							//將比賽结果转换成数组，并返回
+							if (item.award != null) {
+								this.$set(this.documentaryData.ballInfoList[idx], "award", item.award
+									.split(
+										','))
+							} else {
+								//考虑比赛结果还没有出的话设置一个默认值，防止报错
+								var moren = ['', '', '', '', '', '', '', '', '', '', '', '', '', '']
+								this.$set(this.documentaryData.ballInfoList[idx], "award", moren)
+							}
+							if (item.bonusOdds != null) {
+								this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", item
+									.bonusOdds
+									.split(','))
+							} else {
+								//考虑比赛结果还没有出的话设置一个默认值，防止报错
+								var moren = ['', '', '', '', '', '', '', '', '', '', '', '', '', '']
+								this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", moren)
+							}
+						})
+					} else {
+						this.documentaryData.issport = false
+						this.documentaryData.permutationList.map((item, idx) => {
+							//这是需要 处理成LIST对象
+							if (item.individual.startsWith('[')) {
+								//对于号码多选 的结果，
+								this.$set(this.documentaryData.permutationList[idx], "individual", JSON
+									.parse(item.individual))
+
+								this.$set(this.documentaryData.permutationList[idx], "isArrays", true)
+
+								if (item.ten != null) {
+									this.$set(this.documentaryData.permutationList[idx], "ten", JSON
+										.parse(item.ten))
+								}
+							} else {
+								//可以直接按位处理
+								this.$set(this.documentaryData.permutationList[idx], "isArrays", false)
+							}
+
+
+
+							//將比賽结果转换成数组，并返回
+							if (typeof(item.award) != 'undefined' && item.award != null) {
+								this.$set(this.documentaryData.permutationList[idx], "award", item.award
+									.split(','))
+							}
+						})
+					}
 					setTimeout(function() {
 						uni.hideLoading();
 					}, 200);
@@ -648,5 +768,29 @@
 		font-size: 15px;
 		color: #333;
 		font-family: Helvetica Neue, Helvetica, sans-serif;
+	}
+
+	.paiban {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-direction: row;
+		width: 100%;
+	}
+
+	.content {
+		width: 25px;
+		height: 25px;
+		background-color: #FF3F43;
+		border-radius: 50%;
+
+		p {
+			width: 25px;
+			height: 25px;
+			color: #fff;
+			text-align: center;
+			line-height: 25px;
+			font-size: 14px;
+		}
 	}
 </style>

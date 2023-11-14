@@ -50,4 +50,17 @@ public class Constant {
      * 支付宝私钥前缀
      */
     public static final String ALIPAY_PRIVATE_KAY = "alipay_private_kay";
+
+    public static boolean isSport(String type) {
+        switch (type) {
+            case "0":
+            case "1":
+            case "2"://北单
+            case "6"://14场
+            case "7":
+                return true;
+            default:
+                return false;
+        }
+    }
 }

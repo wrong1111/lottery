@@ -2,6 +2,8 @@ package com.qihang.controller.documentary.app.vo;
 
 import com.qihang.common.vo.BaseVO;
 import com.qihang.controller.order.app.lottery.vo.BallInfoVO;
+import com.qihang.controller.permutation.app.vo.PermutationVO;
+import com.qihang.domain.permutation.PermutationDO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -89,4 +91,9 @@ public class DocumentaryByIdVO extends BaseVO {
 
     @ApiModelProperty(value = "比赛截止时间")
     private Date deadline;
+
+    @ApiModelProperty(value = "数字彩下注列表")
+    List<PermutationDO> permutationList;
+
+    String lotId;
 }

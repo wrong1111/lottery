@@ -39,4 +39,7 @@ public class BallInfoVO implements Serializable {
 
     @ApiModelProperty(value = "北单赔率")
     private String bonusOdds;
+
+    @ApiModelProperty(value = "是否胆")
+    Boolean isGallbladder;
 }

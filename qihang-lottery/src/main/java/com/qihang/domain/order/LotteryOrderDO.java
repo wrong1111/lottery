@@ -98,5 +98,10 @@ public class LotteryOrderDO implements Serializable {
      */
     private Date ticketingTime;
 
+    /*
+    下单期号
+    * */
+    Integer stageNumber;
+
 
 }

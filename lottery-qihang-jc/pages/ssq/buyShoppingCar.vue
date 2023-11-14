@@ -53,6 +53,9 @@
 					<div class="bottom_left">
 						共 <b>{{acount}}</b>注 <b>{{total}}</b>元
 					</div>
+					<div class="bottom_right1">
+						<button size="mini" type="button" @tap="documentaryBtn">发起跟单</button>
+					</div>
 					<div class="bottom_right">
 						<span @tap="() => confirmIsShow = true">下一步</span>
 					</div>
@@ -74,7 +77,8 @@
 <script>
 	import {
 		place,
-		getIssueNo
+		getIssueNo,
+		documentaryDigit,
 	} from '@/api/pailie.js'
 	export default {
 		data() {
@@ -84,7 +88,8 @@
 				total: 0,
 				acount: 0,
 				times: 1,
-				issueNo: ""
+				issueNo: "",
+				lotid: 24,
 			}
 		},
 		onLoad(option) {
@@ -98,6 +103,29 @@
 			})
 		},
 		methods: {
+			//发起跟单
+			documentaryBtn() {
+				let data = uni.getStorageSync('ssq');
+				if (data.length <= 0) {
+					uni.showToast({
+						title: '至少选择一注',
+						icon: 'none'
+					});
+					return;
+				}
+				//往数组中添加倍数新字段
+				data.forEach(item => {
+					this.$set(item, 'times', this.times)
+				})
+				let placeData = {
+					data: data,
+					acount: this.acount,
+					times: this.times,
+					type: this.lotid,
+					storage: 'ssq'
+				}
+				documentaryDigit(placeData)
+			},
 			//投注
 			betting() {
 				uni.showLoading();
@@ -122,19 +150,20 @@
 					delete item['total']
 					delete item['uid']
 					//处理方案组合
-					if(item.schemeDetails==undefined){
-						let map=[];
+					if (item.schemeDetails == undefined) {
+						let map = [];
 						map.push({
-							"mode":"双色球",
-							"stageNumber":this.issueNo,
-							"content":item.ten.map(item=>item.num).join(',')+","+item.individual.map(item=>item.num).join(','),
-							"forecastBonus":null
+							"mode": "双色球",
+							"stageNumber": this.issueNo,
+							"content": item.ten.map(item => item.num).join(',') + "," + item.individual
+								.map(item => item.num).join(','),
+							"forecastBonus": null
 						})
 						//转成字符串json
-						map=JSON.stringify(map);
-						this.$set(item, 'schemeDetails',map)
-					}else{
-						this.$set(item, 'schemeDetails',JSON.stringify(item.schemeDetails))
+						map = JSON.stringify(map);
+						this.$set(item, 'schemeDetails', map)
+					} else {
+						this.$set(item, 'schemeDetails', JSON.stringify(item.schemeDetails))
 					}
 				})
 				place(data, "24").then(res => {
@@ -208,7 +237,7 @@
 						isGallbladder: false
 					})
 				}
-				
+
 				let data2 = [];
 				//组装排3数据
 				for (var i = 0; i < numArr.length; i++) {
@@ -223,7 +252,7 @@
 					mode: 0,
 					notes: 1,
 					total: 2,
-					individual:data2,
+					individual: data2,
 					ten: data1,
 				}
 				this.calculation(obj);
@@ -238,11 +267,11 @@
 				for (var i = 0; i < n;) {
 					let index = Math.floor(Math.random() * m);
 					if (exist[index] == 0) {
-						let num=index+1;
+						let num = index + 1;
 						if (num < 10) {
-							num= '0' + num;
-						}else{
-							num = ''+num;
+							num = '0' + num;
+						} else {
+							num = '' + num;
 						}
 						list.push(num)
 						i++;
@@ -297,6 +326,7 @@
 		color: #848484;
 		padding: 0 10rpx;
 	}
+
 	.content {
 		width: 30px;
 		height: 30px;
@@ -304,6 +334,7 @@
 		border-radius: 50%;
 		display: inline-block;
 		margin-right: 2px;
+
 		p {
 			width: 30px;
 			height: 30px;
@@ -313,6 +344,7 @@
 			font-size: 12px;
 		}
 	}
+
 	.tip {
 		display: flex;
 		flex-direction: column;
@@ -420,6 +452,19 @@
 					b {
 						color: #FF5562;
 					}
+				}
+
+				.bottom_right1 {
+					text-align: center;
+					//background: #FF3F43;
+					color: #FFFFFF;
+					font-size: 4.8vmin;
+					width: 28.53333vmin;
+					border-radius: 4px;
+					height: 100%;
+					display: flex;
+					align-items: center;
+					justify-content: center;
 				}
 
 				.bottom_right {

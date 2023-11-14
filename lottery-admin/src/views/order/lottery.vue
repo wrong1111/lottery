@@ -135,7 +135,7 @@
                       </el-table-column>
                       <el-table-column label="下注内容" align="center">
                         <template slot-scope="inner">
-                          {{ getRaceContent(inner.row) }}
+                          <div v-if="showDan(inner.row)" class="blue">[胆]</div> {{ getRaceContent(inner.row) }}
                         </template>
                       </el-table-column>
                       <el-table-column label="赛果(全/半)" align="center">
@@ -346,6 +346,13 @@
       this.getList();
     },
     methods: {
+      //show 胆
+      showDan(row) {
+        if (row.content.hasOwnProperty("isGallbladder") && row.content.isGallbladder) {
+          return true
+        }
+        return false
+      },
       // 获取统计列表
       getList() {
         this.loading = true;
@@ -427,6 +434,10 @@
       getRaceContent(row) {
         const content = row.content;
         let result = "";
+        //对于任选9场来说有胆
+        // if (typeof(content.isGallbladder) != 'undefined' && content.isGallbladder) {
+        //   result = "[胆]"
+        // }
         // 让球胜平负
         if (content.letOddsList && content.letOddsList.length) {
           let oddsList = [];

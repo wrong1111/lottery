@@ -23,7 +23,7 @@
 										<p>{{a}}</p>
 									</div>
 									<span class="vertical" v-if="arr.kilo!=null">|</span>
-									
+
 									<div class="content" v-for="a in arr.hundred">
 										<p>{{a}}</p>
 									</div>
@@ -61,6 +61,9 @@
 					<div class="bottom_left">
 						共 <b>{{acount}}</b>注 <b>{{total}}</b>元
 					</div>
+					<div class="bottom_right1">
+						<button size="mini" type="button" @tap="documentaryBtn">发起跟单</button>
+					</div>
 					<div class="bottom_right">
 						<span @tap="() => confirmIsShow = true">下一步</span>
 					</div>
@@ -82,7 +85,8 @@
 <script>
 	import {
 		place,
-		getIssueNo
+		getIssueNo,
+		documentaryDigit,
 	} from '@/api/pailie.js'
 	export default {
 		data() {
@@ -92,7 +96,8 @@
 				total: 0,
 				acount: 0,
 				times: 1,
-				issueNo: ""
+				issueNo: "",
+				lotid: 4,
 			}
 		},
 		onLoad(option) {
@@ -106,6 +111,29 @@
 			})
 		},
 		methods: {
+			//发起跟单
+			documentaryBtn() {
+				let data = uni.getStorageSync('pailie5');
+				if (data.length <= 0) {
+					uni.showToast({
+						title: '至少选择一注',
+						icon: 'none'
+					});
+					return;
+				}
+				//往数组中添加倍数新字段
+				data.forEach(item => {
+					this.$set(item, 'times', this.times)
+				})
+				let placeData = {
+					data: data,
+					acount: this.acount,
+					times: this.times,
+					type: this.lotid,
+					storage: 'pailie5'
+				}
+				documentaryDigit(placeData)
+			},
 			//投注
 			betting() {
 				uni.showLoading();
@@ -375,6 +403,19 @@
 					b {
 						color: #FF5562;
 					}
+				}
+
+				.bottom_right1 {
+					text-align: center;
+					//background: #FF3F43;
+					color: #FFFFFF;
+					font-size: 4.8vmin;
+					width: 28.53333vmin;
+					border-radius: 4px;
+					height: 100%;
+					display: flex;
+					align-items: center;
+					justify-content: center;
 				}
 
 				.bottom_right {

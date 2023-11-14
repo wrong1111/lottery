@@ -252,6 +252,10 @@
 		}, {
 			"path": "pages/kl8/openPrize",
 			"style": {}
+		},
+		{
+			"path" : "pages/documentary/placeDigit/placeDigit",
+			"style" : {}
 		}
 
 	],
