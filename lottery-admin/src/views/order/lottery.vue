@@ -214,47 +214,47 @@
       </el-table-column>
     </el-table>
     <el-drawer :title="title" :visible.sync="drawer" :with-header="true" :show-close="true"
-      :style="{ height: '1800px' }">
+      :style="{ height: '800px' }" style="overflow-y: auto;">
+      <div>
+        彩种 {{lotName}}
+       <el-table :data="itemInfo" border v-if="itemInfo.length>0" name="table1" :height="800">
+          <el-table-column prop="idx" width="100" align="center" label="序 号">
 
-      彩种 {{lotName}}
-      <el-table :data="itemInfo" border v-if="itemInfo.length>0">
-        <el-table-column prop="idx" width="100" align="center" label="序 号">
+          </el-table-column>
+          <el-table-column prop="stageNumber" width="100" align="center" label="期 号">
 
-        </el-table-column>
-        <el-table-column prop="stageNumber" width="100" align="center" label="期 号">
+          </el-table-column>
+          <el-table-column prop="cont" width="180" align="center" label="投注内容">
+            <template slot-scope="scope">
+              {{getContent(scope.row.cont)}}
+            </template>
+          </el-table-column>
+          <el-table-column prop="mode" width="180" align="center" label="玩法">
+            <template slot-scope="scope">
+              {{getNoSportsBettingStyle(lotId,scope.row.mode)}}
+            </template>
+          </el-table-column>
+        </el-table>
 
-        </el-table-column>
-        <el-table-column prop="cont" width="180" align="center" label="投注内容">
-          <template slot-scope="scope">
-            {{getContent(scope.row.cont)}}
-          </template>
-        </el-table-column>
-        <el-table-column prop="mode" width="180" align="center" label="玩法">
-          <template slot-scope="scope">
-            {{getNoSportsBettingStyle(lotId,scope.row.mode)}}
-          </template>
-        </el-table-column>
-      </el-table>
+        <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2"  :height="800">
+          <el-table-column prop="id" width="100" align="center" label="序 号">
 
-      <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0">
-        <el-table-column prop="id" width="100" align="center" label="序 号">
-
-        </el-table-column>
-        <el-table-column prop="type" width="100" align="center" label="玩法">
-        </el-table-column>
-        <el-table-column prop="ballCombinationList" width="380" align="center" label="投注内容">
-          <template slot-scope="scope">
-            <span v-for="(item,index) in scope.row.ballCombinationList">
-              <span prop="number">{{item.number}}</span>
-              <span prop="homeTeam" style="margin-left: 10px;">{{item.homeTeam}}</span> VS
-              <span prop="visitingTeam" style="margin-left: 10px;">{{item.visitingTeam}}</span>
-              <span prop="content" style="margin-left: 10px;">{{item.content}}</span>
-              </br>
-            </span>
-          </template>
-        </el-table-column>
-      </el-table>
-
+          </el-table-column>
+          <el-table-column prop="type" width="100" align="center" label="玩法">
+          </el-table-column>
+          <el-table-column prop="ballCombinationList" width="380" align="center" label="投注内容">
+            <template slot-scope="scope">
+              <span v-for="(item,index) in scope.row.ballCombinationList">
+                <span prop="number">{{item.number}}</span>
+                <span prop="homeTeam" style="margin-left: 10px;">{{item.homeTeam}}</span> VS
+                <span prop="visitingTeam" style="margin-left: 10px;">{{item.visitingTeam}}</span>
+                <span prop="content" style="margin-left: 10px;">{{item.content}}</span>
+                </br>
+              </span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-drawer>
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
@@ -833,6 +833,10 @@
 
   .blue {
     color: blue;
+  }
+
+  .el-drawer__body {
+    overflow: auto;
   }
 
   .demo-table-expand {
