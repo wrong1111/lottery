@@ -318,6 +318,8 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
     @Override
     public CommonListVO<LotteryOrderQueryVO> getAdminLotteryOrderPage(LotteryOrderQueryDTO lotteryOrderQuery) {
         CommonListVO<LotteryOrderQueryVO> commonList = new CommonListVO<>();
+        commonList.setTotal(0L);
+        commonList.setVoList(new ArrayList<>());
         Integer userId = null;
         UserDO user = userMapper.selectOne(new QueryWrapper<UserDO>().lambda().eq(UserDO::getPhone, lotteryOrderQuery.getPhone()));
         if (ObjectUtil.isNotNull(user)) {
