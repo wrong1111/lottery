@@ -104,30 +104,34 @@
 									<uni-table stripe emptyText="暂无更多数据">
 										<!-- 表头行 -->
 										<uni-tr>
-											<uni-th width="50" align="center">期 号</uni-th>
-											<uni-th width="70" align="center">玩法</uni-th>
-											<uni-th width="70" align="center">投注内容</uni-th>
+											<uni-th width='20' align="center">期 号</uni-th>
+											<uni-th width='40' align="center">玩法</uni-th>
+											<uni-th width='100' align="center">投注内容</uni-th>
 										</uni-tr>
 										<!-- 表格数据行 -->
 										<uni-tr v-for="(record,index) in documentaryData.permutationList" :key="index">
-											<uni-td width="50" align="center">
-												<div style="display: flex;width: 100%;">
-													<div style="font-size: 14px;">
-														{{record.stageNumber}}
-													</div>
-													<!-- <div class="content" v-if="record.isGallbladder">
-														<p>胆</p>
-													</div> -->
-												</div>
+											<uni-td width='20'  align="center">
+												 	{{record.stageNumber}}
 											</uni-td>
-											<uni-td width="70" align="center">
+											<uni-td width='40'  align="center">
 												{{playTypes(documentaryData.lotId,record.mode)}}
 											</uni-td>
-											<uni-td width="70" align="center">
-												<span v-if="record.isArray">
-													{{ showContent(record)}}
+											<!-- 超出宽度，自动换行 style="width:40%;word-break: break-all;" -->
+											<uni-td width='100'  align="center" style="word-break: break-all;">
+												<span v-if="record.isArrays">
+													 <span v-if="record.ten!=null && record.ten!=''" v-for="(item,index) in record.ten">
+														 {{item.num}}
+														 <span style="color: #FF3F43;" v-if="item.isGallbladder">[胆]</span>
+													 	  <span v-if="record.ten.length-index>1">,</span>
+													 </span>
+													 <span v-if="record.ten!=null && record.ten!=''">|<br></span>
+													 <span v-for="(item,index) in record.individual">
+														 {{item.num}}
+														 <span style="color: #FF3F43;" v-if="item.isGallbladder">[胆]</span>
+													 	  <span v-if="record.individual.length-index>1">,</span>
+													 </span>
 												</span>
-												<span v-if="!record.isArray">
+												<span v-if="!record.isArrays">
 													{{ showContent(record)}}
 												</span>
 											</uni-td>
@@ -707,7 +711,7 @@
 
 								this.$set(this.documentaryData.permutationList[idx], "isArrays", true)
 
-								if (item.ten != null) {
+								if (item.ten != null && item.ten!='') {
 									this.$set(this.documentaryData.permutationList[idx], "ten", JSON
 										.parse(item.ten))
 								}

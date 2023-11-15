@@ -25,8 +25,8 @@
 					</view>
 					<ul>
 						<p>号码</p>
-						<li @click="check(1,1,index)" v-for="(itm,index) in ge" :class="itm.active?'active':''">
-							{{itm.num}}<span style="font-size: 15px;" v-if="itm.isGallbladder">胆</span>
+						<li  v-for="(itm,index) in ge" :class="itm.active?'active':''">
+							<span @click="check(1,1,index)">{{itm.num}}</span><span style="font-size: 15px;" v-if="itm.isGallbladder">胆</span>
 							<view v-if="omitData.record!=undefined&&omiIsShow"
 								style="color: #A5A5A5;font-size: 13px;margin-top: -8px;">
 								{{omitData.record[index]}}
@@ -305,8 +305,7 @@
 					mode: this.item.model,
 					notes: this.acount,
 					total: this.total,
-					individual: this.gearr,
-					ten: []
+					individual: this.gearr
 				}
 				console.log(' sure ',data)
 				uni.navigateTo({

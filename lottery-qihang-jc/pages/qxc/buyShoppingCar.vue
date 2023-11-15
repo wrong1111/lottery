@@ -107,7 +107,7 @@
 				acount: 0,
 				times: 1,
 				issueNo: "",
-				logid:5,
+				lotid:5,
 			}
 		},
 		onLoad(option) {

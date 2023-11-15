@@ -130,7 +130,8 @@
 					acount: this.acount,
 					times: this.times,
 					type: this.lotid,
-					storage: 'pailie5'
+					storage: 'pailie5',
+					 
 				}
 				documentaryDigit(placeData)
 			},

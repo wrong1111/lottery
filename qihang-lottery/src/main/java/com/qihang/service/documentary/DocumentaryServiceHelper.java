@@ -173,19 +173,20 @@ public class DocumentaryServiceHelper {
         lotteryOrder.setCreateTime(new Date());
         lotteryOrder.setUpdateTime(new Date());
         lotteryOrder.setTenantId(userDo.getTenantId());
-
+        //数字型 数据入库
+        lotteryOrder.setSchemeDetails(lotteryOrderDO.getSchemeDetails());
         return lotteryOrder;
 
     }
 
     public void setRacingBallList(List<RacingBallDO> racingBallList) {
         this.racingBallList = racingBallList;
-        this.notes = racingBallList.get(0).getNotes();
+        this.notes = racingBallList.stream().mapToInt(RacingBallDO::getNotes).sum();
     }
 
     public void setPermutationDOS(List<PermutationDO> permutationList) {
         this.permutationList = permutationList;
-        this.notes = permutationList.get(0).getNotes();
+        this.notes = permutationList.stream().mapToInt(PermutationDO::getNotes).sum();
     }
 
     public BigDecimal calculationForest(List<String> contentList, String type, int notes, int multiple, String passway) {

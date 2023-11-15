@@ -15,7 +15,7 @@
 							<div class="selected_text">
 								<div class="selected_num">
 									</span>
-									<div style="background-color: #007BED;" class="content" v-for="c in arr.individual">
+									<div style="background-color: #FF3F43;" class="content" v-for="c in arr.individual">
 										<p v-if="c.isGallbladder" style="font-size: 12px;">
 											{{'胆'+c.num}}
 										</p>

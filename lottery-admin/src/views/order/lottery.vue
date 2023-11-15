@@ -151,10 +151,13 @@
                       </el-table-column>
                       <el-table-column label="投注方式" align="center">
                         <template slot-scope="inner">
-                          <span>{{ getNoSportsBettingStyle(scope.row,inner.row) }}</span>
+                          <span>{{ getNoSportsBettingStyle(scope.row.type,inner.row.type) }}</span>
                         </template>
                       </el-table-column>
                       <el-table-column label="下注内容" prop="content" align="center">
+                        <template slot-scope="inner">
+                          <span>{{ inner.row.content }}</span>
+                        </template>
                       </el-table-column>
                       <el-table-column label="赛果" prop="reward" align="center">
                       </el-table-column>
@@ -168,6 +171,7 @@
                       <el-button size="mini" type="warning" @click="refuseSigle(scope.row)">拒绝</el-button>
                     </template>
                     <el-button size="mini" type="danger" @click="retreatSigle(scope.row)">退票</el-button>
+                    <el-button size="mini" type="danger" @click="showInfo(scope.row)">详情</el-button>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -209,6 +213,49 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-drawer :title="title" :visible.sync="drawer" :with-header="true" :show-close="true"
+      :style="{ height: '1800px' }">
+
+      彩种 {{lotName}}
+      <el-table :data="itemInfo" border v-if="itemInfo.length>0">
+        <el-table-column prop="idx" width="100" align="center" label="序 号">
+
+        </el-table-column>
+        <el-table-column prop="stageNumber" width="100" align="center" label="期 号">
+
+        </el-table-column>
+        <el-table-column prop="cont" width="180" align="center" label="投注内容">
+          <template slot-scope="scope">
+            {{getContent(scope.row.cont)}}
+          </template>
+        </el-table-column>
+        <el-table-column prop="mode" width="180" align="center" label="玩法">
+          <template slot-scope="scope">
+            {{getNoSportsBettingStyle(lotId,scope.row.mode)}}
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0">
+        <el-table-column prop="id" width="100" align="center" label="序 号">
+
+        </el-table-column>
+        <el-table-column prop="type" width="100" align="center" label="玩法">
+        </el-table-column>
+        <el-table-column prop="ballCombinationList" width="380" align="center" label="投注内容">
+          <template slot-scope="scope">
+            <span v-for="(item,index) in scope.row.ballCombinationList">
+              <span prop="number">{{item.number}}</span>
+              <span prop="homeTeam" style="margin-left: 10px;">{{item.homeTeam}}</span> VS
+              <span prop="visitingTeam" style="margin-left: 10px;">{{item.visitingTeam}}</span>
+              <span prop="content" style="margin-left: 10px;">{{item.content}}</span>
+              </br>
+            </span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+    </el-drawer>
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
@@ -232,6 +279,17 @@
     props: {},
     data() {
       return {
+        drawerHeight: 800,
+        title: '方案详情',
+        //竞赛详情
+        sportItemInfo: [],
+        //方案内容详情
+        itemInfo: [],
+        orderNo: '',
+        lotName: '',
+        lotId: '',
+        //方案详情在最右侧展示
+        drawer: false,
         // 遮罩层
         loading: false,
         // 总数据条数
@@ -346,6 +404,47 @@
       this.getList();
     },
     methods: {
+      getContent(txt) {
+        return txt
+      },
+      //展示详细注数号码
+      showInfo(row) {
+        let that = this
+        that.itemInfo = []
+        that.sportItemInfo = []
+
+        that.lotId = row.type
+        that.title = row.orderId + '  方案详情'
+        that.orderNo = row.orderId
+        let lot = that.typeOptions.filter(p => p.value == row.type)
+        that.lotName = lot[0].label
+        that.drawer = true
+        //竞猜展示
+        if (that.isSportRace(row)) {
+          let idx = 1
+          let items = row.schemeDetails
+          for (let i = 0; i < items.length; i++) {
+            items[i].id = idx++;
+          }
+          that.sportItemInfo = items
+          return
+        } else {
+          //数字展示
+          console.log(row.schemeDetails[0])
+          let items = row.schemeDetails
+          let itemArys = []
+          for (let i = 0; i < items.length; i++) {
+            itemArys.push({
+              idx: i + 1,
+              cont: items[i]['content'],
+              mode: items[i]['mode'],
+              stageNumber: items[i]['stageNumber']
+            })
+          }
+
+          that.itemInfo = itemArys
+        }
+      },
       //show 胆
       showDan(row) {
         if (row.content.hasOwnProperty("isGallbladder") && row.content.isGallbladder) {
@@ -363,6 +462,10 @@
             const volist = response.voList;
             for (let index = 0; index < volist.length; index++) {
               const outter = volist[index];
+              //数字彩的内容。
+              if (outter.schemeDetails != null) {
+                outter.schemeDetails = JSON.parse(outter.schemeDetails)
+              }
               for (let i = 0; i < outter.racingBallList.length; i++) {
                 const inner = outter.racingBallList[i];
                 const content = inner.content;
@@ -398,8 +501,8 @@
       // 根据比赛显示数据
       // 0 足彩 1 篮彩 2 北京单场 3 排列3 4排列5  5七星彩  6 14场胜负 7任选九 8大乐透 21 3D，22七乐彩 23 快乐8，24 双色球
       isSportRace(row) {
-        if (row.type === "3" || row.type === "4" || row.type === "5" || row.type === "8" || row.type == "21" || row
-          .type == "22" || row.type == "23" || row.type == "24") {
+        if (row.type === "3" || row.type === "4" || row.type === "5" || row.type === "8" || row.type === "21" || row
+          .type === "22" || row.type === "23" || row.type === "24") {
           return false;
         }
         return true;
@@ -518,8 +621,16 @@
       // ---------------- 其他格式化 -----------------------
       // 投注数量
       getBettingNotes(row) {
+        if (this.isSportRace(row.type)) {
+          if (row.racingBallList.length) {
+            return row.racingBallList[0].notes + "注"
+          }
+          return ''
+        }
         if (row.racingBallList.length) {
-          return row.racingBallList[0].notes + "注";
+          let counts = 0
+          row.racingBallList.map(item => counts += item.notes)
+          return counts + "注"
         }
         return "";
       },
@@ -543,10 +654,10 @@
         return styleList;
       },
       // 非体育赛事投注方式
-      getNoSportsBettingStyle(scoprow, row) {
+      getNoSportsBettingStyle(lotid, mode) {
         //0 直选 1 组三 2 组九
-        if (scoprow.type === "3") { //排列3 mode 3 和值
-          switch (row.type) {
+        if (lotid === "3") { //排列3 mode 3 和值
+          switch (mode) {
             case "0":
               return "直选"
             case "1":
@@ -562,8 +673,8 @@
             default:
               return ''
           }
-        } else if (scoprow.type === "23") { // 快乐8 23
-          switch (row.type) {
+        } else if (lotid === "23") { // 快乐8 23
+          switch (mode) {
             case "10":
               return "选十"
             case "9":
@@ -589,7 +700,7 @@
               return ''
           }
         } else {
-          switch (row.type) {
+          switch (mode) {
             case "0":
               return "直选";
             case "1":
@@ -698,6 +809,18 @@
 <style scoped lang="scss">
   ::v-deep .el-table__expanded-cell[class*="cell"] {
     padding: 10px;
+  }
+
+  // 滚动条的宽度
+  ::v-deep .el-table__body-wrapper::-webkit-scrollbar {
+    width: 6px; // 横向滚动条
+    height: 6px; // 纵向滚动条 必写
+  }
+
+  // 滚动条的滑块
+  ::v-deep .el-table__body-wrapper::-webkit-scrollbar-thumb {
+    background-color: #ddd;
+    border-radius: 3px;
   }
 
   .award {

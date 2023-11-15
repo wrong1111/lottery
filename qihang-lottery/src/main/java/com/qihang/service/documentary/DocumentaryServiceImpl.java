@@ -729,14 +729,15 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
 
         } else {
             //数字彩
+            documentaryById.setContent(lotteryOrder.getSchemeDetails());
             //查询下注信息
             List<PermutationDO> permutationDOS = permutationMapper.selectBatchIds(Convert.toList(Integer.class, lotteryOrder.getTargetIds()));
             //注数
-            documentaryById.setNotes(permutationDOS.get(0).getNotes());
+            documentaryById.setNotes(permutationDOS.stream().mapToInt(PermutationDO::getNotes).sum());
             //倍数
             documentaryById.setTimes(permutationDOS.get(0).getTimes());
             //启投金额
-            documentaryById.setRiseThrowPrice(new BigDecimal(permutationDOS.get(0).getNotes() * 2));
+            documentaryById.setRiseThrowPrice(new BigDecimal(documentaryById.getNotes() * 2));
             //数字彩投注内容
             documentaryById.setPermutationList(permutationDOS);
             //获取最后的截止时间
@@ -751,6 +752,7 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
                     endTime = DateUtils.addDays(new Date(), -1);
                 }
             }
+
         }
         BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, LotteryOrderTypeEnum.valueOFS(lotteryOrder.getType()).getValue())).get(0);
         name = ballGameDO.getName();

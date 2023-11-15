@@ -108,6 +108,21 @@
 				//往数组中添加倍数新字段
 				data.forEach(item => {
 					this.$set(item, 'times', this.times)
+					//处理方案组合
+					if(item.schemeDetails==undefined){
+						let map=[];
+						map.push({
+							"mode":"0",
+							"stageNumber":this.issueNo,
+							"content":item.individual.map(item=>item.num).join(','),
+							"forecastBonus":null
+						})
+						//转成字符串json
+						map=JSON.stringify(map);
+						this.$set(item, 'schemeDetails',map)
+					}else{
+						this.$set(item, 'schemeDetails',JSON.stringify(item.schemeDetails))
+					}
 				})
 				let placeData = {
 					data: data,
@@ -147,7 +162,7 @@
 						map.push({
 							"mode":"0",
 							"stageNumber":this.issueNo,
-							"content":item.ten.map(item=>item.num).join(','),
+							"content":item.individual.map(item=>item.num).join(','),
 							"forecastBonus":null
 						})
 						//转成字符串json

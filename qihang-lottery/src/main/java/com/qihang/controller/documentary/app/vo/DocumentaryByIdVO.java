@@ -95,5 +95,8 @@ public class DocumentaryByIdVO extends BaseVO {
     @ApiModelProperty(value = "数字彩下注列表")
     List<PermutationDO> permutationList;
 
+    @ApiModelProperty(value = "具体详细内容")
+    String content;
+    @ApiModelProperty(value = "彩种类型  0 竞猜足球")
     String lotId;
 }

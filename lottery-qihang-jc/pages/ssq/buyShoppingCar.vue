@@ -116,6 +116,21 @@
 				//往数组中添加倍数新字段
 				data.forEach(item => {
 					this.$set(item, 'times', this.times)
+					if (item.schemeDetails == undefined) {
+						let map = [];
+						map.push({
+							"mode": "双色球",
+							"stageNumber": this.issueNo,
+							"content": item.ten.map(item => item.num).join(',') + "," + item.individual
+								.map(item => item.num).join(','),
+							"forecastBonus": null
+						})
+						//转成字符串json
+						map = JSON.stringify(map);
+						this.$set(item, 'schemeDetails', map)
+					} else {
+						this.$set(item, 'schemeDetails', JSON.stringify(item.schemeDetails))
+					}
 				})
 				let placeData = {
 					data: data,
@@ -233,7 +248,7 @@
 				for (var i = 0; i < numberArr.length; i++) {
 					data1.push({
 						num: numberArr[i],
-						active: false,
+						active: true,
 						isGallbladder: false
 					})
 				}
@@ -243,7 +258,7 @@
 				for (var i = 0; i < numArr.length; i++) {
 					data2.push({
 						num: numArr[i],
-						active: false,
+						active: true,
 						isGallbladder: false
 					})
 				}

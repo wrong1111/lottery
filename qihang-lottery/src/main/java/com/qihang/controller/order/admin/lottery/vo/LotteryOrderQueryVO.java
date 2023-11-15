@@ -64,4 +64,7 @@ public class LotteryOrderQueryVO extends PageDTO {
     @ApiModelProperty(value = "下注列表")
     List<RacingBallVO> racingBallList;
 
+    @ApiModelProperty(value = "详情")
+    String schemeDetails;
+
 }

@@ -26,7 +26,7 @@ public class GrandLottoUtil {
         if (danList.size() > 6) {
             return new ArrayList<>();
         }
-        if (danList.size() + redList.size() > 16) {
+        if (danList.size() + redList.size() > 25) {
             return new ArrayList<>();
         }
         List<String> frontList = new ArrayList<>();

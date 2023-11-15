@@ -11,8 +11,7 @@
 			</view>
 			<view style="display: flex; justify-content: space-between; align-items: center;">
 				<text><span>订单金额</span></text>
-				<text
-					style="color: red;"><span>{{placeData.acount * placeData.times * 2}}元</span></text>
+				<text style="color: red;"><span>{{placeData.acount * placeData.times * 2}}元</span></text>
 			</view>
 		</view>
 		<view
@@ -64,8 +63,8 @@
 					commission: 5,
 					type: ''
 				},
-				placeData : {
-				 
+				placeData: {
+
 				},
 				stationList: [{
 					name: '4%',
@@ -92,14 +91,14 @@
 		onLoad(option) {
 			let obj = JSON.parse(decodeURIComponent(option.obj));
 			this.placeData = obj
-			console.log(' 数字 合买页，收到参数=>',obj,this.placeData)
+			//console.log(' 数字 合买页，收到参数=>', obj, this.placeData)
 		},
 		methods: {
 			getLotteryName(type) {
 				return getLottery(type)
 			},
 			confirm() {
-				//console.log(" 跟单信息 ==》",this.placeData)
+				//console.log(" 跟单信息 ==》", this.placeData)
 				if (this.placeData.acount * this.placeData.times * 2 < 200) {
 					uni.showToast({
 						title: '发布跟单最低200起投',
@@ -109,7 +108,7 @@
 				}
 				uni.showLoading();
 				//先创建订单
-				place(this.placeData.data,this.placeData.type).then(res => {
+				place(this.placeData.data, this.placeData.type).then(res => {
 					if (res.success) {
 						//创建跟单数据
 						this.documentaryParam.lotteryOrderId = res.id;
@@ -118,10 +117,10 @@
 							if (response.success) {
 								//标识为已经下单了
 								//清除相应的存储
-								if(this.placeData.storage){
-									uni.removeStorageSync(this.placeData.storage)	
+								if (this.placeData.storage) {
+									uni.removeStorageSync(this.placeData.storage)
 								}
-								
+
 								uni.setStorageSync('isPay', true);
 								setTimeout(function() {
 									uni.hideLoading();
