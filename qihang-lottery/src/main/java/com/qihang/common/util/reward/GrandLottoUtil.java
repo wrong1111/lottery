@@ -2,7 +2,12 @@ package com.qihang.common.util.reward;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.qihang.common.util.CombinationUtil;
+import com.qihang.common.util.PlayUtil;
+import com.qihang.common.vo.BaseVO;
+import com.qihang.common.vo.BonusVo;
 import com.qihang.controller.grandlotto.dto.GrandLottoObjDTO;
 import com.qihang.controller.winburden.dto.WinBurdenMatchDTO;
 import org.apache.commons.lang3.StringUtils;
@@ -13,6 +18,1537 @@ import java.util.stream.Collectors;
 
 public class GrandLottoUtil {
 
+
+    /*
+   选十              选九             选八            选七              选六        选五
+中10	5000000     中9	300000      中8	50000       中7	10000       中6	3000    中5	1000
+中9		8000        中8	2000        中7	800         中6	288         中5	30      中4	21
+中8		800         中7	200         中6	88          中5	28          中4	10      中3	3
+中7		80          中6	20          中5	28          中4	4           中3	3
+中6		5           中5	5           中4	4           中0	2
+中5		3           中4  3          中0	2
+中0		2           中0	2
+
+选四                 选三
+中4	100             中3	53
+中3   5             中2	3
+中2	3
+
+选二中2		19
+选一中1		4.6
+     */
+    public static List<BonusVo> awardKL8(List<GrandLottoObjDTO> betList, String reaward, String awardMoney, String mode) {
+        switch (mode) {
+            case "10":
+                return mode10(betList, reaward, awardMoney);
+            case "9":
+                return mode9(betList, reaward, awardMoney);
+            case "8":
+                return mode8(betList, reaward, awardMoney);
+            case "7":
+                return mode7(betList, reaward, awardMoney);
+            case "6":
+                return mode6(betList, reaward, awardMoney);
+            case "5":
+                return mode5(betList, reaward, awardMoney);
+            case "4":
+                return mode4(betList, reaward, awardMoney);
+            case "3":
+                return mode3(betList, reaward, awardMoney);
+            case "2":
+                return mode2(betList, reaward, awardMoney);
+            case "1":
+                return mode1(betList, reaward, awardMoney);
+            default:
+                return new ArrayList<>();
+        }
+
+    }
+
+    public static Map<String, Double> awardLevelMap = new HashMap<>();
+
+    static {
+        awardLevelMap.put("23-10中10", 5000000d);
+        awardLevelMap.put("23-10中9", 8000d);
+        awardLevelMap.put("23-10中8", 800d);
+        awardLevelMap.put("23-10中7", 80d);
+        awardLevelMap.put("23-10中6", 5d);
+        awardLevelMap.put("23-10中5", 3d);
+        awardLevelMap.put("23-10中0", 2d);
+        awardLevelMap.put("23-9中9", 300000d);
+        awardLevelMap.put("23-9中8", 2000d);
+        awardLevelMap.put("23-9中7", 200d);
+        awardLevelMap.put("23-9中6", 20d);
+        awardLevelMap.put("23-9中5", 5d);
+        awardLevelMap.put("23-9中4", 3d);
+        awardLevelMap.put("23-9中0", 2d);
+        awardLevelMap.put("23-8中8", 50000d);
+        awardLevelMap.put("23-8中7", 800d);
+        awardLevelMap.put("23-8中6", 88d);
+        awardLevelMap.put("23-8中5", 10d);
+        awardLevelMap.put("23-8中4", 3d);
+        awardLevelMap.put("23-8中0", 2d);
+        awardLevelMap.put("23-7中7", 10000d);
+        awardLevelMap.put("23-7中6", 288d);
+        awardLevelMap.put("23-7中5", 28d);
+        awardLevelMap.put("23-7中4", 4d);
+        awardLevelMap.put("23-7中0", 2d);
+        awardLevelMap.put("23-6中6", 3000d);
+        awardLevelMap.put("23-6中5", 30d);
+        awardLevelMap.put("23-6中4", 10d);
+        awardLevelMap.put("23-6中3", 3d);
+        awardLevelMap.put("23-5中5", 1000d);
+        awardLevelMap.put("23-5中4", 21d);
+        awardLevelMap.put("23-5中3", 3d);
+        awardLevelMap.put("23-4中4", 100d);
+        awardLevelMap.put("23-4中3", 5d);
+        awardLevelMap.put("23-4中2", 3d);
+        awardLevelMap.put("23-3中3", 53d);
+        awardLevelMap.put("23-3中2", 3d);
+        awardLevelMap.put("23-2中2", 19d);
+        awardLevelMap.put("23-1中1", 4.6d);
+    }
+
+    private static List<BonusVo> mode10(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        bonusVo.setAward(false);
+        bonusVo.setLevel("");
+        bonusVo.setMoney(0d);
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        int maxNotDan = 10 - danList.size();
+        int maxDan = danList.size();
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            //一等奖
+            long notes = PlayUtil.getAwardDTCount(10, maxDan, maxNotDan, awardDan, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中10");
+                bonusVo.setMoney(5000000d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(9, maxDan, maxNotDan, awardDan, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中9");
+                bonusVo.setMoney(8000d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(8, maxDan, maxNotDan, awardDan, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中8");
+                bonusVo.setMoney(800d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(7, maxDan, maxNotDan, awardDan, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中7");
+                bonusVo.setMoney(80d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(6, maxDan, maxNotDan, awardDan, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中6");
+                bonusVo.setMoney(5d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, maxDan, maxNotDan, awardDan, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中5");
+                bonusVo.setMoney(3d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(0, maxDan, maxNotDan, awardDan, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中0");
+                bonusVo.setMoney(2d);
+                List<String> awardList = new ArrayList<>(Arrays.asList(awardNumber));
+                bonusVo.setAwardContent(StringUtils.join(numberList.stream().filter(p -> !awardList.contains(p)).collect(Collectors.toList()), ","));
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            long notes = PlayUtil.getAwardDTCount(10, 0, maxNotDan, 0, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中10");
+                bonusVo.setMoney(5000000d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(9, 0, maxNotDan, 0, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中9");
+                bonusVo.setMoney(8000d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(8, 0, maxNotDan, 0, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中8");
+                bonusVo.setMoney(800d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(7, 0, maxNotDan, 0, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中7");
+                bonusVo.setMoney(80d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(6, 0, maxNotDan, 0, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中6");
+                bonusVo.setMoney(5d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, 0, maxNotDan, 0, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中5");
+                bonusVo.setMoney(3d);
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(0, 0, maxNotDan, 0, awardNotDan, 10);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("10中0");
+                bonusVo.setMoney(2d);
+                List<String> awardList = new ArrayList<>(Arrays.asList(awardNumber));
+                bonusVo.setAwardContent(StringUtils.join(numberList.stream().filter(p -> !awardList.contains(p)).collect(Collectors.toList()), ","));
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        }
+        return bonusVoList;
+    }
+
+    private static List<BonusVo> mode9(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        int maxNotDan = 9 - danList.size();
+        int base = 9;
+        int maxDan = danList.size();
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            //一等奖
+
+            long notes = PlayUtil.getAwardDTCount(base, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中9");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(8, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中8");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(7, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中7");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(6, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中6");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(0, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中0");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                List<String> awardList = new ArrayList<>(Arrays.asList(awardNumber));
+                bonusVo.setAwardContent(StringUtils.join(numberList.stream().filter(p -> !awardList.contains(p)).collect(Collectors.toList()), ","));
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            long notes = PlayUtil.getAwardDTCount(9, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中9");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(8, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中8");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(7, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中7");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(6, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中6");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(0, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("9中0");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                List<String> awardList = new ArrayList<>(Arrays.asList(awardNumber));
+                bonusVo.setAwardContent(StringUtils.join(numberList.stream().filter(p -> !awardList.contains(p)).collect(Collectors.toList()), ","));
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        }
+        return bonusVoList;
+    }
+
+    private static List<BonusVo> mode8(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        int maxNotDan = 8 - danList.size();
+        int base = 8;
+        int maxDan = danList.size();
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            //一等奖
+
+            long notes = PlayUtil.getAwardDTCount(8, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中8");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(7, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中7");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(6, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中6");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(4, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(0, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中0");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                List<String> awardList = new ArrayList<>(Arrays.asList(awardNumber));
+                bonusVo.setAwardContent(StringUtils.join(numberList.stream().filter(p -> !awardList.contains(p)).collect(Collectors.toList()), ","));
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            long notes = PlayUtil.getAwardDTCount(8, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中8");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(7, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中7");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(6, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中6");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(4, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(0, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("8中0");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                List<String> awardList = new ArrayList<>(Arrays.asList(awardNumber));
+                bonusVo.setAwardContent(StringUtils.join(numberList.stream().filter(p -> !awardList.contains(p)).collect(Collectors.toList()), ","));
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        }
+        return bonusVoList;
+    }
+
+    private static List<BonusVo> mode7(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        int maxNotDan = 7 - danList.size();
+        int base = 7;
+        int maxDan = danList.size();
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            //一等奖
+
+            long notes = PlayUtil.getAwardDTCount(7, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中7");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(6, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中6");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(4, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(0, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中0");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                List<String> awardList = new ArrayList<>(Arrays.asList(awardNumber));
+                bonusVo.setAwardContent(StringUtils.join(numberList.stream().filter(p -> !awardList.contains(p)).collect(Collectors.toList()), ","));
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            long notes = PlayUtil.getAwardDTCount(7, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中7");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(6, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中6");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(4, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(0, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7中0");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                List<String> awardList = new ArrayList<>(Arrays.asList(awardNumber));
+                bonusVo.setAwardContent(StringUtils.join(numberList.stream().filter(p -> !awardList.contains(p)).collect(Collectors.toList()), ","));
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        }
+        return bonusVoList;
+    }
+
+    private static List<BonusVo> mode6(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        int maxNotDan = 6 - danList.size();
+        int base = 6;
+        int maxDan = danList.size();
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            //一等奖
+
+            long notes = PlayUtil.getAwardDTCount(6, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6中6");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(4, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(3, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6中3");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            long notes = PlayUtil.getAwardDTCount(6, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6中6");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(5, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(4, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(3, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6中3");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        }
+        return bonusVoList;
+    }
+
+    private static List<BonusVo> mode5(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        int maxNotDan = 5 - danList.size();
+        int base = 5;
+        int maxDan = danList.size();
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            //一等奖
+
+            long notes = PlayUtil.getAwardDTCount(5, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(4, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(3, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5中3");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            long notes = PlayUtil.getAwardDTCount(5, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5中5");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(4, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(3, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5中3");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        }
+        return bonusVoList;
+    }
+
+    private static List<BonusVo> mode4(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        int maxNotDan = 4 - danList.size();
+        int base = 4;
+        int maxDan = danList.size();
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            //一等奖
+
+            long notes = PlayUtil.getAwardDTCount(4, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(3, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4中3");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(2, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4中2");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            long notes = PlayUtil.getAwardDTCount(4, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4中4");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(3, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4中3");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(2, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4中2");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        }
+        return bonusVoList;
+    }
+
+    private static List<BonusVo> mode3(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        int maxNotDan = 3 - danList.size();
+        int base = 3;
+        int maxDan = danList.size();
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            //一等奖
+
+            long notes = PlayUtil.getAwardDTCount(3, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("3中3");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(2, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("3中2");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            long notes = PlayUtil.getAwardDTCount(3, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("3中3");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+            notes = PlayUtil.getAwardDTCount(2, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("3中2");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        }
+        return bonusVoList;
+    }
+
+    private static List<BonusVo> mode2(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        int maxNotDan = 2 - danList.size();
+        int base = 2;
+        int maxDan = danList.size();
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            //一等奖
+
+            long notes = PlayUtil.getAwardDTCount(2, maxDan, maxNotDan, awardDan, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("2中2");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < awardNumber.length; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            long notes = PlayUtil.getAwardDTCount(2, 0, maxNotDan, 0, awardNotDan, base);
+            if (notes > 0) {
+                bonusVo.setAward(true);
+                bonusVo.setLevel("2中2");
+                bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes((int) notes);
+                bonusVoList.add(bonusVo);
+            }
+        }
+        return bonusVoList;
+    }
+
+    private static List<BonusVo> mode1(List<GrandLottoObjDTO> betList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        List<BonusVo> bonusVoList = new ArrayList<>();
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+
+        List<String> numberList = loadNumber(betList);
+        String awardContent = "";
+        int awardNotDan = 0;
+        for (int i = 0; i < awardNumber.length; i++) {
+            if (numberList.contains(awardNumber[i])) {
+                awardNotDan++;
+                awardContent += awardNumber[i] + ",";
+            }
+        }
+        long notes = awardNotDan;
+        if (notes > 0) {
+            bonusVo.setAward(true);
+            bonusVo.setLevel("1中1");
+            bonusVo.setMoney(awardLevelMap.get("23-" + bonusVo.getLevel()));
+            bonusVo.setAwardContent(awardContent);
+            bonusVo.setAwardNotes((int) notes);
+            bonusVoList.add(bonusVo);
+        }
+        return bonusVoList;
+    }
+
+    /**
+     * 一等奖：投注号码与当期开奖号码全部相同（顺序不限，下同），即中奖；
+     * <p>
+     * 二等奖：投注号码与当期开奖号码中的6个红色球号码相同，即中奖；
+     * <p>
+     * 三等奖：投注号码与当期开奖号码中的任意5个红色球号码和1个蓝色球号码相同，即中奖；
+     * <p>
+     * 四等奖：投注号码与当期开奖号码中的任意5个红色球号码相同，或与任意4个红色球号码和1个蓝色球号码相同，即中奖；
+     * <p>
+     * 五等奖：投注号码与当期开奖号码中的任意4个红色球号码相同，或与任意3个红色球号码和1个蓝色球号码相同，即中奖；
+     * <p>
+     * 六等奖：投注号码与当期开奖号码中的1个蓝色球号码相同，即中奖。
+     */
+    public static BonusVo awardSSQ(List<GrandLottoObjDTO> tenList, List<GrandLottoObjDTO> blueList, String reward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        bonusVo.setAward(false);
+        bonusVo.setLevel("");
+        bonusVo.setMoney(0d);
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reward, ",");
+        String[] awardsMoney = StringUtils.splitByWholeSeparatorPreserveAllTokens(awardMoney, ",");
+        String blueNumber = awardNumber[6];
+
+
+        List<String> danList = loadDan(tenList);
+        List<String> numberList = loadNotDan(tenList);
+
+        List<String> blues = loadNumber(blueList);
+        boolean awardBlue = blues.contains(blueNumber);
+
+        String awardContent = "";
+        if (danList.size() > 0) {
+            int maxNotDan = 6 - danList.size();
+            int maxDan = danList.size();
+
+            int awardDan = 0;
+            int awardNotDan = 0;
+            for (int i = 0; i < 6; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            int cawardNotDan = awardNotDan >= maxNotDan ? maxNotDan : awardNotDan;
+            int cawardDan = awardDan >= maxDan ? maxDan : awardDan;
+            if (cawardDan + cawardNotDan >= 6 && awardBlue) {
+                //一等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("1");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[0]));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes(1);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 6) {
+                //二等 奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("2");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[1]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 5 && awardBlue) {
+                //三等 奖 3000
+                bonusVo.setAward(true);
+                bonusVo.setLevel("3");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[2]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 5 || (cawardDan + cawardNotDan >= 4 && awardBlue)) {
+                //四等 奖 200
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[3]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 4 || (cawardDan + cawardNotDan >= 3 && awardBlue)) {
+                //五等 奖 10
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[4]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardBlue) {
+                //六等 奖 5
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[5]));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes(1);
+                return bonusVo;
+            }
+        } else {
+            int awardNotDan = 0;
+            for (int i = 0; i < 6; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            if (awardBlue && awardNotDan >= 6) {
+                //一等
+                bonusVo.setAward(true);
+                bonusVo.setLevel("1");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[0]));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes(1);
+                return bonusVo;
+            } else if (awardNotDan >= 6) {
+                //二等 奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("2");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[1]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardNotDan >= 5 && awardBlue) {
+                //三等 奖 3000
+                bonusVo.setAward(true);
+                bonusVo.setLevel("3");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[2]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardNotDan >= 5 || (awardNotDan >= 4 && awardBlue)) {
+                //四等 奖 200
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[3]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardNotDan >= 4 || (awardNotDan >= 3 && awardBlue)) {
+                //五等 奖 10
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[4]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardBlue) {
+                //六等 奖 5
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[5]));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes(1);
+                return bonusVo;
+            }
+        }
+        return bonusVo;
+    }
+
+    /*
+     官方出号 7+1
+        一等奖：投注号码与当期开奖号码中7个基本号码完全相同（顺序不限，下同）； 奖金总额为当期高奖等奖金的70%；
+        二等奖：投注号码与当期开奖号码中任意6个基本号码及特别号码相同； 奖金总额为当期高奖等奖金的10%；
+        三等奖：投注号码与当期开奖号码中任意6个基本号码相同；  奖金总额为当期高奖等奖金的20%；
+        四等奖：投注号码与当期开奖号码中任意5个基本号码及特别号码相同；  单注奖金额固定为200元；
+        五等奖：投注号码与当期开奖号码中任意5个基本号码相同；          单注奖金额固定为50元；
+        六等奖：投注号码与当期开奖号码中任意4个基本号码及特别号码相同；   单注奖金额固定为10元；
+        七等奖：投注号码与开奖号码中任意4个基本号码相同                单注奖金额固定为5元。
+     */
+    public static BonusVo awardQLC(List<GrandLottoObjDTO> betList, String reaward, String awardMoney) {
+        BonusVo bonusVo = new BonusVo();
+        bonusVo.setAward(false);
+        bonusVo.setLevel("");
+        bonusVo.setMoney(0d);
+        String[] awardNumber = StringUtils.splitByWholeSeparatorPreserveAllTokens(reaward, ",");
+        String[] awardsMoney = StringUtils.splitByWholeSeparatorPreserveAllTokens(awardMoney, ",");
+        //特别号码
+        List<String> danList = loadDan(betList);
+        List<String> numberList = loadNotDan(betList);
+        String blueNumber = awardNumber[7];
+        int awardDan = 0;
+        int awardNotDan = 0;
+
+        int blueAward = 0;
+        //特殊号码是否中
+        boolean awardBlue = false;
+        boolean danflag = danList.size() > 0 ? true : false;
+        //是否是胆拖，否则是复式
+        String awardContent = "";
+        if (danflag) {
+            int maxNotDan = 7 - danList.size();
+            int maxDan = danList.size();
+            //排除最后一个号码 特殊号码
+            for (int i = 0; i < 7; i++) {
+                if (danList.contains(awardNumber[i])) {
+                    awardDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            awardBlue = danList.contains(blueNumber) || numberList.contains(blueNumber);
+            if (awardBlue) {
+                awardContent = awardContent + "+" + blueNumber;
+            }
+            int cawardNotDan = awardNotDan >= maxNotDan ? maxNotDan : awardNotDan;
+            int cawardDan = awardDan >= maxDan ? maxDan : awardDan;
+
+            if (cawardDan + cawardNotDan >= 7) {
+                //中一等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("1");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[0]));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes(1);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 6 && awardBlue) {
+                //二等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("2");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[1]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 6) {
+                //三等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("3");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[2]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 5 && awardBlue) {
+                //四等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[3]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 5) {
+                //五等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[4]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 4 && awardBlue) {
+                //六等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[5]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (cawardDan + cawardNotDan >= 4) {
+                //七等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[6]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = awardNotDan > maxNotDan ? CombinationUtil.getCombination(awardNotDan, maxNotDan) : 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            }
+        } else {
+            //排除最后一个号码 特殊号码
+            for (int i = 0; i < 7; i++) {
+                if (numberList.contains(awardNumber[i])) {
+                    awardNotDan++;
+                    awardContent += awardNumber[i] + ",";
+                }
+            }
+            awardBlue = numberList.contains(blueNumber);
+            if (awardBlue) {
+                awardContent = awardContent + "+" + blueNumber;
+            }
+            if (awardNotDan >= 7) {
+                //中一等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("1");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[0]));
+                bonusVo.setAwardContent(awardContent);
+                bonusVo.setAwardNotes(1);
+                return bonusVo;
+            } else if (awardNotDan >= 6 && awardBlue) {
+                //二等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("2");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[1]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardNotDan >= 6) {
+                //三等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("3");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[2]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardNotDan >= 5 && awardBlue) {
+                //四等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("4");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[3]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardNotDan >= 5) {
+                //五等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("5");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[4]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardNotDan >= 4 && awardBlue) {
+                //六等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("6");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[5]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            } else if (awardNotDan >= 4) {
+                //七等奖
+                bonusVo.setAward(true);
+                bonusVo.setLevel("7");
+                bonusVo.setMoney(Double.valueOf(awardsMoney[6]));
+                bonusVo.setAwardContent(awardContent);
+                int notes = 1;
+                bonusVo.setAwardNotes(notes);
+                return bonusVo;
+            }
+        }
+        return bonusVo;
+    }
+
+    public static List<String> loadDan(List<GrandLottoObjDTO> bet) {
+        return bet.stream().filter(item -> item.getIsGallbladder()).map(i -> i.getNum()).collect(Collectors.toList());
+    }
+
+    public static List<String> loadNotDan(List<GrandLottoObjDTO> bet) {
+        return bet.stream().filter(item -> !item.getIsGallbladder()).map(i -> i.getNum()).collect(Collectors.toList());
+    }
+
+    public static List<String> loadNumber(List<GrandLottoObjDTO> bet) {
+        return bet.stream().map(i -> i.getNum()).collect(Collectors.toList());
+    }
 
     /*
     最多可以选择25个红球，胆最多不能超过5个。
@@ -1263,5 +2799,11 @@ public class GrandLottoUtil {
             index += subStrLength;
         }
         return count;
+    }
+
+    public static void main(String[] args) {
+        //int award, int dm_cnt, int tm_cnt,
+        //                                       int dm_award, int tm_award, int base
+        System.out.println(PlayUtil.getAwardDTCount(0, 4, 8, 0, 0, 5));
     }
 }

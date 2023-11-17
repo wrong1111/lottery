@@ -15,8 +15,8 @@ public enum LotteryOrderTypeEnum {
     FOOTBALL("0", "竞彩足球"),
     BASKETBALL("1", "竞彩篮球"),
     SINGLE("2", "北京单场"),
-    ARRAY("3", "排列3"),
-    ARRANGE("4", "排列5"),
+    ARRAY("3", "排列3"),//21:25
+    ARRANGE("4", "排列5"),//21:25
 
     SEVEN_STAR("5", "七星彩"),
 

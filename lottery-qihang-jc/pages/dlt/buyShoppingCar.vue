@@ -152,7 +152,7 @@
 					if (item.schemeDetails == undefined) {
 						let map = [];
 						map.push({
-							"mode": "大乐透",
+							"mode": "0",
 							"stageNumber": this.issueNo,
 							"content": item.ten.map(item => item.num).join(',') + "," + item.individual
 								.map(item => item.num).join(','),

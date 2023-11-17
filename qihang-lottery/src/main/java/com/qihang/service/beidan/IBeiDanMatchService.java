@@ -41,5 +41,4 @@ public interface IBeiDanMatchService extends IService<BeiDanMatchDO> {
      */
     BaseVO award();
 
-    List<BeiDanMatchDO> selectBatchIds(List<Integer> targetIds);
 }

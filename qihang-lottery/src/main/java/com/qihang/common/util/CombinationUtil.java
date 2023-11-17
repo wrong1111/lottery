@@ -7,6 +7,27 @@ import java.util.List;
 
 public class CombinationUtil {
 
+    /**
+     * 获取组合数 n(n-1)(n-2)……(n-m+1)/m!
+     *
+     * @param m
+     * @param n
+     * @return
+     */
+    public static int getCombination(int n, int m) {
+        if (m > n) {
+            throw new IllegalArgumentException("m不能大于n！");
+        }
+        if (m > n / 2) {
+            m = n - m;
+        }
+        int nn = 1, mm = 1;    //保存最后值
+        for (int i = n, j = 1; j <= m /*&& i >= (n - m + 1)*/; nn *= i--, mm *= j++)
+            ;
+        return nn / mm;
+    }
+
+
     public static List<List<String>> getCombinations(String[] nums, int n) {
         List<List<String>> result = new ArrayList<>();
         List<String> combination = new ArrayList<>();
@@ -65,6 +86,7 @@ public class CombinationUtil {
     }
 
     public static void main(String[] args) {
-        combine();
+        //combine();
+        System.out.println(getCombination(6, 0));
     }
 }

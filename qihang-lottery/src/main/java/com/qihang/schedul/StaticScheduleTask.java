@@ -150,7 +150,7 @@ public class StaticScheduleTask {
         //循环查找看比赛截止时间是否到了，到了就关闭这个比赛下注
         Date date = new Date();
         for (FootballMatchDO footballMatch : footballMatchList) {
-            if (date.compareTo(footballMatch.getDeadline()) > 0 || date.compareTo(footballMatch.getDeadline()) == 0) {
+            if (BettingStateEnum.YES.getKey().equals(footballMatch.getState()) && date.compareTo(footballMatch.getDeadline()) >= 0) {
                 footballMatch.setState(BettingStateEnum.NO.getKey());
                 footballMatchMapper.updateById(footballMatch);
             }
@@ -159,7 +159,7 @@ public class StaticScheduleTask {
         List<BasketballMatchDO> basketballMatchList = basketballMatchMapper.selectList(new QueryWrapper<BasketballMatchDO>().lambda().le(BasketballMatchDO::getDeadline, DateUtil.now()).eq(BasketballMatchDO::getState, "1"));
         //循环查找看比赛截止时间是否到了，到了就关闭这个比赛下注
         for (BasketballMatchDO basketballMatch : basketballMatchList) {
-            if (date.compareTo(basketballMatch.getDeadline()) > 0 || date.compareTo(basketballMatch.getDeadline()) == 0) {
+            if (BettingStateEnum.YES.getKey().equals(basketballMatch.getState()) && date.compareTo(basketballMatch.getDeadline()) >= 0) {
                 basketballMatch.setState(BettingStateEnum.NO.getKey());
                 basketballMatchMapper.updateById(basketballMatch);
             }
@@ -169,7 +169,7 @@ public class StaticScheduleTask {
         List<BeiDanMatchDO> beiDanMatchList = beiDanMatchMapper.selectList(new QueryWrapper<BeiDanMatchDO>().lambda().le(BeiDanMatchDO::getDeadline, DateUtil.now()).eq(BeiDanMatchDO::getState, "1"));
         //循环查找看比赛截止时间是否到了，到了就关闭这个比赛下注
         for (BeiDanMatchDO beiDanMatch : beiDanMatchList) {
-            if (date.compareTo(beiDanMatch.getDeadline()) > 0 || date.compareTo(beiDanMatch.getDeadline()) == 0) {
+            if (BettingStateEnum.YES.getKey().equals(beiDanMatch.getState()) && date.compareTo(beiDanMatch.getDeadline()) >= 0) {
                 beiDanMatch.setState(BettingStateEnum.NO.getKey());
                 beiDanMatchMapper.updateById(beiDanMatch);
             }
@@ -178,7 +178,7 @@ public class StaticScheduleTask {
         List<WinBurdenMatchDO> winBurdenMatchList = winBurdenMatchMapper.selectList(new QueryWrapper<WinBurdenMatchDO>().lambda().le(WinBurdenMatchDO::getDeadline, DateUtil.now()).eq(WinBurdenMatchDO::getState, "1"));
         //循环查找看比赛截止时间是否到了，到了就关闭这个比赛下注
         for (WinBurdenMatchDO winBurdenMatch : winBurdenMatchList) {
-            if (date.compareTo(winBurdenMatch.getDeadline()) > 0 || date.compareTo(winBurdenMatch.getDeadline()) == 0) {
+            if (BettingStateEnum.YES.getKey().equals(winBurdenMatch.getState()) && date.compareTo(winBurdenMatch.getDeadline()) >= 0) {
                 winBurdenMatch.setState(BettingStateEnum.NO.getKey());
                 winBurdenMatchMapper.updateById(winBurdenMatch);
             }

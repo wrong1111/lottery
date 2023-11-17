@@ -63,4 +63,6 @@ public class BeanConfig {
                 return new LocalUploadServiceImpl().setProperties(localUtil);
         }
     }
+
+
 }

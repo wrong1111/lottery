@@ -52,6 +52,5 @@ public class PermutationAwardDO implements Serializable {
     private Date updateTime;
 
 
-    @TableField(exist = false)
     private String moneyAward;
 }

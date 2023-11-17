@@ -11,6 +11,7 @@ import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.omit.OmitDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
+import com.qihang.domain.permutation.PermutationDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
 import com.qihang.enumeration.ball.BettingStateEnum;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
@@ -110,6 +111,11 @@ public class LotteryPipeline implements Pipeline {
                     return;
                 }
                 permutationAwardService.save(permutationAward);
+
+                //修改此期下注的开奖结果
+                PermutationDO permutation = new PermutationDO();
+                permutation.setReward(permutationAward.getReward());
+                permutationService.update(permutation, new QueryWrapper<PermutationDO>().lambda().eq(PermutationDO::getStageNumber, permutationAward.getStageNumber()).eq(PermutationDO::getType, permutationAward.getType()));
                 //计算用户有没有中奖
                 permutationService.calculation(permutationAward);
             }

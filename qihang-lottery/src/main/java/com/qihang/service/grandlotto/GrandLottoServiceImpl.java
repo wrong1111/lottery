@@ -48,7 +48,7 @@ public class GrandLottoServiceImpl implements IGrandLottoService {
             for (String s : list) {
                 PermutationVO permutationVO = new PermutationVO();
                 permutationVO.setContent(s);
-                permutationVO.setMode(LotteryOrderTypeEnum.GRAND_LOTTO.getValue());
+                permutationVO.setMode("0");
                 permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
                 permutationList.add(permutationVO);
             }
@@ -64,7 +64,7 @@ public class GrandLottoServiceImpl implements IGrandLottoService {
             for (String s : list) {
                 PermutationVO permutationVO = new PermutationVO();
                 permutationVO.setContent(s);
-                permutationVO.setMode(LotteryOrderTypeEnum.FCSSQ.getValue());
+                permutationVO.setMode("0");
                 permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
                 permutationList.add(permutationVO);
             }
@@ -79,7 +79,7 @@ public class GrandLottoServiceImpl implements IGrandLottoService {
             for (String s : list) {
                 PermutationVO permutationVO = new PermutationVO();
                 permutationVO.setContent(s);
-                permutationVO.setMode(LotteryOrderTypeEnum.FCQLC.getValue());
+                permutationVO.setMode("0");
                 permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
                 permutationList.add(permutationVO);
             }
@@ -94,7 +94,7 @@ public class GrandLottoServiceImpl implements IGrandLottoService {
             for (String s : list) {
                 PermutationVO permutationVO = new PermutationVO();
                 permutationVO.setContent(s);
-                permutationVO.setMode(LotteryOrderTypeEnum.FCQLC.getValue());
+                permutationVO.setMode("0");
                 permutationVO.setStageNumber(permutationAward.getStageNumber() + 1);
                 permutationList.add(permutationVO);
             }

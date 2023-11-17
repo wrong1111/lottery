@@ -5,6 +5,7 @@ import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.permutation.app.dto.PlaceOrderDTO;
 import com.qihang.controller.permutation.app.vo.PermutationRecordVO;
+import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.permutation.PermutationDO;
 
@@ -39,9 +40,37 @@ public interface IPermutationService extends IService<PermutationDO> {
 
     /**
      * 计算用户中奖结果
-     * 开奖入口方法
+     * 数字彩兑奖入口
+     *
      * @param permutationAward
      * @return
      */
     BaseVO calculation(PermutationAwardDO permutationAward);
+
+    /**
+     * 计算用户中奖结果
+     * 数字彩兑奖入口
+     *
+     * @param type
+     * @return
+     */
+    BaseVO calculation(String type);
+
+    /**
+     * 计算用户中奖结果
+     * 数字彩兑奖入口
+     *
+     * @param type
+     * @return
+     */
+    public BaseVO calculationBySchemeDetail(String type);
+
+    /**
+     * 计算用户中奖结果
+     * 数字彩兑奖入口
+     *
+     * @param orders
+     * @return
+     */
+    public BaseVO calculationBySchemeDetail(LotteryOrderDO orders, PermutationAwardDO permutationAwardDO);
 }

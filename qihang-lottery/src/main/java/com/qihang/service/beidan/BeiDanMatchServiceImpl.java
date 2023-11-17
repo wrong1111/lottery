@@ -1,7 +1,6 @@
 package com.qihang.service.beidan;
 
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -17,6 +16,8 @@ import com.qihang.controller.beidan.vo.BeiDanVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
+import com.qihang.domain.documentary.DocumentaryDO;
+import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.order.PayOrderDO;
 import com.qihang.domain.racingball.RacingBallDO;
@@ -28,10 +29,14 @@ import com.qihang.enumeration.order.pay.PayOrderStateEnum;
 import com.qihang.enumeration.order.pay.PayOrderTypeEnum;
 import com.qihang.enumeration.order.pay.PayTypeEnum;
 import com.qihang.mapper.beidan.BeiDanMatchMapper;
+import com.qihang.mapper.documentary.DocumentaryMapper;
+import com.qihang.mapper.documentary.DocumentaryUserMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
+import com.qihang.service.documentary.DocumentaryCommissionHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +48,7 @@ import java.util.stream.Collectors;
  * @author bright
  * @since 2022-11-02
  */
+@Slf4j
 @Service
 public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDanMatchDO> implements IBeiDanMatchService {
 
@@ -62,12 +68,21 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
     @Resource
     private PayOrderMapper payOrderMapper;
 
+    @Resource
+    private DocumentaryMapper documentaryMapper;
+    @Resource
+    private DocumentaryUserMapper documentaryUserMapper;
+
+    @Resource
+    DocumentaryCommissionHelper documentaryCommissionHelper;
+
+
     @Override
     public CommonListVO<BeiDanVO> beiDanMatchList() {
         CommonListVO<BeiDanVO> commonList = new CommonListVO<>();
         List<BeiDanVO> beiDanList = new ArrayList<>();
         //小于当前时间 不展示
-        List<BeiDanMatchDO> beiDanMatchDataList = beiDanMatchMapper.selectList(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getState, BettingStateEnum.YES.getKey()).gt(BeiDanMatchDO::getDeadline,new Date()));
+        List<BeiDanMatchDO> beiDanMatchDataList = beiDanMatchMapper.selectList(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getState, BettingStateEnum.YES.getKey()).gt(BeiDanMatchDO::getDeadline, new Date()));
         Map<String, List<BeiDanMatchDO>> map = beiDanMatchDataList.stream().collect(Collectors.groupingBy(BeiDanMatchDO::getStartTime));
         //对map的key进行排序
         map = map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
@@ -226,8 +241,10 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
     @Override
     @TenantIgnore
     public BaseVO award() {
+        log.debug("=======>[北单]=======");
         //查询未出票的订单
         List<LotteryOrderDO> orderNotList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()).eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.SINGLE.getKey()));
+        log.debug("=======>[北单][未出票] 记录数: {} ", orderNotList.size());
         for (LotteryOrderDO lotteryOrderDO : orderNotList) {
             //查询下注的列表
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, lotteryOrderDO.getTargetIds()));
@@ -254,6 +271,7 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
         }
         //查询北单已经下注的订单列表
         List<LotteryOrderDO> orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()).eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.SINGLE.getKey()));
+        log.debug("=======>[北单][待开奖] 记录数: {} ", orderList.size());
         for (LotteryOrderDO order : orderList) {
             //查询下注的列表
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
@@ -271,6 +289,7 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
                 BeiDanMatchDO beiDanMatch = beiDanMatchMapper.selectById(racingBallDO.getTargetId());
                 //如果比赛和赔率还没有出结果直接跳出 由于赔率不是同时出的，所有也需要做如下判断处理
                 if (StrUtil.isBlank(beiDanMatch.getAward()) || beiDanMatch.getBonusOdds().indexOf("-") != -1) {
+                    log.debug("=======>[北单][待开奖] 订单 [{}] 赛事[{}]未出赛果 或赔率 ", order.getOrderId(), beiDanMatch.getNumber());
                     flag = false;
                     break;
                 }
@@ -285,26 +304,22 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
                 //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
                 Double price = BeiDanUtil.award(beiDanMatchList, multiple, pssTypeList, list, bonusOddsList);
                 //等于0相当于没有中奖
+                log.debug("=======>[北单][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
                 if (price == 0) {
+                    log.debug("=======>[北单][未中奖] 订单[{}] 未中奖  ", order.getOrderId());
                     order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
                 } else {
                     //已经中奖
-                    order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
-                    order.setWinPrice(NumberUtil.round(price, 2));
+                    //给订单分佣处理。
+                    documentaryCommissionHelper.processCommiss("北单", order, price);
                 }
                 order.setUpdateTime(new Date());
                 lotteryOrderMapper.updateById(order);
+                log.debug("=======>[北单]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), price);
             }
         }
         return new BaseVO();
     }
-
-    @Override
-    public List<BeiDanMatchDO> selectBatchIds(List<Integer> targetIds) {
-
-        return null;
-    }
-
 
     private void addRecord(LotteryOrderDO lotteryOrder, Integer tenantId) {
         PayOrderDO payOrder = new PayOrderDO();

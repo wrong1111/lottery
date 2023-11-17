@@ -1,6 +1,7 @@
 package com.qihang.common.util.email;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,9 @@ public class EmailUtils {
 
     @Resource
     private JavaMailSender mailSender;
+
+    @Value("spring.mail.username")
+    String mailUserName;
 
     /**
      * 未出票发送邮件
@@ -71,7 +75,7 @@ public class EmailUtils {
         MimeMessage message = mailSender.createMimeMessage();
         try {
             // 2. From: 发件人                //需替换自己的邮箱
-            message.setFrom(new InternetAddress("bieshujihua@163.com", "官方团队", "UTF-8"));
+            message.setFrom(new InternetAddress(mailUserName, "官方团队", "UTF-8"));
 
             // 3. To: 收件人（可以增加多个收件人、抄送、密送）
             message.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(receiveMailAccount, "UTF-8"));

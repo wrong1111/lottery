@@ -83,7 +83,7 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
         List<FootballVO> footballList = new ArrayList<>();
         //小于当前时间 的也不能投注了，
         //wyong edit 2023-11-12
-        List<FootballMatchDO> footballWinEvenLoseDist = footballMatchMapper.selectList(new QueryWrapper<FootballMatchDO>().lambda().eq(FootballMatchDO::getState, BettingStateEnum.YES.getKey()).gt(FootballMatchDO::getDeadline,new Date()));
+        List<FootballMatchDO> footballWinEvenLoseDist = footballMatchMapper.selectList(new QueryWrapper<FootballMatchDO>().lambda().eq(FootballMatchDO::getState, BettingStateEnum.YES.getKey()).gt(FootballMatchDO::getDeadline, new Date()));
         Map<String, List<FootballMatchDO>> map = footballWinEvenLoseDist.stream().collect(Collectors.groupingBy(FootballMatchDO::getStartTime));
         //对map的key进行排序
         map = map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
@@ -231,8 +231,11 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
     @TenantIgnore
     public BaseVO award() {
         //查询未出票的订单
+        log.debug("=======>[竞猜足球]=======");
         List<LotteryOrderDO> orderNotList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()).eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.FOOTBALL.getKey()));
+        log.debug("=======>[竞猜足球][未出票] 记录数: {} ", orderNotList.size());
         for (LotteryOrderDO lotteryOrderDO : orderNotList) {
+            log.debug("=======>[竞猜足球][未出票] 订单[{}]  彩种id:[{}] 验证是否已开奖  ", lotteryOrderDO.getOrderId(), lotteryOrderDO.getType());
             //查询下注的列表
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, lotteryOrderDO.getTargetIds()));
             Boolean flag = true;
@@ -240,11 +243,13 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                 FootballMatchDO footballMatch = footballMatchMapper.selectById(racingBallDO.getTargetId());
                 //如果比赛还没有出结果直接跳出
                 if (StrUtil.isBlank(footballMatch.getAward())) {
+                    log.info("=======>[竞猜足球][未出票] 订单[{}]  彩种id:[{}] 赛事:[{}] 未有赛果 <<<<<<<< ", lotteryOrderDO.getOrderId(), lotteryOrderDO.getType(), footballMatch.getNumber());
                     flag = false;
                     break;
                 }
             }
             if (flag) {
+                log.error("=======>[竞猜足球][未出票] 订单[{}]  彩种id:[{}] 已有赛果未出票，退票 <<<<<<<< ", lotteryOrderDO.getOrderId(), lotteryOrderDO.getType());
                 //如果订单为出票并且结果也出了情况下进行退票操作
                 UserDO userDO = userMapper.selectById(lotteryOrderDO.getUserId());
                 userDO.setGold(userDO.getGold().add(lotteryOrderDO.getPrice()));
@@ -258,7 +263,9 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
         }
         //查询足球已经下注的订单列表
         List<LotteryOrderDO> orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()).eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.FOOTBALL.getKey()));
+        log.debug("=======>[竞猜足球][待开奖]  数量:[{}]  ", orderList.size());
         for (LotteryOrderDO order : orderList) {
+            log.debug("=======>[竞猜足球][待开奖]  订单 :[{}]  start  ", order.getOrderId());
             //查询下注的列表
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
             //用戶下注列表
@@ -273,6 +280,7 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                 FootballMatchDO footballMatch = footballMatchMapper.selectById(racingBallDO.getTargetId());
                 //如果比赛还没有出结果直接跳出
                 if (StrUtil.isBlank(footballMatch.getAward())) {
+                    log.info("=======>[竞猜足球][待开奖]  订单 :[{}]  赛事[{}]未开奖 <<<<<<<< ", order.getOrderId(), footballMatch.getNumber());
                     flag = false;
                     break;
                 }
@@ -286,7 +294,9 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                 //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
                 Double price = FootballUtil.award(footballMatchList, multiple, pssTypeList, list);
                 //等于0相当于没有中奖
+                log.debug("=======>[竞猜足球][待开奖]  订单 :[{}]  中奖【{}】  ", order.getOrderId(), price);
                 if (price == 0) {
+                    log.info("=======>[竞猜足球][待开奖]  订单 :[{}]  未中奖 ", order.getOrderId());
                     order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
                 } else {
                     //已经中奖
@@ -296,11 +306,13 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                     DocumentaryUserDO documentaryUser = documentaryUserMapper.selectOne(new QueryWrapper<DocumentaryUserDO>().lambda().eq(DocumentaryUserDO::getLotteryOrderId, order.getId()));
 
                     if (ObjectUtil.isNotNull(documentary)) {
+                        log.debug("=======>[竞猜足球][已中奖]  订单 :[{}]  中奖【{}】是跟单发起人 [{}]  ", order.getOrderId(), price, documentary.getUserId());
                         //是发单订单
                         order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
                         BigDecimal winPrice = NumberUtil.round(price, 2);
                         order.setWinPrice(winPrice);
                     } else if (ObjectUtil.isNotNull(documentaryUser)) {
+                        log.debug("=======>[竞猜足球][已中奖]  订单 :[{}]  中奖【{}】是跟单订单 跟单人[{}]  ", order.getOrderId(), price, documentaryUser.getUserId());
                         //是跟单订单
                         //查询跟单是那个用户的订单
                         documentary = documentaryMapper.selectOne(new QueryWrapper<DocumentaryDO>().lambda().eq(DocumentaryDO::getId, documentaryUser.getDocumentaryId()));
@@ -309,6 +321,7 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                         BigDecimal proportionPrice = winPrice.multiply(new BigDecimal((float) documentary.getCommission() / 100)).setScale(2, RoundingMode.HALF_UP);
                         order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
                         order.setWinPrice(winPrice.subtract(proportionPrice));
+                        log.debug("=======>[竞猜足球][已中奖]  订单 :[{}]  中奖【{}】是跟单订单 跟单人[{}],佣金[{}],分佣[{}]  ", order.getOrderId(), price, documentary.getUserId(), documentary.getCommission(), proportionPrice.toPlainString());
                         //给发单用户加金额
                         UserDO userDO = userMapper.selectById(documentary.getUserId());
                         userDO.setGold(userDO.getGold().add(proportionPrice));
@@ -326,6 +339,7 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                         payOrder.setPrice(proportionPrice);
                         payOrderMapper.insert(payOrder);
                     } else {
+                        log.debug("=======>[竞猜足球][已中奖]  订单 :[{}]  中奖【{}】 个人订单  ", order.getOrderId(), price);
                         order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
                         order.setWinPrice(NumberUtil.round(price, 2));
                     }

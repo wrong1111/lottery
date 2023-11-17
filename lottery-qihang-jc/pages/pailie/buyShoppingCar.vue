@@ -14,23 +14,23 @@
 						<div class="selected_left">
 							<div class="selected_text">
 								<div class="selected_num">
-									<div class="content" v-for="a in arr.hundred">
+									<div class="content" v-for="a in arr.hundred" v-if="">
 										<p>{{a}}</p>
 									</div>
 									<span class="vertical" v-if="arr.hundred!=null">|
 									</span>
-									<div class="content" v-for="b in arr.ten">
+									<div class="content" v-for="b in arr.ten" v-if="">
 										<p>{{b}}</p>
 									</div>
 									<span class="vertical" v-if="arr.ten!=null">|
 									</span>
-									<div class="content" v-if="type==1 || type==2" v-for="c in arr.individual">
+									<div class="content" v-if="arr.mode==1 || arr.mode==2" v-for="c in arr.individual">
 										<p v-if="c.isGallbladder" style="font-size: 14px;">
 											{{'胆'+c.num}}
 										</p>
 										<p v-else>{{c.num}}</p>
 									</div>
-									<div v-if="type!=1 &&type!=2" class="content" v-for="c in arr.individual">
+									<div v-if="arr.mode!=1 &&arr.mode!=2" class="content" v-for="c in arr.individual">
 										<p>{{c}}</p>
 									</div>
 								</div>
@@ -87,14 +87,14 @@
 	export default {
 		data() {
 			return {
-				type: "",//玩法，
+				type: "", //玩法，
 				confirmIsShow: false,
 				placeData: [],
 				total: 0,
 				acount: 0,
 				times: 1,
 				issueNo: "",
-				lotid:'3',//彩种
+				lotid: '3', //彩种
 			}
 		},
 		filters: {
@@ -127,7 +127,7 @@
 		},
 		methods: {
 			//发起跟单
-			documentaryBtn(){
+			documentaryBtn() {
 				let data = uni.getStorageSync('pailie');
 				if (data.length <= 0) {
 					uni.showToast({
@@ -145,7 +145,7 @@
 					acount: this.acount,
 					times: this.times,
 					type: this.lotid,
-					storage:'pailie'
+					storage: 'pailie'
 				}
 				documentaryDigit(placeData)
 			},
@@ -174,6 +174,7 @@
 					delete item['uid']
 				})
 				place(data, "3").then(res => {
+					console.log('>>.排列返回数据项', res)
 					if (res.success) {
 						uni.showToast({
 							title: '下单成功',
@@ -229,10 +230,11 @@
 			},
 			//机选
 			random() {
+				console.log(' 玩法', this.type)
 				this.total = 0;
 				this.acount = 0;
 				let uid = Math.ceil(Math.random() * 9999999999999999)
-				if (this.type == 0 || this.type == 3) {
+				if (this.type == 0) {
 					let arr = this.globalUtil.randomFromZero(10, 3);
 					let obj = {
 						uid: uid,
@@ -242,6 +244,16 @@
 						individual: [arr[0]],
 						ten: [arr[1]],
 						hundred: [arr[2]]
+					}
+					this.calculation(obj);
+				} else if (this.type == 3) {
+					let arr = this.globalUtil.randomFromZero(27, 1);
+					let obj = {
+						uid: uid,
+						mode:3,
+						notes: 1,
+						total: 2,
+						individual: [arr[0]],
 					}
 					this.calculation(obj);
 				} else if (this.type == 1) {
@@ -282,14 +294,26 @@
 						individual: data,
 					}
 					this.calculation(obj);
-				} else if (this.type == 4 || this.type == 5) {
-					let arr = this.globalUtil.randomFromZero(10, 3);
+				} else if (this.type == 4) {
+					//组选和值
+					let arr = this.globalUtil.randomFromZero(26, 1);
 					let obj = {
 						uid: uid,
-						mode: 2,
+						mode: 4,
 						notes: 1,
 						total: 2,
 						individual: arr,
+					}
+					this.calculation(obj);
+				} else if (this.type == 5) {
+					let arr = this.globalUtil.randomFromZero(10, 1);
+					let obj = {
+						uid: uid,
+						mode: 5,
+						notes: 1,
+						total: 2,
+						individual: arr,
+						ten: this.globalUtil.randomFromZero(10, 1)
 					}
 					this.calculation(obj);
 				}
@@ -463,7 +487,8 @@
 						color: #FF5562;
 					}
 				}
-				.bottom_right1{
+
+				.bottom_right1 {
 					text-align: center;
 					//background: #FF3F43;
 					color: #FFFFFF;
@@ -475,6 +500,7 @@
 					align-items: center;
 					justify-content: center;
 				}
+
 				.bottom_right {
 					/*border: none;*/
 					text-align: center;

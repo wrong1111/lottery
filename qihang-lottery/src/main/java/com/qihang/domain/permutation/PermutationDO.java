@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -112,6 +113,21 @@ public class PermutationDO implements Serializable {
      * 更新时间
      */
     private Date updateTime;
+
+    /**
+     * 中注数
+     */
+    Integer awardNotes;
+
+    /**
+     * 中金额
+     */
+    String awardMoney;
+
+    /**
+     * 中号码
+     */
+    String awardContent;
 
 
 }

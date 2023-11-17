@@ -2,17 +2,21 @@ package com.qihang.service.permutation;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.thread.ThreadFactoryBuilder;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.log.LogUtil;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
-import com.qihang.common.util.reward.GrandLottoUtil;
-import com.qihang.common.util.reward.PermutationUtil;
+import com.qihang.common.util.reward.*;
+import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
+import com.qihang.common.vo.BonusVo;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.grandlotto.dto.GrandLottoObjDTO;
 import com.qihang.controller.permutation.app.dto.PlaceOrderDTO;
@@ -35,21 +39,25 @@ import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.permutation.PermutationAwardMapper;
 import com.qihang.mapper.permutation.PermutationMapper;
 import com.qihang.mapper.user.UserMapper;
+import com.qihang.service.documentary.DocumentaryCommissionHelper;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author bright
  * @since 2022-10-10
  */
+@Slf4j
 @Service
 public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, PermutationDO> implements IPermutationService {
 
@@ -71,6 +79,9 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
 
     @Resource
     private LogUtil logUtil;
+
+    @Resource
+    DocumentaryCommissionHelper documentaryCommissionHelper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -241,19 +252,16 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
         return commonList;
     }
 
+
     /*
      排列开奖逻辑。
+     数字彩兑奖逻辑
      */
     @Override
     @TenantIgnore
     public BaseVO calculation(PermutationAwardDO permutationAward) {
-        //修改所有这期下注的开奖结果
-        PermutationDO permutation = new PermutationDO();
-        permutation.setReward(permutationAward.getReward());
-        permutationMapper.update(permutation, new QueryWrapper<PermutationDO>().lambda().eq(PermutationDO::getStageNumber, permutationAward.getStageNumber()).eq(PermutationDO::getType, permutationAward.getType()));
-
         //最后出奖的时候，如果还有未出票的订单进行退回金额
-        List<LotteryOrderDO> retreatOrderList = orderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.ARRAY.getKey()).eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()).eq(LotteryOrderDO::getType, permutationAward.getType()));
+        List<LotteryOrderDO> retreatOrderList = orderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()).eq(LotteryOrderDO::getType, permutationAward.getType()));
         for (LotteryOrderDO lotteryOrderDO : retreatOrderList) {
             List<PermutationDO> permutationList = permutationMapper.selectBatchIds(Convert.toList(Integer.class, lotteryOrderDO.getTargetIds()));
             for (PermutationDO permutationDO : permutationList) {
@@ -269,74 +277,92 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
                 }
             }
         }
-        List<LotteryOrderDO> orderList = orderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getType, permutationAward.getType()).eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
+        List<LotteryOrderDO> orderList = orderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getStageNumber, permutationAward.getStageNumber()).eq(LotteryOrderDO::getType, permutationAward.getType()).eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
         for (LotteryOrderDO lotteryOrderDO : orderList) {
+            log.debug("彩种[{}],订单[{}] 期号[{}],开奖号码:[{}]开始兑奖 >>>>", LotteryOrderTypeEnum.valueOFS(lotteryOrderDO.getType()).getValue(), lotteryOrderDO.getOrderId(), permutationAward.getStageNumber(), permutationAward.getReward());
             //根据id查询投注信息
             List<PermutationDO> permutationList = permutationMapper.selectBatchIds(Convert.toList(Integer.class, lotteryOrderDO.getTargetIds()));
             //判断排列3选的是直选还是组三还是组九
-            Long price = 0L;
+            Double price = 0d;
             for (PermutationDO permutationDO : permutationList) {
                 if (permutationDO.getStageNumber().equals(permutationAward.getStageNumber())) {
                     Boolean flag = false;
-                    Long bonus = 0L;
+                    double bonus = 0d;
                     //是排列3还是排列5
                     //wyong edit  福彩3D
                     if (permutationAward.getType().equals(LotteryOrderTypeEnum.ARRAY.getKey()) || permutationAward.getType().equals(LotteryOrderTypeEnum.FC3D.getKey())) {
                         //直选
                         if (ObjectUtil.equal(permutationDO.getMode(), "0")) {
                             bonus = PermutationUtil.directlyElected(permutationDO.getHundred().split(","), permutationDO.getTen().split(","), permutationDO.getIndividual().split(","), permutationAward.getReward());
-                            flag = !bonus.equals(0L) ? true : false;
+                            flag = bonus > 0 ? true : false;
                         }
                         //组三
                         if (ObjectUtil.equal(permutationDO.getMode(), "1")) {
                             bonus = PermutationUtil.GroupThree(permutationDO.getIndividual(), permutationAward.getReward());
-                            flag = !bonus.equals(0L) ? true : false;
+                            flag = bonus > 0 ? true : false;
                         }
                         //组六
                         if (ObjectUtil.equal(permutationDO.getMode(), "2")) {
                             //计算用户买的是否中奖
                             bonus = PermutationUtil.groupSix(permutationDO.getIndividual(), permutationAward.getReward());
-                            flag = !bonus.equals(0L) ? true : false;
+                            flag = bonus > 0 ? true : false;
                         }
                         //直选和值
                         if (ObjectUtil.equal(permutationDO.getMode(), "3")) {
                             //计算用户买的是否中奖
                             bonus = PermutationUtil.directlyElectedGentle(permutationDO.getIndividual().split(","), permutationAward.getReward());
-                            flag = !bonus.equals(0L) ? true : false;
+                            flag = bonus > 0 ? true : false;
                         }
                         //组选和值
                         if (ObjectUtil.equal(permutationDO.getMode(), "4")) {
                             //计算用户买的是否中奖
                             bonus = PermutationUtil.groupGentle(permutationDO.getIndividual().split(","), permutationAward.getReward());
-                            flag = !bonus.equals(0L) ? true : false;
+                            flag = bonus > 0 ? true : false;
                         }
                         //组三复式
                         if (ObjectUtil.equal(permutationDO.getMode(), "5")) {
                             //计算用户买的是否中奖
                             bonus = PermutationUtil.compound(permutationDO.getTen().split(","), permutationDO.getIndividual().split(","), permutationAward.getReward());
-                            flag = !bonus.equals(0L) ? true : false;
+                            flag = bonus > 0 ? true : false;
                         }
                     } else if (permutationAward.getType().equals(LotteryOrderTypeEnum.ARRANGE.getKey())) {
                         bonus = PermutationUtil.arrangeElected(permutationDO.getMyriad().split(","), permutationDO.getKilo().split(","), permutationDO.getHundred().split(","), permutationDO.getTen().split(","), permutationDO.getIndividual().split(","), permutationAward.getReward());
-                        flag = !bonus.equals(0L) ? true : false;
+                        flag = bonus > 0 ? true : false;
                     } else if (permutationAward.getType().equals(LotteryOrderTypeEnum.SEVEN_STAR.getKey())) {
                         //七星彩开奖算法
                         bonus = PermutationUtil.sevenStarLottery(permutationDO.getHundredMyriad().split(","), permutationDO.getTenMyriad().split(","), permutationDO.getMyriad().split(","), permutationDO.getKilo().split(","), permutationDO.getHundred().split(","), permutationDO.getTen().split(","), permutationDO.getIndividual().split(","), permutationAward.getReward(), permutationAward.getMoneyAward());
-                        flag = !bonus.equals(0L) ? true : false;
+                        flag = bonus > 0 ? true : false;
                     } else if (permutationAward.getType().equals(LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
                         //大乐透开奖算法
                         bonus = GrandLottoUtil.award(JSONUtil.toList(permutationDO.getTen(), GrandLottoObjDTO.class), JSONUtil.toList(permutationDO.getIndividual(), GrandLottoObjDTO.class), permutationAward.getReward(), permutationAward.getMoneyAward().split(",")[0], permutationAward.getMoneyAward().split(",")[1]);
-                        flag = !bonus.equals(0L) ? true : false;
+                        flag = bonus > 0 ? true : false;
+                    } else if (permutationAward.getType().equals(LotteryOrderTypeEnum.FCQLC.getKey())) {
+                        //七乐彩开奖算法
+                        BonusVo bonusVo = GrandLottoUtil.awardQLC(JSONUtil.toList(permutationDO.getIndividual(), GrandLottoObjDTO.class), permutationAward.getReward(), permutationAward.getMoneyAward());
+                        flag = bonusVo.getAward();
+                        bonus = bonusVo.getMoney();
+                    } else if (permutationAward.getType().equals(LotteryOrderTypeEnum.FCSSQ.getKey())) {
+                        //双色球
+                        BonusVo bonusVo = GrandLottoUtil.awardSSQ(JSONUtil.toList(permutationDO.getTen(), GrandLottoObjDTO.class), JSONUtil.toList(permutationDO.getIndividual(), GrandLottoObjDTO.class), permutationAward.getReward(), permutationAward.getMoneyAward());
+                        flag = bonusVo.getAward();
+                        bonus = bonusVo.getMoney();
+                    } else if (permutationAward.getType().equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
+                        //快乐8
+                        List<BonusVo> bonusVo = GrandLottoUtil.awardKL8(JSONUtil.toList(permutationDO.getIndividual(), GrandLottoObjDTO.class), permutationAward.getReward(), permutationAward.getMoneyAward(), permutationDO.getMode());
+                        flag = !bonusVo.isEmpty();
+                        bonus = bonusVo.stream().mapToDouble(item -> item.getAwardNotes() * item.getMoney()).sum();
                     }
 
                     //TODO 开奖算法
                     //wyong edit
                     if (flag) {
-                        price += bonus * permutationDO.getTimes();
+                        price += Double.valueOf(bonus * permutationDO.getTimes());
                     }
                 }
             }
-            if (price != 0) {
+            log.debug("彩种[{}],订单[{}]  中奖金额[{}] >>>>", LotteryOrderTypeEnum.valueOFS(lotteryOrderDO.getType()).getValue(), lotteryOrderDO.getOrderId(), price);
+            if (price > 0) {
+                log.debug("彩种[{}],订单[{}]  已中奖 >>>>", LotteryOrderTypeEnum.valueOFS(lotteryOrderDO.getType()).getValue(), lotteryOrderDO.getOrderId());
                 //中奖就修改订单状态为待派奖
                 lotteryOrderDO.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
                 lotteryOrderDO.setUpdateTime(new Date());
@@ -344,13 +370,100 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
                 lotteryOrderDO.setWinPrice(new BigDecimal(price));
                 orderMapper.updateById(lotteryOrderDO);
             } else {
+                log.debug("彩种[{}],订单[{}]  未中奖 >>>>", LotteryOrderTypeEnum.valueOFS(lotteryOrderDO.getType()).getValue(), lotteryOrderDO.getOrderId());
+                documentaryCommissionHelper.processCommiss(LotteryOrderTypeEnum.valueOFS(permutationAward.getType()).getValue(), lotteryOrderDO, price);
                 //没有状态改为未中奖
                 lotteryOrderDO.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
                 lotteryOrderDO.setUpdateTime(new Date());
                 orderMapper.updateById(lotteryOrderDO);
             }
         }
+        //另外的
         return new BaseVO();
+
+    }
+
+    /*
+     *  数字彩兑奖逻辑
+     * */
+    @Override
+    public BaseVO calculation(String type) {
+        log.debug(" 开奖 彩种[{}],name:[{}] ", type, LotteryOrderTypeEnum.valueOFS(type).getValue());
+        List<LotteryOrderDO> orderList = orderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getType, type).eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()).orderByAsc(LotteryOrderDO::getStageNumber));
+        if (CollectionUtils.isEmpty(orderList)) {
+            return new BaseVO();
+        }
+        for (LotteryOrderDO order : orderList) {
+            Integer issueNo = order.getStageNumber();
+            PermutationAwardDO permutationAwardDO = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).eq(PermutationAwardDO::getStageNumber, issueNo).orderByDesc(PermutationAwardDO::getCreateTime));
+            if (null == permutationAwardDO) {
+                log.error(" 开奖 彩种[{}],name:[{}] 期号[{}] 没有开奖数据", type, LotteryOrderTypeEnum.valueOFS(type).getValue(), issueNo);
+                break;
+            }
+            calculation(permutationAwardDO);
+
+            //计算schemeDetail
+            calculationBySchemeDetail(order, permutationAwardDO);
+        }
+        return new BaseVO();
+    }
+
+    @Override
+    public BaseVO calculationBySchemeDetail(String type) {
+        log.debug(" 开奖 彩种[{}],name:[{}] ", type, LotteryOrderTypeEnum.valueOFS(type).getValue());
+        List<LotteryOrderDO> orderList = orderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getType, type).eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()).orderByAsc(LotteryOrderDO::getStageNumber));
+        if (CollectionUtils.isEmpty(orderList)) {
+            return new BaseVO();
+        }
+        for (LotteryOrderDO order : orderList) {
+            Integer issueNo = order.getStageNumber();
+            PermutationAwardDO permutationAwardDO = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).eq(PermutationAwardDO::getStageNumber, issueNo).orderByDesc(PermutationAwardDO::getCreateTime));
+            if (null == permutationAwardDO || StringUtils.isBlank(permutationAwardDO.getReward())) {
+                log.error(" 开奖 彩种[{}],name:[{}] 期号[{}] 没有开奖数据", type, LotteryOrderTypeEnum.valueOFS(type).getValue(), issueNo);
+                break;
+            }
+            calculationBySchemeDetail(order, permutationAwardDO);
+        }
+        return new BaseVO();
+    }
+
+
+    @Override
+    public BaseVO calculationBySchemeDetail(LotteryOrderDO order, PermutationAwardDO permutationAwardDO) {
+        List<DigitBall> digitBalls = JSONUtil.toList(order.getSchemeDetails(), DigitBall.class);
+
+        //调用线程池
+        Future<List<DigitBall>> future = DigitBallAwardUtils.threadPool.submit(new DigitBallAward(digitBalls, permutationAwardDO));
+        Map<String, Object> result = new HashMap<>();
+        try {
+            List<DigitBall> balls = future.get();
+            int awardCounts = 0;
+            double awardMoney = 0;
+            for (DigitBall ball : balls) {
+                if (ball.getAward()) {
+                    awardMoney = awardMoney + Double.valueOf(ball.getMoney());
+                    awardCounts++;
+                }
+            }
+            log.error(" 彩种[{}],订单[{}],中奖金额[{}],中奖注数[{}]", LotteryOrderTypeEnum.valueOFS(order.getType()).getValue(), order.getOrderId(), awardMoney, awardCounts);
+            String json = JSON.toJSONString(balls);
+            LotteryOrderDO updateOrder = new LotteryOrderDO();
+            updateOrder.setSchemeDetails(json);
+            //updateOrder.setWinPrice(BigDecimal.valueOf(awardMoney));
+            updateOrder.setWinCounts(awardCounts);
+            orderMapper.update(updateOrder, new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getId, order.getId()));
+            result.put("awardCounts", awardCounts);
+            result.put("awardMoney", awardMoney);
+            result.put("issueNo", permutationAwardDO.getStageNumber());
+            result.put("reward", permutationAwardDO.getReward());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        BaseDataVO base = new BaseDataVO();
+        base.setData(result);
+        return base;
     }
 
     private void addRecord(LotteryOrderDO lotteryOrder) {
