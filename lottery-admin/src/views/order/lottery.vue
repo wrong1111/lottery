@@ -214,10 +214,10 @@
       </el-table-column>
     </el-table>
     <el-drawer :title="title" :visible.sync="drawer" :with-header="true" :show-close="true"
-      :style="{ height: '800px' }" style="overflow-y: auto;">
+      :style="{ height: '1400px' }" style="overflow-y: auto;">
       <div>
         彩种 {{lotName}}
-       <el-table :data="itemInfo" border v-if="itemInfo.length>0" name="table1" :height="800">
+       <el-table :data="itemInfo" border v-if="itemInfo.length>0" name="table1" :height="1200">
           <el-table-column prop="idx" width="100" align="center" label="序 号">
 
           </el-table-column>
@@ -236,7 +236,7 @@
           </el-table-column>
         </el-table>
 
-        <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2"  :height="800">
+        <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2"  :height="1200">
           <el-table-column prop="id" width="100" align="center" label="序 号">
 
           </el-table-column>
@@ -621,7 +621,7 @@
       // ---------------- 其他格式化 -----------------------
       // 投注数量
       getBettingNotes(row) {
-        if (this.isSportRace(row.type)) {
+        if (this.isSportRace(row)) {
           if (row.racingBallList.length) {
             return row.racingBallList[0].notes + "注"
           }
@@ -708,7 +708,7 @@
             case "2":
               return "组六";
             default:
-              return "";
+              return "直选";
           }
         }
 
