@@ -8,3 +8,12 @@ export function getWithdrawalList(data) {
     data: data,
   });
 }
+
+// 处理提现
+export function processWithdrawal(data) {
+  return request({
+    url: "/admin/withdrawal/examine",
+    method: "put",
+    data: data,
+  });
+}

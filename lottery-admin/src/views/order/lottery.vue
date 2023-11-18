@@ -88,7 +88,7 @@
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="中奖金额：">
-                    <span :class="getAward(scope.row)">{{ scope.row.winPrice }}</span>
+                    <span :class="getAward(scope.row)">{{ (scope.row.winPrice>0?scope.row.winPrice:'') }}</span>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
@@ -171,7 +171,8 @@
                       <el-button size="mini" type="warning" @click="refuseSigle(scope.row)">拒绝</el-button>
                     </template>
                     <el-button size="mini" type="danger" @click="retreatSigle(scope.row)">退票</el-button>
-                    <el-button size="mini" type="danger" @click="showInfo(scope.row)">详情</el-button>
+                    <el-button size="mini" type="danger" @click="showInfo(scope.row)"
+                      v-if="!isSportRace(scope.row)">详情</el-button>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -217,7 +218,8 @@
       :style="{ height: '1400px' }" style="overflow-y: auto;">
       <div>
         彩种 {{lotName}}
-       <el-table :data="itemInfo" border v-if="itemInfo.length>0" name="table1" :height="1200">
+        <el-table :data="itemInfo" border v-if="itemInfo.length>0" name="table1" :height="1200"
+          :row-class-name="myclass">
           <el-table-column prop="idx" width="100" align="center" label="序 号">
 
           </el-table-column>
@@ -234,9 +236,14 @@
               {{getNoSportsBettingStyle(lotId,scope.row.mode)}}
             </template>
           </el-table-column>
+          <el-table-column prop="reaward" width="100" align="center" label="结果">
+            <template slot-scope="scope">
+              {{ scope.row.award?  scope.row.money:''}}
+            </template>
+          </el-table-column>
         </el-table>
 
-        <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2"  :height="1200">
+        <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2" :height="1200">
           <el-table-column prop="id" width="100" align="center" label="序 号">
 
           </el-table-column>
@@ -404,6 +411,12 @@
       this.getList();
     },
     methods: {
+      myclass(row) {
+        if (row.award) {
+          return 'awardRow'
+        }
+        return ''
+      },
       getContent(txt) {
         return txt
       },
@@ -430,7 +443,7 @@
           return
         } else {
           //数字展示
-          console.log(row.schemeDetails[0])
+          //console.log(row.schemeDetails[0])
           let items = row.schemeDetails
           let itemArys = []
           for (let i = 0; i < items.length; i++) {
@@ -438,7 +451,10 @@
               idx: i + 1,
               cont: items[i]['content'],
               mode: items[i]['mode'],
-              stageNumber: items[i]['stageNumber']
+              stageNumber: items[i]['stageNumber'],
+              reaward: typeof(items[i]['award']) == 'undefined' ? false : true,
+              award: typeof(items[i]['award']) == 'undefined' ? false : items[i]['award'],
+              money: typeof(items[i]['money']) == 'undefined' ? '0' : items[i]['money'],
             })
           }
 
@@ -501,8 +517,9 @@
       // 根据比赛显示数据
       // 0 足彩 1 篮彩 2 北京单场 3 排列3 4排列5  5七星彩  6 14场胜负 7任选九 8大乐透 21 3D，22七乐彩 23 快乐8，24 双色球
       isSportRace(row) {
-        if (row.type === "3" || row.type === "4" || row.type === "5" || row.type === "8" || row.type === "21" || row
-          .type === "22" || row.type === "23" || row.type === "24") {
+        // console.log(row.type)
+        if (row.type == "3" || row.type == "4" || row.type == "5" || row.type == "8" || row.type == "21" || row
+          .type == "22" || row.type == "23" || row.type == "24") {
           return false;
         }
         return true;
@@ -715,7 +732,7 @@
       },
       // 中奖Style
       getAward(row) {
-        if (row.state === "4") {
+        if (row.state == "4" || row.state == '3') {
           return "award";
         }
         return "";
@@ -742,10 +759,30 @@
       },
       // 一键派奖
       awardAll() {
-
+        //弹窗提示，是否有足够的店铺保证金扣除
+          this.$confirm('确定要 一键派奖 吗？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            // 用户点击了确认按钮，执行后续处理
+            // 在这里编写你需要执行的代码
+            const data = {
+              //id: row.id, 没有ID默认未出的全出，
+            };
+            orderAward(data).then((response) => {
+              if (!response.errorCode) {
+                this.getList();
+              }
+            });
+          }).catch(() => {
+            // 用户点击了取消按钮，可以选择执行一些其他操作
+          });
       },
       // 单个派奖
-      awardSigle(row) {},
+      awardSigle(row) {
+
+      },
       // 一键出票
       ticketAll() {
         //弹窗提示，是否有足够的店铺保证金扣除
@@ -771,7 +808,7 @@
       },
       // 单个出票
       ticketSigle(row) {
-        console.log(row);
+        //  console.log(row);
         const data = {
           state: "1",
           id: row.id,
@@ -825,7 +862,13 @@
 
   .award {
     color: red;
+
   }
+
+  .awardRow {
+    background-color: red;
+  }
+
 
   .red {
     color: red;

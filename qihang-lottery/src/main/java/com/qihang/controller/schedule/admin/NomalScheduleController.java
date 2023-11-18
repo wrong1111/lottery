@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.domain.permutation.PermutationAwardDO;
+import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import com.qihang.reptile.SpiderRunner;
 import com.qihang.service.basketball.IBasketballMatchService;
 import com.qihang.service.beidan.IBeiDanMatchService;
@@ -97,12 +98,14 @@ public class NomalScheduleController {
                 log.info("任九开奖 End");
                 break;
             case "15":
-                log.info("排列开奖->期号:{},type:{}", issueNo, lotId);
+                log.info("排列开奖->期号:{},lotId:{}", issueNo, lotId);
                 //查询当期开奖信息
                 PermutationAwardDO awardDO = permutationAwardService.getOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, lotId).eq(PermutationAwardDO::getStageNumber, issueNo).orderByDesc(PermutationAwardDO::getCreateTime));
                 if (null != awardDO) {
-                    log.info("排列3开奖->期号:{},type:{},info:{}", issueNo, lotId, awardDO);
+                    log.info("排列开奖->{},期号:{},type:{},info:{}", LotteryOrderTypeEnum.valueOFS("" + lotId).getValue(), issueNo, lotId, awardDO);
                     permutationService.calculation(awardDO);
+                } else {
+                    log.info("排列开奖->{},期号:{},type:{} 未开奖", LotteryOrderTypeEnum.valueOFS("" + lotId).getValue(), issueNo, lotId);
                 }
                 log.info("排列开奖 End");
                 break;

@@ -377,8 +377,10 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
                 lotteryOrderDO.setUpdateTime(new Date());
                 orderMapper.updateById(lotteryOrderDO);
             }
+            //另外 计算schemedetail
+            this.calculationBySchemeDetail(lotteryOrderDO, permutationAward);
         }
-        //另外的
+
         return new BaseVO();
 
     }
@@ -386,6 +388,7 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
     /*
      *  数字彩兑奖逻辑
      * */
+    @TenantIgnore
     @Override
     public BaseVO calculation(String type) {
         log.debug(" 开奖 彩种[{}],name:[{}] ", type, LotteryOrderTypeEnum.valueOFS(type).getValue());
@@ -402,12 +405,11 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             }
             calculation(permutationAwardDO);
 
-            //计算schemeDetail
-            calculationBySchemeDetail(order, permutationAwardDO);
         }
         return new BaseVO();
     }
 
+    @TenantIgnore
     @Override
     public BaseVO calculationBySchemeDetail(String type) {
         log.debug(" 开奖 彩种[{}],name:[{}] ", type, LotteryOrderTypeEnum.valueOFS(type).getValue());
@@ -427,7 +429,7 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
         return new BaseVO();
     }
 
-
+    @TenantIgnore
     @Override
     public BaseVO calculationBySchemeDetail(LotteryOrderDO order, PermutationAwardDO permutationAwardDO) {
         List<DigitBall> digitBalls = JSONUtil.toList(order.getSchemeDetails(), DigitBall.class);

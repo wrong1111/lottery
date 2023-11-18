@@ -260,9 +260,9 @@
 						<uni-tr v-for="(record,index) in lotteryOrder.ballInfoList" :key="index">
 							<uni-td align="center">{{record.number}}</uni-td>
 							<uni-td align="center">{{record.homeTeam}}
-								<span class="rangqiu"
-									:class="{rangqiuBlue:record.letBall < 0}"><br> ({{record.letBall}})</span>
-								 <br>{{record.visitingTeam}}
+								<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}"><br>
+									({{record.letBall}})</span>
+								<br>{{record.visitingTeam}}
 							</uni-td>
 							<uni-td align="center">
 								<!-- notLet.describe==record.award[0] 如果选择的和中奖的结果一样标记为红色 -->
@@ -340,9 +340,9 @@
 						<uni-tr v-for="(record,index) in lotteryOrder.ballInfoList" :key="index">
 							<uni-td align="center">{{record.number}}</uni-td>
 							<uni-td align="center">{{record.visitingTeam}}
-								<span class="rangqiu"
-									:class="{rangqiuBlue:record.letBall < 0}"><br> ({{record.letBall}})</span>
-								 <br>{{record.homeTeam}}
+								<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}"><br>
+									({{record.letBall}})</span>
+								<br>{{record.homeTeam}}
 							</uni-td>
 							<uni-td align="center">
 								<span :style="winNegative.describe==record.award[0]?'color:#FF3F43':''"
@@ -411,8 +411,9 @@
 					<uni-tr v-for="(record,index) in lotteryOrder.ballInfoList" :key="index">
 						<uni-td align="center">{{record.number}}</uni-td>
 						<uni-td align="center">{{record.homeTeam}}
-							<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}"><br> ({{record.letBall}})</span>
-							 <br>{{record.visitingTeam}}
+							<span class="rangqiu" :class="{rangqiuBlue:record.letBall < 0}"><br>
+								({{record.letBall}})</span>
+							<br>{{record.visitingTeam}}
 						</uni-td>
 						<uni-td align="center">
 							<span :style="record.halfFullCourt!=undefined&&lets.describe==(Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)>Number(record.halfFullCourt.split(',')[1].split(':')[1])?'胜'
@@ -538,7 +539,7 @@
 
 			<!-- 竞赛方案详情，展示 schemeDetails-->
 			<uni-card class="phone"
-				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type!=3 && lotteryOrder.type!=21 &&lotteryOrder.type!=4&&lotteryOrder.type!=5&&lotteryOrder.type!=8&&lotteryOrder.type!=24&& lotteryOrder.type!=22&& lotteryOrder.type!=23">
+				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&isSportType(lotteryOrder.type)">
 				<p>
 					<view class="title">方案详情</view>
 					<uni-table border stripe emptyText="暂无更多数据" class="make">
@@ -593,14 +594,15 @@
 			</uni-card>
 			<!-- 数字彩 详情 展示 schemeDeatils -->
 			<uni-card class="phone"
-				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&lotteryOrder.type==3 ||lotteryOrder.type ==21||lotteryOrder.type==4||lotteryOrder.type==5||lotteryOrder.type==8||lotteryOrder.type==24||lotteryOrder.type==22||lotteryOrder.type==23">
+				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&!isSportType(lotteryOrder.type)">
 				<p>
-					<view class="title">方案详情</view>
+					<view class=" title">方案详情</view>
 					<uni-table border stripe emptyText="暂无更多数据" class="make">
 						<!-- 表头行 -->
 						<uni-tr>
 							<uni-th width="20px" align="center">期号</uni-th>
-							<uni-th align="center" width="30px" v-if="lotteryOrder.type==3 ||lotteryOrder.type ==21 ||lotteryOrder.type==23">玩法</uni-th>
+							<uni-th align="center" width="30px"
+								v-if="lotteryOrder.type==3 ||lotteryOrder.type ==21 ||lotteryOrder.type==23">玩法</uni-th>
 							<uni-th align="center" width="80px">中奖组合</uni-th>
 							<uni-th align="center" width="30px">倍数</uni-th>
 							<uni-th align="center" width="120px">预测奖金</uni-th>
@@ -623,7 +625,11 @@
 									{{lotteryOrder.times}}
 								</uni-td>
 								<uni-td align="center"
-									v-if="lotteryOrder.type==3||lotteryOrder.type==4 ||lotteryOrder.type==21||lotteryOrder.type ==23">{{item.forecastBonus}}</uni-td>
+									v-if="((lotteryOrder.type==3||lotteryOrder.type==4 ||lotteryOrder.type==21||lotteryOrder.type ==23)&&typeof(item.award)=='undefined')">{{item.forecastBonus}}</uni-td>
+								<uni-td align="center"
+									v-else-if="typeof(item.award)!='undefined' && item.award"><b style="color: #FF3F43;font-size: 18px;">{{item.money}}</b></uni-td>
+								<uni-td align="center"
+									v-else-if="typeof(item.award)!='undefined' && !item.award">未中奖</uni-td>
 								<uni-td align="center" v-else>
 									浮动奖金以官网出奖为准
 								</uni-td>
@@ -638,7 +644,9 @@
 				<view class="uni-body">创建时间：{{lotteryOrder.createTime|formatDate(that)}}</view>
 				<view class="uni-body">出票时间：{{lotteryOrder.ticketingTime|formatDate(that)}}</view>
 				<view class="uni-body" v-if="lotteryOrder.type=='2'">提示：赔率以最后出奖的赔率为准</view>
-				<view class="uni-body" v-else-if="lotteryOrder.type=='0'|| lotteryOrder.type=='1' ||lotteryOrder.type=='6' || lotteryOrder.type=='7' ">提示：赔率以实际出票的赔率为准</view>
+				<view class="uni-body"
+					v-else-if="lotteryOrder.type=='0'|| lotteryOrder.type=='1' ||lotteryOrder.type=='6' || lotteryOrder.type=='7' ">
+					提示：赔率以实际出票的赔率为准</view>
 				<view class="uni-body" v-else>提示：中奖金额以实际出奖金额的为准</view>
 			</uni-card>
 			<!-- 彩票出票照片-->
@@ -793,6 +801,13 @@
 					uni.navigateBack();
 				}
 			},
+			isSportType(type) {
+				if (type == 3 || type == 21 || type == 4 || type == 5 || type == 8 || type == 24 || type == 22 || type ==
+					23) {
+					return false
+				}
+				return true
+			},
 			//初始化事件
 			init(id) {
 				uni.showLoading();
@@ -801,10 +816,7 @@
 					if (res.schemeDetails != null && res.schemeDetails != undefined && res.schemeDetails != "") {
 						this.lotteryOrder.schemeDetails = JSON.parse(res.schemeDetails)
 						//过滤掉数字彩 
-						if (this.lotteryOrder.type != 3 && this.lotteryOrder.type != 21 && this.lotteryOrder
-							.type != 4 && this.lotteryOrder.type !=
-							5 && this.lotteryOrder.type != 8 && this.lotteryOrder.type != 24 && this.lotteryOrder
-							.type != 22 && this.lotteryOrder.type != 23) {
+						if (!this.isSportType(this.lotteryOrder.type)) {
 							this.lotteryOrder.schemeDetails.map((item, index) => {
 								item.forecastBonus = parseFloat((item.forecastBonus / item.notes) * this
 									.lotteryOrder.times).toFixed(2)
@@ -819,15 +831,17 @@
 								.content))
 							//將比賽结果转换成数组，并返回
 							if (item.award != null) {
-								this.$set(this.lotteryOrder.ballInfoList[idx], "award", item.award.split(
-									','))
+								this.$set(this.lotteryOrder.ballInfoList[idx], "award", item.award
+									.split(
+										','))
 							} else {
 								//考虑比赛结果还没有出的话设置一个默认值，防止报错
 								var moren = ["", "", "", "", ""]
 								this.$set(this.lotteryOrder.ballInfoList[idx], "award", moren)
 							}
 							if (item.bonusOdds != null) {
-								this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", item.bonusOdds
+								this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", item
+									.bonusOdds
 									.split(','))
 							} else {
 								//考虑比赛结果还没有出的话设置一个默认值，防止报错
@@ -849,6 +863,7 @@
 							if (item.mode == "1" || item.mode == "2") {
 								item.individual = JSON.parse(item.individual)
 							}
+							item.reward = this.lotteryOrder.reaward
 						})
 					}
 					//处理大乐透 ,双色球,七乐彩
@@ -857,6 +872,7 @@
 						this.lotteryOrder.recordList.map(item => {
 							item.ten = JSON.parse(item.ten)
 							item.individual = JSON.parse(item.individual)
+							item.reward = this.lotteryOrder.reaward
 						})
 					}
 				})

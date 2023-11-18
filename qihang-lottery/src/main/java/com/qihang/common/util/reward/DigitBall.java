@@ -20,6 +20,7 @@ public class DigitBall implements Serializable {
     String money;
     String awardContent;
     String level;
+    String forecastBonus;
 
 
 }

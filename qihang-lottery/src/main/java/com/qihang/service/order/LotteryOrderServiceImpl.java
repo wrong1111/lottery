@@ -38,6 +38,7 @@ import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.log.LogDO;
 import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.order.PayOrderDO;
+import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.permutation.PermutationDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.shop.ShopDO;
@@ -60,6 +61,7 @@ import com.qihang.mapper.football.FootballMatchMapper;
 import com.qihang.mapper.log.LogMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.order.PayOrderMapper;
+import com.qihang.mapper.permutation.PermutationAwardMapper;
 import com.qihang.mapper.permutation.PermutationMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.SysUserMapper;
@@ -137,6 +139,9 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
     @Resource
     private WithdrawalMapper withdrawalMapper;
 
+    @Resource
+    PermutationAwardMapper permutationAwardMapper;
+
     @Override
     public CommonListVO<LotteryOrderVO> getLotteryOrderPage(LotteryOrderDTO lotteryOrder, Integer userId) {
         CommonListVO<LotteryOrderVO> commonList = new CommonListVO<>();
@@ -179,6 +184,14 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         LotteryOrderDO lotteryOrder = lotteryOrderMapper.selectById(id);
         //转换vo
         LotteryOrderVO lotteryOrderVO = BeanUtil.copyProperties(lotteryOrder, LotteryOrderVO.class);
+        lotteryOrderVO.setReaward("");
+        //是否有开奖
+        if (null != lotteryOrder.getStageNumber()) {
+            PermutationAwardDO permutationAwardDO = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, lotteryOrder.getType()).eq(PermutationAwardDO::getStageNumber, lotteryOrder.getStageNumber()));
+            if (null != permutationAwardDO && StringUtils.isNotBlank(permutationAwardDO.getReward())) {
+                lotteryOrderVO.setReaward(permutationAwardDO.getReward());
+            }
+        }
         List<DocumentaryUserDO> documentaryUserList = documentaryUserMapper.selectList(new QueryWrapper<DocumentaryUserDO>().lambda().eq(DocumentaryUserDO::getLotteryOrderId, lotteryOrder.getId()).eq(DocumentaryUserDO::getUserId, userId));
         if (CollUtil.isNotEmpty(documentaryUserList)) {
             //根据订单id查询发单详情

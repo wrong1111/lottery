@@ -1,5 +1,6 @@
 package com.qihang.controller.order.app.lottery.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.controller.permutation.app.vo.PermutationRecordVO;
 import io.swagger.annotations.ApiModelProperty;
@@ -83,4 +84,15 @@ public class LotteryOrderVO extends BaseVO {
 
     @ApiModelProperty(value = "竞彩下注列表")
     private List<BallInfoVO> ballInfoList;
+
+    @ApiModelProperty("开奖号码")
+    String reaward;
+
+    /*
+  下单期号
+  * */
+    Integer stageNumber;
+
+
+    Integer winCounts;
 }
