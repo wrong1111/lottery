@@ -694,7 +694,6 @@ public class DigitBallAwardUtils {
 
     private static List<DigitBall> qxc(List<DigitBall> bets, PermutationAwardDO award) {
         String[] awardNubmer = StringUtils.splitByWholeSeparatorPreserveAllTokens(award.getReward(), ",");//7
-        String[] awardMoney = StringUtils.splitByWholeSeparatorPreserveAllTokens(award.getMoneyAward(), ",");
         String blueNumber = awardNubmer[6];
         int awardCount = 0;
         for (DigitBall bet : bets) {

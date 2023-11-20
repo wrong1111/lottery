@@ -43,3 +43,13 @@ export function orderRetreat(id) {
     method: "put",
   });
 }
+
+//上传票据
+
+export function orderActual(data) {
+  return request({
+    url: '/admin/lottery/order/actual',
+    method: 'put',
+    data: data
+  })
+}

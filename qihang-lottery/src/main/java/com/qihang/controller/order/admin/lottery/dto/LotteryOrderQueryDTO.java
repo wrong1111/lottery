@@ -24,4 +24,7 @@ public class LotteryOrderQueryDTO extends PageDTO {
 
     @ApiModelProperty(value = "手机号")
     private String phone;
+
+    @ApiModelProperty(value = "是否已经上传票0 未上传 1 已经有上传")
+    String bill;
 }

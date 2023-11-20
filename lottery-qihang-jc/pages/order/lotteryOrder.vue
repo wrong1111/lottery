@@ -22,7 +22,7 @@
 				<view>订单状态：<span class="uni-body"
 						:style="item.state=='3'||item.state=='4'?'color: #FF3F43':''">{{item.state|formatState}}</span>
 				</view>
-				<view v-if="item.winPrice!=undefined">中奖金额：<span class="uni-body"
+				<view v-if="item.winPrice!=undefined && item.winPrice!=null && item.winPrice>0">中奖金额：<span class="uni-body"
 						style="color: #FF3F43;font-size: 18px;"
 						v-if="item.state=='3'||item.state=='4'">{{item.winPrice}}</span></view>
 			</uni-card>
@@ -33,7 +33,8 @@
 
 <script>
 	import {
-		getLotteryOrderPage
+		getLotteryOrderPage,
+		isSport
 	} from '@/api/lotteryOrder.js'
 	export default {
 		data() {

@@ -108,7 +108,14 @@ public class LotteryProcessor implements PageProcessor {
                 permutationAward.setType(LotteryOrderTypeEnum.ARRANGE.getKey());
             } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL17)) {
                 permutationAward.setType(LotteryOrderTypeEnum.SEVEN_STAR.getKey());
-                permutationAward.setMoneyAward(html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().replaceAll(",", ""));
+                String r = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[6]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[7]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[8]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[9]/td[3]/text()").toString().trim().replaceAll(",", "");
+                permutationAward.setMoneyAward(r);
             } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL20)) {
                 permutationAward.setType(LotteryOrderTypeEnum.GRAND_LOTTO.getKey());
                 rewardList = page.getHtml().css(".ball_box01 li", "text").all();
@@ -119,6 +126,14 @@ public class LotteryProcessor implements PageProcessor {
                 permutationAward.setType(LotteryOrderTypeEnum.FCQLC.getKey());
                 //开奖号码
                 rewardList = page.getHtml().css(".ball_box01 li", "text").all();
+                String r = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[6]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[7]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[8]/td[3]/text()").toString().trim().replaceAll(",", "")
+                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[9]/td[3]/text()").toString().trim().replaceAll(",", "");
+                permutationAward.setMoneyAward(r);
             } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_SSQ)) {
                 permutationAward.setType(LotteryOrderTypeEnum.FCSSQ.getKey());
                 //开奖号码
@@ -233,6 +248,8 @@ public class LotteryProcessor implements PageProcessor {
                 if (StrUtil.isNotBlank(score) && !score.equals("-")) {
                     int[] scoreArr = StrUtil.splitToInt(score, ":");
                     //判断让分后是客胜还是主胜
+                    //500 客队在前，主队在后
+                    score = scoreArr[1] + ":" + scoreArr[0];
                     if (scoreArr[0] > scoreArr[1] + Double.valueOf(str)) {
                         result = "主负";
                     } else {

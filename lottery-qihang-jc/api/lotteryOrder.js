@@ -4,6 +4,12 @@
 
 import request from '@/util/ajax'
 
+export function isSport(type){
+	if (type == "3" || type == "4" || type == "5" || type == "8" || type == "21" || type == "22" || type == "23" || type == "24") {
+	  return false;
+	}
+	return true;
+}
 /**
  * 购彩订单记录
  */

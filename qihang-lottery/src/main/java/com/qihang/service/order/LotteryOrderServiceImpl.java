@@ -70,6 +70,7 @@ import com.qihang.mapper.winburden.WinBurdenMatchMapper;
 import com.qihang.mapper.withdrawal.WithdrawalMapper;
 import com.qihang.service.shop.IShopService;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -85,6 +86,7 @@ import java.util.stream.Collectors;
  * @author bright
  * @since 2022-10-10
  */
+@Slf4j
 @Service
 public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, LotteryOrderDO> implements ILotteryOrderService {
 
@@ -350,6 +352,13 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getOrderId()), LotteryOrderDO::getOrderId, lotteryOrderQuery.getOrderId());
         qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getState()), LotteryOrderDO::getState, lotteryOrderQuery.getState());
         qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getType()), LotteryOrderDO::getType, lotteryOrderQuery.getType());
+        if (StringUtils.isNotBlank(lotteryOrderQuery.getBill())) {
+            if("0".equals(lotteryOrderQuery.getBill())){
+                qw.isNull(LotteryOrderDO::getBill);
+            }else if("1".equals(lotteryOrderQuery.getBill())) {
+                qw.isNotNull(LotteryOrderDO::getBill);
+            }
+        }
         qw.orderByDesc(LotteryOrderDO::getCreateTime);
         Page<LotteryOrderDO> lotteryOrderPage = lotteryOrderMapper.selectPage(page, qw);
         commonList.setTotal(lotteryOrderPage.getTotal());
@@ -591,6 +600,9 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             if (!StrUtil.equals(lotteryOrder.getState(), LotteryOrderStateEnum.WAITING_AWARD.getKey())) {
                 return new BaseVO(false, ErrorCodeEnum.E075.getKey(), ErrorCodeEnum.E075.getValue());
             }
+            if (lotteryOrder.getWinPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                return new BaseVO(false, ErrorCodeEnum.E094.getKey(), ErrorCodeEnum.E094.getValue());
+            }
             //根据租户id查询店铺余额
             ShopDO shop = shopService.getShopById(lotteryOrder.getTenantId());
             //需要的手续费
@@ -619,6 +631,10 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                 return new BaseVO(false, ErrorCodeEnum.E077.getKey(), ErrorCodeEnum.E077.getValue());
             }
             for (LotteryOrderDO lotteryOrder : orderList) {
+                if (lotteryOrder.getWinPrice().compareTo(BigDecimal.ZERO) < 0) {
+                    log.info(" 订单[{}],彩种[{}] 中奖金额未确认 ", lotteryOrder.getOrderId(), LotteryOrderTypeEnum.valueOFS(lotteryOrder.getType()).getValue());
+                    continue;
+                }
                 //根据租户id查询店铺余额
                 ShopDO shop = shopService.getShopById(lotteryOrder.getTenantId());
                 //需要的手续费

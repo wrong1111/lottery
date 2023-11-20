@@ -63,6 +63,11 @@ public class CrawlingAddressConstant {
      */
     public static final String URL13 = "https://zx.500.com/zqdc/kaijiang.php";
 
+    /*
+      https://zx.500.com/jczq/kaijiang.php?d=2023-11-16
+     */
+    public static final String URL_BD_PRE = "https://zx.500.com/jczq/kaijiang.php?d=";
+
     /**
      * 篮球单关查询
      */
@@ -117,16 +122,16 @@ public class CrawlingAddressConstant {
     /*
      双色球开奖
      */
-    public static final String URL_SSQ  = "https://kaijiang.500.com/ssq.shtml";
+    public static final String URL_SSQ = "https://kaijiang.500.com/ssq.shtml";
 
 
     /*
      七乐彩开奖
      */
-    public static final String URL_QLC  = "https://kaijiang.500.com/qlc.shtml";
+    public static final String URL_QLC = "https://kaijiang.500.com/qlc.shtml";
 
     /*
      快乐8开奖
      */
-    public static final String URL_KL8  = "https://kaijiang.500.com/kl8.shtml";
+    public static final String URL_KL8 = "https://kaijiang.500.com/kl8.shtml";
 }

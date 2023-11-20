@@ -109,6 +109,8 @@ public class NomalScheduleController {
                 }
                 log.info("排列开奖 End");
                 break;
+            case "16":
+                spiderRunner.runpre();
             default:
                 break;
 

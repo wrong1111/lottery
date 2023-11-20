@@ -18,7 +18,11 @@
           <el-option v-for="item in typeOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
-
+      <el-form-item label="是否已上传票据" prop="bill">
+        <el-select v-model="queryParams.bill" placeholder="是否有票据" clearable>
+          <el-option v-for="item in bills" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -54,44 +58,44 @@
           <el-card>
             <el-form label-position="left" inline class="demo-table-expand">
               <el-row :gutter="5">
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="订单号：">
                     <span>{{ scope.row.orderId }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="用户名：">
                     <span>{{ scope.row.nickname }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="上级：">
                     <span>{{ scope.row.parentName }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="订单状态：">
                     <span :class="getAward(scope.row)">{{
                       getOrderState(scope.row)
                     }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="下注金额：">
                     <span>{{ scope.row.price }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="预计奖金：">
                     <span>{{ scope.row.forecast }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="中奖金额：">
                     <span :class="getAward(scope.row)">{{ (scope.row.winPrice>0?scope.row.winPrice:'') }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item>
                     <el-tag size="mini" type="success">{{
                       getBettingNotes(scope.row)
@@ -105,12 +109,12 @@
                     </template>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="创建时间：">
                     <span>{{ parseTime(scope.row.createTime) }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="8">
                   <el-form-item label="出票时间：">
                     <span>{{ parseTime(scope.row.ticketingTime) }}</span>
                   </el-form-item>
@@ -173,7 +177,11 @@
                     <el-button size="mini" type="danger" @click="retreatSigle(scope.row)">退票</el-button>
                     <el-button size="mini" type="danger" @click="showInfo(scope.row)"
                       v-if="!isSportRace(scope.row)">详情</el-button>
+                    <el-button size="mini" type="success" @click="upload(scope.row)">上传票纸</el-button>
                   </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <ImageUpload :multiple="true" :handleChildData="handleSuc" :value=scope.row.bill></ImageUpload>
                 </el-col>
               </el-row>
             </el-form>
@@ -275,17 +283,29 @@
     orderAward,
     orderTicketing,
     orderRetreat,
+    orderActual,
   } from "@/api/order";
   import {
     removeUser
   } from "@/utils/auth";
 
+  import ImageUpload from '@/components/ImageUpload/index.vue';
   export default {
     name: "OrderLottery",
-    components: {},
+    components: {
+      ImageUpload
+    },
     props: {},
     data() {
       return {
+        bills: [{
+          label: "无票据",
+          value: "0",
+        }, {
+          label: "有票据",
+          value: "1",
+        }],
+        fileList: [],
         drawerHeight: 800,
         title: '方案详情',
         //竞赛详情
@@ -311,6 +331,7 @@
           phone: undefined,
           pageNo: 1,
           pageSize: 10,
+          bill: undefined
         },
         // 是否显示搜索
         showSearch: true,
@@ -411,6 +432,29 @@
       this.getList();
     },
     methods: {
+      //-------上传图片使用的
+      handleSuc(data) {
+        let that = this
+        //        console.log(' upload return filesize ',data)
+        that.fileList = data
+      },
+      upload(row) {
+        console.log(' commit row', row, this.fileList)
+        if (this.fileList == null || this.fileList.length == 0) {
+          this.$alert('请先上传再处理')
+          return
+        }
+
+        orderActual({
+          id: row.id,
+          bill: this.fileList.map(item => item.url).join(',')
+        }).then((response) => {
+          if (!response.errorCode) {
+            this.getList();
+          }
+        });
+      },
+      //=======end
       myclass(row) {
         if (row.award) {
           return 'awardRow'
@@ -760,24 +804,24 @@
       // 一键派奖
       awardAll() {
         //弹窗提示，是否有足够的店铺保证金扣除
-          this.$confirm('确定要 一键派奖 吗？', '提示', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }).then(() => {
-            // 用户点击了确认按钮，执行后续处理
-            // 在这里编写你需要执行的代码
-            const data = {
-              //id: row.id, 没有ID默认未出的全出，
-            };
-            orderAward(data).then((response) => {
-              if (!response.errorCode) {
-                this.getList();
-              }
-            });
-          }).catch(() => {
-            // 用户点击了取消按钮，可以选择执行一些其他操作
+        this.$confirm('确定要 一键派奖 吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          // 用户点击了确认按钮，执行后续处理
+          // 在这里编写你需要执行的代码
+          const data = {
+            //id: row.id, 没有ID默认未出的全出，
+          };
+          orderAward(data).then((response) => {
+            if (!response.errorCode) {
+              this.getList();
+            }
           });
+        }).catch(() => {
+          // 用户点击了取消按钮，可以选择执行一些其他操作
+        });
       },
       // 单个派奖
       awardSigle(row) {

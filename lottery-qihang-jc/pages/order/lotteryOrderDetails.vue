@@ -626,8 +626,8 @@
 								</uni-td>
 								<uni-td align="center"
 									v-if="((lotteryOrder.type==3||lotteryOrder.type==4 ||lotteryOrder.type==21||lotteryOrder.type ==23)&&typeof(item.award)=='undefined')">{{item.forecastBonus}}</uni-td>
-								<uni-td align="center"
-									v-else-if="typeof(item.award)!='undefined' && item.award"><b style="color: #FF3F43;font-size: 18px;">{{item.money}}</b></uni-td>
+								<uni-td align="center" v-else-if="typeof(item.award)!='undefined' && item.award"><b
+										style="color: #FF3F43;font-size: 18px;">{{item.money}}</b></uni-td>
 								<uni-td align="center"
 									v-else-if="typeof(item.award)!='undefined' && !item.award">未中奖</uni-td>
 								<uni-td align="center" v-else>
@@ -650,12 +650,13 @@
 				<view class="uni-body" v-else>提示：中奖金额以实际出奖金额的为准</view>
 			</uni-card>
 			<!-- 彩票出票照片-->
-			<uni-card class="phone" v-if="lotteryOrder.bill!=undefined">
-				<p>
+			<uni-card class="phone" v-if="lotteryOrder.bill!=undefined ">
+				<p style="">
 					<view class="title">彩票照片</view>
-					<u-image v-if="lotteryOrder.bill!=undefined" @click="imgListPreview(lotteryOrder.bill)"
-						:src="lotteryOrder.bill"
-						style="display: flex;justify-content: center;align-items: center;margin-top: 20px;"></u-image>
+				</p>
+				<p class="paiban2">
+					<u-image @click="imgListPreview(item)" v-for="(item,index) in lotteryOrder.bill" class="img"
+						:src="item" :width="100" :height="100"></u-image>
 				</p>
 			</uni-card>
 		</view>
@@ -813,6 +814,9 @@
 				uni.showLoading();
 				getLotteryOrderById(id).then(res => {
 					this.lotteryOrder = res;
+					if (typeof(this.lotteryOrder.bill) != 'undefined' && this.lotteryOrder.bill!=null && this.lotteryOrder.bill.length > 0) {
+						this.lotteryOrder.bill = this.lotteryOrder.bill.split(',')
+					}
 					if (res.schemeDetails != null && res.schemeDetails != undefined && res.schemeDetails != "") {
 						this.lotteryOrder.schemeDetails = JSON.parse(res.schemeDetails)
 						//过滤掉数字彩 
@@ -885,6 +889,15 @@
 </script>
 
 <style scoped lang="scss">
+	.paiban2 {
+		display: flex;
+		align-items: center;
+		justify-content: space-evenly;
+		flex-direction: row;
+		flex-wrap: wrap;
+		width: 100%;
+	}
+
 	.paiban {
 		display: flex;
 		align-items: center;
@@ -969,6 +982,8 @@
 			.title {
 				font-size: 28rpx;
 			}
+
+			.img {}
 
 			.tip {
 				margin-top: 20rpx;
