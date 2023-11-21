@@ -227,8 +227,8 @@
       :style="{ height: '1400px' }" style="overflow-y: auto;">
       <div>
         彩种 {{lotName}}
-        <el-table :data="itemInfo" border v-if="itemInfo.length>0" name="table1" :height="1200"
-          :row-class-name="myclass">
+        <el-table :data="itemInfo" border v-if="itemInfo.length>0" name="table1" :height="drawerHeight"
+          :row-class-name="myclass" :key="digitId">
           <el-table-column prop="idx" width="100" align="center" label="序 号">
 
           </el-table-column>
@@ -252,17 +252,16 @@
           </el-table-column>
         </el-table>
 
-        <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2" :height="1200">
+        <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2" :height="drawerHeight" :key="sportId">
           <el-table-column prop="id" width="80" align="center" label="序 号"> </el-table-column>
-          <el-table-column prop="reaward" width="80" align="center" label="结果">
+          <el-table-column prop="reawardx" width="80" align="center" label="结果">
             <template slot-scope="scope">
-              <span :class="scope.row.award?'red':''">
-                {{ scope.row.award? scope.row.money :''}}
+              <span :class="scope.row.awardx?'red':''">
+                {{ scope.row.awardx? scope.row.moneyx :''}}
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="type" width="100" align="center" label="玩法">
-          </el-table-column>
+          <el-table-column prop="types" width="100" align="center" label="玩法"/>
           <el-table-column prop="ballCombinationList" width="380" align="center" label="投注内容">
             <template slot-scope="scope">
               <span v-for="(item,index) in scope.row.ballCombinationList">
@@ -304,6 +303,8 @@
     props: {},
     data() {
       return {
+        sportId:Math.random(),
+        digitId:Math.random(),
         bills: [{
           label: "无票据",
           value: "0",
@@ -435,9 +436,13 @@
     watch: {},
     created() {},
     mounted() {
-      this.getList();
+      this.getWindowHeight()
+      this.getList()
     },
     methods: {
+      getWindowHeight() {
+        this.drawerHeight = window.innerHeight - 80
+      },
       //-------上传图片使用的
       handleSuc(data) {
         let that = this
@@ -488,13 +493,16 @@
           let idx = 1
           let items = row.schemeDetails
           for (let i = 0; i < items.length; i++) {
-            items[i].id = idx++;
-            items[i].reaward = typeof(items[i]['award']) == 'undefined' ? false : true
-            items[i].award = typeof(items[i]['award']) == 'undefined' ? false : items[i]['award']
-            items[i].money = typeof(items[i]['money']) == 'undefined' ? '0' : items[i]['money']
+            that.sportItemInfo.push({
+              id: idx++,
+              types: items[i]['type'],
+              reawardx: (typeof(items[i]['award']) == 'undefined' || !item[i]['award']) ? false : true,
+              awardx: typeof(items[i]['award']) == 'undefined' ? false : items[i]['award'],
+              moneyx: typeof(items[i]['money']) == 'undefined' ? '0' : items[i]['money'],
+              ballCombinationList: items[i]['ballCombinationList']
+            })
           }
-          console.log(' info 222', items)
-          that.sportItemInfo = items
+          console.log('sportItemInfo',that.sportItemInfo)
           return
         } else if (!that.isSportRace(row)) {
           //数字展示

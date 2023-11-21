@@ -626,8 +626,8 @@
 								</uni-td>
 								<uni-td align="center"
 									v-if="((lotteryOrder.type==3||lotteryOrder.type==4 ||lotteryOrder.type==21||lotteryOrder.type ==23)&&typeof(item.award)=='undefined')">{{item.forecastBonus}}</uni-td>
-								<uni-td align="center" v-else-if="typeof(item.award)!='undefined' && item.award"><b
-										style="color: #FF3F43;font-size: 18px;">{{item.money}}</b></uni-td>
+								<uni-td align="center" v-else-if="typeof(item.award)!='undefined' && item.award">
+									<b style="color: #FF3F43;font-size: 18px;">{{item.money}}</b></uni-td>
 								<uni-td align="center"
 									v-else-if="typeof(item.award)!='undefined' && !item.award">未中奖</uni-td>
 								<uni-td align="center" v-else>
@@ -667,7 +667,8 @@
 <script>
 	import {
 		getLotteryOrderPage,
-		getLotteryOrderById
+		getLotteryOrderById,
+		isSport
 	} from '@/api/lotteryOrder.js'
 	export default {
 		data() {
@@ -803,8 +804,8 @@
 				}
 			},
 			isSportType(type) {
-				if (type == 3 || type == 21 || type == 4 || type == 5 || type == 8 || type == 24 || type == 22 || type ==
-					23) {
+				if (type == "3" || type == "21" || type == 4 || type == 5 ||
+					type == 8 || type == 24 || type == 22 || type == 23) {
 					return false
 				}
 				return true
@@ -814,16 +815,18 @@
 				uni.showLoading();
 				getLotteryOrderById(id).then(res => {
 					this.lotteryOrder = res;
-					if (typeof(this.lotteryOrder.bill) != 'undefined' && this.lotteryOrder.bill!=null && this.lotteryOrder.bill.length > 0) {
+					if (typeof(this.lotteryOrder.bill) != 'undefined' && this.lotteryOrder.bill != null && this
+						.lotteryOrder.bill.length > 0) {
 						this.lotteryOrder.bill = this.lotteryOrder.bill.split(',')
 					}
-					if (res.schemeDetails != null && res.schemeDetails != undefined && res.schemeDetails != "") {
+					if (typeof(res.schemeDetails) != 'undefined' && res.schemeDetails != null && res
+						.schemeDetails != "") {
 						this.lotteryOrder.schemeDetails = JSON.parse(res.schemeDetails)
 						//过滤掉数字彩 
-						if (!this.isSportType(this.lotteryOrder.type)) {
+						console.log(this.isSportType(this.lotteryOrder.type))
+						if (this.isSportType(this.lotteryOrder.type)) {
 							this.lotteryOrder.schemeDetails.map((item, index) => {
-								item.forecastBonus = parseFloat((item.forecastBonus / item.notes) * this
-									.lotteryOrder.times).toFixed(2)
+								item.forecastBonus = parseFloat((item.forecastBonus / item.notes) * this.lotteryOrder.times).toFixed(2)
 								item.notes = this.lotteryOrder.times
 							})
 						}

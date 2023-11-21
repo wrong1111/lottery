@@ -144,12 +144,12 @@
 					delete item['total']
 					delete item['uid']
 					//处理方案组合
-					if (item.schemeDetails == undefined) {
+					if (typeof(item.schemeDetails) == "undefined") {
 						let map = [];
 						map.push({
 							"mode": this.mode,
 							"stageNumber": this.issueNo,
-							"content": item.ten.map(item => item.num).join(','),
+							"content": item.individual.map(item => item.num).join(','),
 							"forecastBonus": null
 						})
 						//转成字符串json
@@ -236,7 +236,6 @@
 					notes: 1,
 					total: 2,
 					individual: data1,
-					ten: [],
 				}
 				this.calculation(obj);
 			},
