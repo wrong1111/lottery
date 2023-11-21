@@ -353,9 +353,9 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getState()), LotteryOrderDO::getState, lotteryOrderQuery.getState());
         qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getType()), LotteryOrderDO::getType, lotteryOrderQuery.getType());
         if (StringUtils.isNotBlank(lotteryOrderQuery.getBill())) {
-            if("0".equals(lotteryOrderQuery.getBill())){
+            if ("0".equals(lotteryOrderQuery.getBill())) {
                 qw.isNull(LotteryOrderDO::getBill);
-            }else if("1".equals(lotteryOrderQuery.getBill())) {
+            } else if ("1".equals(lotteryOrderQuery.getBill())) {
                 qw.isNotNull(LotteryOrderDO::getBill);
             }
         }
@@ -485,21 +485,25 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                         FootballMatchDO footballMatchDO = footballMatchMapper.selectById(racingBallDO.getTargetId());
                         if (ObjectUtil.isNotNull(footballMatchDO)) {
                             racingBall.setReward(footballMatchDO.getHalfFullCourt());
+                            racingBall.setAward(footballMatchDO.getAward());
                         }
                     } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey())) {
                         BasketballMatchDO basketballMatchDO = basketballMatchMapper.selectById(racingBallDO.getTargetId());
                         if (ObjectUtil.isNotNull(basketballMatchDO)) {
                             racingBall.setReward(basketballMatchDO.getHalfFullCourt());
+                            racingBall.setAward(basketballMatchDO.getAward());
                         }
                     } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SINGLE.getKey())) {
                         BeiDanMatchDO beiDanMatchDO = beiDanMatchMapper.selectById(racingBallDO.getTargetId());
                         if (ObjectUtil.isNotNull(beiDanMatchDO)) {
                             racingBall.setReward(beiDanMatchDO.getHalfFullCourt());
+                            racingBall.setAward(beiDanMatchDO.getAward());
                         }
                     } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey())) {
                         WinBurdenMatchDO winBurdenMatchDO = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
                         if (ObjectUtil.isNotNull(winBurdenMatchDO)) {
                             racingBall.setReward(winBurdenMatchDO.getAward());
+                            racingBall.setAward(winBurdenMatchDO.getAward());
                         }
                     }
                     racingBallVOList.add(racingBall);

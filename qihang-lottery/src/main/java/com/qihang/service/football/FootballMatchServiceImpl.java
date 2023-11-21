@@ -5,6 +5,7 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.annotation.TenantIgnore;
@@ -15,6 +16,7 @@ import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.football.dto.FootballMatchDTO;
 import com.qihang.controller.football.vo.FootballMatchVO;
 import com.qihang.controller.football.vo.FootballVO;
+import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsListVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.domain.documentary.DocumentaryDO;
@@ -38,6 +40,7 @@ import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -272,12 +275,18 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
             List<FootballMatchDTO> footballMatchList = new ArrayList<>();
             //每场比赛出奖比赛列表
             List<String> list = new ArrayList<>();
+            Map<String, String> resultMatch = new HashMap<>();
             Boolean flag = true;
             for (RacingBallDO racingBallDO : racingBallList) {
                 //下注結果組成list
                 footballMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), FootballMatchDTO.class));
                 //查询下注对应的比赛赛果
                 FootballMatchDO footballMatch = footballMatchMapper.selectById(racingBallDO.getTargetId());
+                if (null == footballMatch) {
+                    log.error("ERROR=======>[竞猜足球][待开奖]  订单 :[{}]  赛事[{}] 不存在，订单异常 <<<<<<<< ", order.getOrderId(), racingBallDO.getTargetId());
+                    flag = false;
+                    break;
+                }
                 //如果比赛还没有出结果直接跳出
                 if (StrUtil.isBlank(footballMatch.getAward())) {
                     log.info("=======>[竞猜足球][待开奖]  订单 :[{}]  赛事[{}]未开奖 <<<<<<<< ", order.getOrderId(), footballMatch.getNumber());
@@ -285,6 +294,7 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                     break;
                 }
                 list.add(footballMatch.getAward());
+                resultMatch.put(footballMatch.getNumber(), footballMatch.getAward());
             }
             if (flag) {
                 //过关类型
@@ -292,7 +302,7 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                 //倍数
                 Integer multiple = racingBallList.get(0).getTimes();
                 //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
-                Double price = FootballUtil.award(footballMatchList, multiple, pssTypeList, list);
+                Double price = FootballUtil.award(footballMatchList, multiple, pssTypeList, list).setScale(2, RoundingMode.HALF_DOWN).doubleValue();
                 //等于0相当于没有中奖
                 log.debug("=======>[竞猜足球][待开奖]  订单 :[{}]  中奖【{}】  ", order.getOrderId(), price);
                 if (price == 0) {
@@ -346,7 +356,25 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                 }
                 order.setUpdateTime(new Date());
                 lotteryOrderMapper.updateById(order);
+
+                //对schemeDetails兑奖
+                if (StringUtils.isNotBlank(order.getSchemeDetails())) {
+                    List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
+                    FootballUtil.awardSchemeDetails(listVOList, resultMatch);
+                    double all = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
+                    if (all > 0) {
+                        log.info(" 订单[{}],中奖金额[{}]]", order.getOrderId(), all);
+                    } else {
+                        log.info("订单[{}],未中奖 ", order.getOrderId());
+                    }
+                    //反向保存一下数据
+                    order.setSchemeDetails(JSON.toJSONString(listVOList));
+                }
+
+                lotteryOrderMapper.updateById(order);
             }
+
+
         }
         return new BaseVO();
     }

@@ -104,6 +104,7 @@ public class LotteryOrderDO implements Serializable {
     Integer stageNumber;
 
 
-
     Integer winCounts;
+
+    Integer times;
 }

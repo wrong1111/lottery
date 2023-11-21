@@ -63,6 +63,7 @@ import com.qihang.mapper.winburden.WinBurdenMatchMapper;
 import com.qihang.service.basketball.IBasketballMatchService;
 import com.qihang.service.beidan.IBeiDanMatchService;
 import com.qihang.service.documentary.forest.BasketballHelper;
+import com.qihang.service.documentary.forest.BeidanHelper;
 import com.qihang.service.documentary.forest.FootballHelper;
 import com.qihang.service.football.IFootballMatchService;
 import com.qihang.service.winburden.IWinBurdenMatchService;
@@ -839,6 +840,9 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
     @Resource
     FootballHelper footballHelper;
 
+    @Resource
+    BeidanHelper beidanHelper;
+
 
     /*
      wyong edit 23-11-14
@@ -867,6 +871,10 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
             basketballHelper.setRacingBallList(racingBallList);
             return basketballHelper.templateDocumentary(createDocumentaryUser, documentary, user, order);
+        } else if (order.getType().equals(LotteryOrderTypeEnum.SINGLE.getKey())) {
+            List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
+            beidanHelper.setRacingBallList(racingBallList);
+            return beidanHelper.templateDocumentary(createDocumentaryUser, documentary, user, order);
         } else if (Constant.isSport(order.getType())) {
             //其他竞猜北单，胜负彩，任九
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));

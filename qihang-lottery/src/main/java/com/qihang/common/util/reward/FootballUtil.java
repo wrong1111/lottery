@@ -2,10 +2,17 @@ package com.qihang.common.util.reward;
 
 import cn.hutool.core.util.NumberUtil;
 import com.qihang.controller.football.dto.FootballMatchDTO;
+import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsListVO;
+import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsVO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.controller.racingball.app.vo.BallCombinationVO;
 import com.qihang.controller.racingball.app.vo.BallOptimizationVO;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -16,6 +23,7 @@ import static cn.hutool.core.util.NumberUtil.isInteger;
  * @description:
  * @time: 2022-11-01 22:10
  */
+@Slf4j
 public class FootballUtil {
     /**
      * 从m个数中选n个数的排列组合
@@ -567,8 +575,8 @@ public class FootballUtil {
      *                          第三场开奖结果： 胜,胜,2,胜胜,2:0
      * @return 用户中了多少注把中的每一注金额相加在进行返回
      */
-    public static Double award(List<FootballMatchDTO> footballMatchList, Integer multiple, List<Integer> pssTypeList, List<String> str) {
-        Double res = 0.0;
+    public static BigDecimal award(List<FootballMatchDTO> footballMatchList, Integer multiple, List<Integer> pssTypeList, List<String> str) {
+        BigDecimal res = BigDecimal.ZERO;
         String[][] AllFootconse = new String[str.size()][5];
         List<List<Map<String, String>>> hasFootconse = new ArrayList<>();
         for (int i = 0; i < str.size(); i++) {
@@ -620,7 +628,7 @@ public class FootballUtil {
             }
         }
         if (pssTypeList.isEmpty()) {
-            return 0.0;
+            return BigDecimal.ZERO;
         }
         List<Map<String, String>>[] realFoot = new ArrayList[footballMatchList.size()];
         for (int i = 0; i < footballMatchList.size(); i++) {
@@ -629,9 +637,9 @@ public class FootballUtil {
         for (int i = 0; i < pssTypeList.size(); i++) {
             int[][] Indexgroup = getIndexgroup(footballMatchList.size(), pssTypeList.get(i));
             List<List<Map<String, String>>> realallop = getallop(realFoot, Indexgroup);
-            res = res + getAllbonus(realallop);
+            res = res.add(getAllbonus(realallop));
         }
-        return res * multiple * 2;
+        return res.multiply(BigDecimal.valueOf(multiple)).multiply(BigDecimal.valueOf(2));
     }
 
     public static String Findoddsbytype(List<Map<String, Object>> chose, String realoutcome) {
@@ -643,14 +651,14 @@ public class FootballUtil {
         return res;
     }
 
-    public static Double getAllbonus(List<List<Map<String, String>>> realallop) {
-        Double res = 0.0;
+    public static BigDecimal getAllbonus(List<List<Map<String, String>>> realallop) {
+        BigDecimal res = BigDecimal.ZERO;
         for (int i = 0; i < realallop.size(); i++) {
-            Double z = 1.0;
+            BigDecimal z = BigDecimal.ONE;
             for (int j = 0; j < realallop.get(i).size(); j++) {
-                z = z * Double.parseDouble(realallop.get(i).get(j).get("odds"));
+                z = z.multiply(BigDecimal.valueOf(Double.valueOf(realallop.get(i).get(j).get("odds"))));
             }
-            res = res + z;
+            res = res.add(z);
         }
         return res;
     }
@@ -692,5 +700,89 @@ public class FootballUtil {
             }
             footballCombinationVOList.remove(footballCombinationVOList.size() - 1);
         }
+    }
+
+    public static void awardSchemeDetails(List<SportSchemeDetailsListVO> sportsDetails, Map<String, String> awardMap) {
+
+        for (SportSchemeDetailsListVO detailsVOS : sportsDetails) {
+
+            Map<String, String> matchMaps = detailsVOS.getBallCombinationList().stream().collect(Collectors.toMap(SportSchemeDetailsVO::getNumber, SportSchemeDetailsVO::getContent, (a, b) -> a));
+
+            boolean allFinished = true;
+            for (Map.Entry<String, String> keyEntity : matchMaps.entrySet()) {
+                if (awardMap.get(keyEntity.getKey()) == null) {
+                    //没有开奖
+                    allFinished = false;
+                    break;
+                }
+            }
+            if (allFinished) {
+                List<String> resultOddsList = new ArrayList<>();
+                for (Map.Entry<String, String> keyEntity : matchMaps.entrySet()) {
+                    String content = keyEntity.getValue();
+
+                    String award = awardMap.get(keyEntity.getKey());
+                    //官方开奖结果
+                    //胜,胜,4,胜-胜,4:0
+                    //胜平负，让球胜平负，总进球数，半全场，比分
+                    String[] allfootconse = StringUtils.split(award, ",");
+
+                    //投注 胜（2.0）
+                    String[] betContents = getBetContentAndOddFromContent(content);
+                    for (int i = 0; i < allfootconse.length; i++) {
+                        //官方返回的是少了让字。
+                        if (allfootconse[1].length() == 1) {
+                            allfootconse[1] = "让" + allfootconse[1];
+                        }
+                        String[] bif = allfootconse[4].split(":");
+                        if (Integer.valueOf(bif[0]) + Integer.valueOf(bif[1]) > 7 || Integer.valueOf(bif[0]) > 5 || Integer.valueOf(bif[1]) > 5) {
+                            if (Integer.valueOf(bif[0]) > Integer.valueOf(bif[1]))
+                                allfootconse[4] = "胜其他";
+                            else if (Integer.valueOf(bif[0]) == Integer.valueOf(bif[1]))
+                                allfootconse[4] = "平其他";
+                            else if (Integer.valueOf(bif[0]) < Integer.valueOf(bif[1]))
+                                allfootconse[4] = "负其他";
+                        }
+                    }
+                    String odd = getOddByResult(betContents, allfootconse);
+                    if (StringUtils.isNotBlank(odd)) {
+                        resultOddsList.add(odd);
+                    }
+                }
+                if (resultOddsList.size() == matchMaps.size()) {
+                    //中了
+                    BigDecimal money = sumItem(resultOddsList).multiply(BigDecimal.valueOf(Integer.valueOf(detailsVOS.getNotes())));
+                    detailsVOS.setMoney("" + money.setScale(2, RoundingMode.HALF_DOWN));
+                    detailsVOS.setAward(true);
+                }
+            }
+        }
+
+    }
+
+    static String getOddByResult(String[] content, String[] footconse) {
+        for (String result : footconse) {
+            if (content[0].equals(result)) {
+                return content[1];
+            }
+        }
+        return "";
+    }
+
+    static String[] getBetContentAndOddFromContent(String content) {
+        int idx = content.indexOf("(");
+        int last = content.indexOf(")");
+        String[] odds = new String[2];
+        odds[0] = content.substring(0, idx);
+        odds[1] = content.substring(idx + 1, last);
+        return odds;
+    }
+
+    static BigDecimal sumItem(List<String> strings) {
+        BigDecimal all = BigDecimal.valueOf(Double.valueOf(strings.get(0)));
+        for (int i = 1; i < strings.size(); i++) {
+            all = all.multiply(new BigDecimal(Double.valueOf(strings.get(i))));
+        }
+        return all.multiply(BigDecimal.valueOf(2));
     }
 }

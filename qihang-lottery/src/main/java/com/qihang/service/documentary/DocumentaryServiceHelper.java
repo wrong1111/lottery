@@ -67,6 +67,9 @@ public class DocumentaryServiceHelper {
     //彩种
     String type;
 
+    //玩法
+    String play;
+
 
     public BaseVO templateDocumentary(CreateDocumentaryUserDTO createDocumentaryUserDTO, DocumentaryDO documentaryDO, UserDO userDO,
                                       LotteryOrderDO lotteryOrderDO) {
@@ -76,6 +79,7 @@ public class DocumentaryServiceHelper {
         this.createDocumentaryUserDTO = createDocumentaryUserDTO;
         racingBallDOS = new ArrayList<>();
         permutationDOS = new ArrayList<>();
+        //彩种ID
         this.type = lotteryOrderDO.getType();
         //查询发单用户的下注信息
         //判断自己不能跟自己的单
@@ -168,7 +172,7 @@ public class DocumentaryServiceHelper {
         lotteryOrder.setType(lotteryOrderDO.getType());
 
         //根据类型计算预测奖金
-        BigDecimal forestMoney = calculationForest(contentList, lotteryOrderDO.getType(), notes, createDocumentaryUserDTO.getMultiple(), type);
+        BigDecimal forestMoney = calculationForest(contentList, lotteryOrderDO.getType(), notes, createDocumentaryUserDTO.getMultiple(), play);
         lotteryOrder.setForecast(forestMoney);
         lotteryOrder.setCreateTime(new Date());
         lotteryOrder.setUpdateTime(new Date());
@@ -181,7 +185,9 @@ public class DocumentaryServiceHelper {
 
     public void setRacingBallList(List<RacingBallDO> racingBallList) {
         this.racingBallList = racingBallList;
-        this.notes = racingBallList.stream().mapToInt(RacingBallDO::getNotes).sum();
+        //赛事的注数统一了。
+        this.notes = racingBallList.get(0).getNotes();
+        this.play = racingBallList.get(0).getType();
     }
 
     public void setPermutationDOS(List<PermutationDO> permutationList) {

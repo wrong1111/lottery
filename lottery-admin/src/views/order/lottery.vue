@@ -139,7 +139,9 @@
                       </el-table-column>
                       <el-table-column label="下注内容" align="center">
                         <template slot-scope="inner">
-                          <div v-if="showDan(inner.row)" class="blue">[胆]</div> {{ getRaceContent(inner.row) }}
+                          <div v-if="showDan(inner.row)" class="blue">[胆]</div>
+
+                          {{ getRaceContent(inner.row) }}
                         </template>
                       </el-table-column>
                       <el-table-column label="赛果(全/半)" align="center">
@@ -175,9 +177,8 @@
                       <el-button size="mini" type="warning" @click="refuseSigle(scope.row)">拒绝</el-button>
                     </template>
                     <el-button size="mini" type="danger" @click="retreatSigle(scope.row)">退票</el-button>
-                    <el-button size="mini" type="danger" @click="showInfo(scope.row)"
-                      v-if="!isSportRace(scope.row)">详情</el-button>
-                    <el-button size="mini" type="success" @click="upload(scope.row)">上传票纸</el-button>
+                    <el-button size="mini" type="primary" @click="showInfo(scope.row)">详情</el-button>
+                    <el-button size="mini" type="success" @click="upload(scope.row)">上传票据</el-button>
                   </el-form-item>
                 </el-col>
                 <el-col :span="24">
@@ -252,8 +253,13 @@
         </el-table>
 
         <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2" :height="1200">
-          <el-table-column prop="id" width="100" align="center" label="序 号">
-
+          <el-table-column prop="id" width="80" align="center" label="序 号"> </el-table-column>
+          <el-table-column prop="reaward" width="80" align="center" label="结果">
+            <template slot-scope="scope">
+              <span :class="scope.row.award?'red':''">
+                {{ scope.row.award? scope.row.money :''}}
+              </span>
+            </template>
           </el-table-column>
           <el-table-column prop="type" width="100" align="center" label="玩法">
           </el-table-column>
@@ -439,7 +445,7 @@
         that.fileList = data
       },
       upload(row) {
-        console.log(' commit row', row, this.fileList)
+        //console.log(' commit row', row, this.fileList)
         if (this.fileList == null || this.fileList.length == 0) {
           this.$alert('请先上传再处理')
           return
@@ -466,6 +472,7 @@
       },
       //展示详细注数号码
       showInfo(row) {
+        console.log(' info ', row)
         let that = this
         that.itemInfo = []
         that.sportItemInfo = []
@@ -477,17 +484,21 @@
         that.lotName = lot[0].label
         that.drawer = true
         //竞猜展示
-        if (that.isSportRace(row)) {
+        if (that.isSportRace(row) && row.schemeDetails != null) {
           let idx = 1
           let items = row.schemeDetails
           for (let i = 0; i < items.length; i++) {
             items[i].id = idx++;
+            items[i].reaward = typeof(items[i]['award']) == 'undefined' ? false : true
+            items[i].award = typeof(items[i]['award']) == 'undefined' ? false : items[i]['award']
+            items[i].money = typeof(items[i]['money']) == 'undefined' ? '0' : items[i]['money']
           }
+          console.log(' info 222', items)
           that.sportItemInfo = items
           return
-        } else {
+        } else if (!that.isSportRace(row)) {
           //数字展示
-          //console.log(row.schemeDetails[0])
+          //console.log(row.schemeDetails[0] && row.schemeDetails !=null)
           let items = row.schemeDetails
           let itemArys = []
           for (let i = 0; i < items.length; i++) {
@@ -625,7 +636,7 @@
           }
           result = result + oddsList.join(",");
         }
-        // goalOddsList
+        // 总进球数
         if (content.goalOddsList && content.goalOddsList.length) {
           if (result) {
             result = result + "|";
@@ -638,7 +649,7 @@
           }
           result = result + oddsList.join(",");
         }
-        // halfWholeOddsList
+        // 半全场
         if (content.halfWholeOddsList && content.halfWholeOddsList.length) {
           if (result) {
             result = result + "|";
@@ -651,7 +662,7 @@
           }
           result = result + oddsList.join(",");
         }
-        // scoreOddsList
+        // 比分
         if (content.scoreOddsList && content.scoreOddsList.length) {
           if (result) {
             result = result + "|";
@@ -668,6 +679,7 @@
       },
       // 赛果
       getRaceResult(row) {
+
         if (!row.reward) {
           return "";
         }
@@ -677,7 +689,9 @@
         }
         let all = result[1];
         let half = result[0];
-        return all + "\n" + "半" + half;
+        let r = all + "\n" + "半" + half;
+        //目的就是为了展示让字
+        return r + "\n" + row.award.replace(/,/, ',让')
       },
       // ---------------- 其他格式化 -----------------------
       // 投注数量

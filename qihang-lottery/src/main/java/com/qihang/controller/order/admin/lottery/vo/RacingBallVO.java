@@ -11,7 +11,7 @@ import java.util.Date;
  * @since 2022-10-24
  */
 @Data
-public class  RacingBallVO implements Serializable {
+public class RacingBallVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -41,6 +41,9 @@ public class  RacingBallVO implements Serializable {
 
     @ApiModelProperty(value = "更新时间")
     private Date updateTime;
+
+    @ApiModelProperty(value = "赛果标识")
+    String award;
 
 
 }
