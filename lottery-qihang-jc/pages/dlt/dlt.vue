@@ -5,7 +5,7 @@
 			@rightText="rightBtn">
 		</cmd-nav-bar>
 		<div style="height:100%">
-			<p class="fc_index">第{{issueNo}}期，每周一、三、六 21:35开奖</p>
+			<p class="fc_index">第{{issueNo}}期，每周一、三、六 21:25开奖</p>
 			<div class="fc">
 				<view
 					style="display: flex;justify-content: space-between;align-items: center;width: 95%;margin: 0 auto;">

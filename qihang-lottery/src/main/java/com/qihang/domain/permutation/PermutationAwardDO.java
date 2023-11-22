@@ -53,4 +53,9 @@ public class PermutationAwardDO implements Serializable {
 
 
     private String moneyAward;
+
+    /*
+     截止时间
+     */
+    Date deadTime;
 }

@@ -822,14 +822,6 @@
 					if (typeof(res.schemeDetails) != 'undefined' && res.schemeDetails != null && res
 						.schemeDetails != "") {
 						this.lotteryOrder.schemeDetails = JSON.parse(res.schemeDetails)
-						//过滤掉数字彩 
-						console.log(this.isSportType(this.lotteryOrder.type))
-						if (this.isSportType(this.lotteryOrder.type)) {
-							this.lotteryOrder.schemeDetails.map((item, index) => {
-								item.forecastBonus = parseFloat((item.forecastBonus / item.notes) * this.lotteryOrder.times).toFixed(2)
-								item.notes = this.lotteryOrder.times
-							})
-						}
 					}
 					//将字符串转对象
 					if (this.lotteryOrder.ballInfoList != null) {

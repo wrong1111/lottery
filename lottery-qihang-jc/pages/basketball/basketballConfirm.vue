@@ -309,7 +309,7 @@
 				this.confirmIsShow = false;
 				this.calculationParam.notes = this.notes
 				this.calculationParam.forecast = this.maxPrice
-				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.averageOptimizationList)
+				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.normalOptimizatinList)
 				createOrder(this.calculationParam).then(res => {
 					if (res.success) {
 						//标识为已经下单了
@@ -334,7 +334,7 @@
 			documentary() {
 				this.calculationParam.notes = this.notes
 				this.calculationParam.forecast = this.maxPrice
-				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.averageOptimizationList)
+				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.normalOptimizatinList)
 				uni.navigateTo({
 					url: "pages/documentary/place?obj=" + encodeURIComponent(JSON.stringify(this.calculationParam))
 				});

@@ -6,3 +6,4 @@ task:
   match: true
   minute: true
   omit: true
+  award: true

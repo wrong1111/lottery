@@ -7,7 +7,7 @@
 		<div style="height:100%">
 			<u-subsection style="margin-top: 2px;height: 40px;" fontSize="16" :list="list" mode="button"
 				:current="current" activeColor="#FF3F43" @change="change3"></u-subsection>
-			<p class="fc_index">第{{issueNo}}期，21:40开奖</p>
+			<p class="fc_index">第{{issueNo}}期，21:15开奖</p>
 			<view v-if="current==0">
 				<u-sticky bgColor="#fff"
 					style="margin-bottom: 30px;display: flex;justify-content: center;align-items: center;">

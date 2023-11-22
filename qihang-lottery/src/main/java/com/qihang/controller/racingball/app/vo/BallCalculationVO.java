@@ -38,4 +38,7 @@ public class BallCalculationVO extends BaseVO {
 
     @ApiModelProperty(value = "（博冷优化）每一注组合")
     List<BallOptimizationVO> coldOptimizationList;
+
+    @ApiModelProperty(value = "每一注组合")
+    List<BallOptimizationVO> normalOptimizatinList;
 }

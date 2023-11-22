@@ -39,6 +39,7 @@ import com.qihang.mapper.winburden.WinBurdenMatchMapper;
 import com.qihang.service.documentary.DocumentaryCommissionHelper;
 import com.qihang.service.winburden.IWinBurdenMatchService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -177,6 +178,7 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
         //查询足球已经下注的订单列表
         List<LotteryOrderDO> orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()).eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()));
         log.debug("======>[胜负彩][待开奖] 数量[{}] ", orderList.size());
+        Map<Integer, WinBurdenMatchDO> matchMap = new HashMap<>();
         for (LotteryOrderDO order : orderList) {
             //查询下注的列表
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
@@ -184,13 +186,20 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
             List<WinBurdenMatchDTO> winBurdenMatchList = new ArrayList<>();
             //每场比赛出奖比赛列表
             List<String> list = new ArrayList<>();
+
             Boolean flag = true;
             String moneyAward = "";
             for (RacingBallDO racingBallDO : racingBallList) {
                 //下注結果組成list
                 winBurdenMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), WinBurdenMatchDTO.class));
                 //查询下注对应的比赛赛果
-                WinBurdenMatchDO winBurdenMatch = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
+                WinBurdenMatchDO winBurdenMatch = null;
+                if (matchMap.get(racingBallDO.getTargetId()) != null) {
+                    winBurdenMatch = matchMap.get(racingBallDO.getTargetId());
+                } else {
+                    winBurdenMatch = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
+                    matchMap.put(racingBallDO.getTargetId(), winBurdenMatch);
+                }
                 moneyAward = winBurdenMatch.getMoneyAward();
                 //如果比赛还没有出结果直接跳出
                 if (StrUtil.isBlank(winBurdenMatch.getAward()) || StrUtil.isBlank(winBurdenMatch.getMoneyAward())) {
@@ -230,12 +239,19 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
         //查询未出票的订单
         List<LotteryOrderDO> orderNotList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()).eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.REN_JIU.getKey()));
         log.debug("======>[任九][未出票] 数量:[{}]", orderNotList.size());
+        Map<Integer, WinBurdenMatchDO> matchMap = new HashMap<>();
         for (LotteryOrderDO lotteryOrderDO : orderNotList) {
             //查询下注的列表
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, lotteryOrderDO.getTargetIds()));
             Boolean flag = true;
             for (RacingBallDO racingBallDO : racingBallList) {
-                WinBurdenMatchDO winBurdenMatch = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
+                WinBurdenMatchDO winBurdenMatch = null;
+                if (matchMap.get(racingBallDO.getTargetId()) != null) {
+                    winBurdenMatch = matchMap.get(racingBallDO.getTargetId());
+                } else {
+                    winBurdenMatch = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
+                    matchMap.put(racingBallDO.getTargetId(), winBurdenMatch);
+                }
                 //如果比赛还没有出结果直接跳出
                 if (StrUtil.isBlank(winBurdenMatch.getAward())) {
                     log.error("======>[任九] 订单[{}] 期号:{} 赛事[{}]未开奖", lotteryOrderDO.getOrderId(), winBurdenMatch.getIssueNo(), winBurdenMatch.getNumber());
@@ -273,10 +289,18 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
             for (RacingBallDO racingBallDO : racingBallList) {
                 //下注結果組成list
                 winBurdenMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), WinBurdenMatchDTO.class));
-                WinBurdenMatchDO winBurdenMatch = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
-                issueNo = winBurdenMatch.getIssueNo();
+                //只需要查询一次。
+                if (StringUtils.isBlank(issueNo)) {
+                    WinBurdenMatchDO winBurdenMatch = null;
+                    if (matchMap.get(racingBallDO.getTargetId()) != null) {
+                        winBurdenMatch = matchMap.get(racingBallDO.getTargetId());
+                    } else {
+                        winBurdenMatch = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
+                        matchMap.put(racingBallDO.getTargetId(), winBurdenMatch);
+                    }
+                    issueNo = winBurdenMatch.getIssueNo();
+                }
             }
-
             //根据期号查询14场比赛赛果
             List<WinBurdenMatchDO> winBurdenMatchDOList = winBurdenMatchMapper.selectList(new QueryWrapper<WinBurdenMatchDO>().lambda().eq(WinBurdenMatchDO::getIssueNo, issueNo));
             for (WinBurdenMatchDO winBurdenMatchDO : winBurdenMatchDOList) {

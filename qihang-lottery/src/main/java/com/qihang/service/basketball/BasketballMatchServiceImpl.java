@@ -5,19 +5,23 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.util.reward.BasketballUtil;
+import com.qihang.common.util.reward.FootballUtil;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.basketball.dto.BasketballMatchDTO;
 import com.qihang.controller.basketball.vo.BasketballMatchVO;
 import com.qihang.controller.basketball.vo.BasketballVO;
+import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsListVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.domain.basketball.BasketballMatchDO;
+import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.documentary.DocumentaryDO;
 import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.order.LotteryOrderDO;
@@ -37,7 +41,9 @@ import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
+import com.qihang.service.documentary.DocumentaryCommissionHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -74,6 +80,9 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
     private DocumentaryMapper documentaryMapper;
     @Resource
     private DocumentaryUserMapper documentaryUserMapper;
+
+    @Resource
+    DocumentaryCommissionHelper documentaryCommissionHelper;
 
     @Override
     public CommonListVO<BasketballVO> basketballMatchList() {
@@ -236,6 +245,7 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
         //查询篮球已经下注的订单列表
         List<LotteryOrderDO> orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()).eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.BASKETBALL.getKey()));
         log.debug("=======>[竞猜篮球] [待开奖] 数量:[{}]", orderList.size());
+        Map<Integer, BasketballMatchDO> matchMap = new HashMap<>();
         for (LotteryOrderDO order : orderList) {
             //查询下注的列表
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
@@ -244,11 +254,19 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
             //每场比赛出奖比赛列表
             List<String> list = new ArrayList<>();
             Boolean flag = true;
+
+            Map<String, BasketballMatchDO> resultMatch = new HashMap<>();
             for (RacingBallDO racingBallDO : racingBallList) {
                 //下注結果組成list
                 basketballMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), BasketballMatchDTO.class));
                 //查询下注对应的比赛赛果
-                BasketballMatchDO basketballMatch = basketballMatchMapper.selectById(racingBallDO.getTargetId());
+                BasketballMatchDO basketballMatch = null;
+                if (matchMap.get(racingBallDO.getTargetId()) != null) {
+                    basketballMatch = matchMap.get(racingBallDO.getTargetId());
+                } else {
+                    basketballMatch = basketballMatchMapper.selectById(racingBallDO.getTargetId());
+                    matchMap.put(racingBallDO.getTargetId(), basketballMatch);
+                }
                 //如果比赛还没有出结果直接跳出
                 if (StrUtil.isBlank(basketballMatch.getAward())) {
                     log.info("=======>[竞猜篮球] [待开奖]  订单 [{}] 赛事 [{}]  未开奖 ", order.getOrderId(), basketballMatch.getNumber());
@@ -256,65 +274,27 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
                     break;
                 }
                 list.add(basketballMatch.getAward() + "," + basketballMatch.getHalfFullCourt());
+                resultMatch.put(basketballMatch.getNumber(), basketballMatch);
             }
             if (flag) {
-                //过关类型
-                List<Integer> pssTypeList = Convert.toList(Integer.class, racingBallList.get(0).getType());
-                //倍数
-                Integer multiple = racingBallList.get(0).getTimes();
+                //对schemeDetails兑奖
+                if (StringUtils.isBlank(order.getSchemeDetails())) {
+                    log.error("============订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
+                    continue;
+                }
+                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
+                BasketballUtil.awardSchemeDetails(listVOList, resultMatch);
                 //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
-                Double price = BasketballUtil.award(basketballMatchList, multiple, pssTypeList, list);
+                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
+                //反向保存一下数据
+                order.setSchemeDetails(JSON.toJSONString(listVOList));
                 //等于0相当于没有中奖
                 log.info("=======>[竞猜篮球] [待开奖]  订单 [{}] 中奖金额 【{}】 ", order.getOrderId(), price);
                 if (price == 0) {
                     log.info("=======>[竞猜篮球] [未中奖]  订单 [{}]  ", order.getOrderId());
                     order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
                 } else {
-                    //已经中奖
-                    //查询订单是不是发单订单
-                    DocumentaryDO documentary = documentaryMapper.selectOne(new QueryWrapper<DocumentaryDO>().lambda().eq(DocumentaryDO::getLotteryOrderId, order.getId()));
-                    //查询是否是跟单
-                    DocumentaryUserDO documentaryUser = documentaryUserMapper.selectOne(new QueryWrapper<DocumentaryUserDO>().lambda().eq(DocumentaryUserDO::getLotteryOrderId, order.getId()));
-
-                    if (ObjectUtil.isNotNull(documentary)) {
-                        log.info("=======>[竞猜篮球] [已中奖] 订单[{}] 跟单发起人 [{}]  ", order.getOrderId(), documentary.getUserId());
-                        //是发单订单
-                        order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
-                        BigDecimal winPrice = NumberUtil.round(price, 2);
-                        order.setWinPrice(winPrice);
-                    } else if (ObjectUtil.isNotNull(documentaryUser)) {
-                        log.info("=======>[竞猜篮球] [已中奖] 订单[{}] 跟单订单 [{}]  ", order.getOrderId(), documentaryUser.getUserId());
-                        //是跟单订单
-                        //查询跟单是那个用户的订单
-                        documentary = documentaryMapper.selectOne(new QueryWrapper<DocumentaryDO>().lambda().eq(DocumentaryDO::getId, documentaryUser.getDocumentaryId()));
-                        BigDecimal winPrice = NumberUtil.round(price, 2);
-                        //需要扣除比赛后的金额
-                        BigDecimal proportionPrice = winPrice.multiply(new BigDecimal((float) documentary.getCommission() / 100)).setScale(2, RoundingMode.HALF_UP);
-                        order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
-                        order.setWinPrice(winPrice.subtract(proportionPrice));
-
-                        log.info("=======>[竞猜篮球] [已中奖] 订单[{}] 跟单订单  ,发起人[{}],佣金[{}],分佣[{}] ", order.getOrderId(), documentary.getUserId(), documentary.getCommission(), proportionPrice.toPlainString());
-                        //给发单用户加金额
-                        UserDO userDO = userMapper.selectById(documentary.getUserId());
-                        userDO.setGold(userDO.getGold().add(proportionPrice));
-                        userMapper.updateById(userDO);
-                        //添加流水记录
-                        PayOrderDO payOrder = new PayOrderDO();
-                        payOrder.setOrderId(OrderNumberGenerationUtil.getOrderId());
-                        payOrder.setType(PayOrderTypeEnum.ISSUING_REWARD.getKey());
-                        payOrder.setState(PayOrderStateEnum.PAYMENT.getKey());
-                        payOrder.setCreateTime(new Date());
-                        payOrder.setTenantId(order.getTenantId());
-                        payOrder.setUpdateTime(new Date());
-                        payOrder.setPayType(PayTypeEnum.APP.getKey());
-                        payOrder.setUserId(documentary.getUserId());
-                        payOrder.setPrice(proportionPrice);
-                        payOrderMapper.insert(payOrder);
-                    } else {
-                        log.info("=======>[竞猜篮球] [已中奖] 订单[{}] 个人订单  ", order.getOrderId());
-                        order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
-                        order.setWinPrice(NumberUtil.round(price, 2));
-                    }
+                    documentaryCommissionHelper.processCommiss("竞猜篮球", order, price);
                 }
                 order.setUpdateTime(new Date());
                 lotteryOrderMapper.updateById(order);

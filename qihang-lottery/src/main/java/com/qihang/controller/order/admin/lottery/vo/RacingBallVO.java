@@ -1,5 +1,6 @@
 package com.qihang.controller.order.admin.lottery.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -45,5 +46,8 @@ public class RacingBallVO implements Serializable {
     @ApiModelProperty(value = "赛果标识")
     String award;
 
+    @ApiModelProperty(value = "比赛时间")
+    @JsonFormat(pattern = "MM-dd HH:mm", timezone = "+8")
+    Date deadline;
 
 }

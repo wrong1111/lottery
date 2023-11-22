@@ -139,12 +139,12 @@ public class StaticScheduleTask {
     @Scheduled(cron = "0 0/1 * * * ?")
     private void configureTasks() {
         log.info("爬虫定时任务触发时间【{}】 {} ", taskConfig.getMinute(), DateUtil.now());
-        if (taskConfig.getMinute()) {
+        if (taskConfig.getAward()) {
             runAward();
         }
     }
 
-    private void runAward() {
+    public void runAward() {
         //查询足球当天的比赛记录
         List<FootballMatchDO> footballMatchList = footballMatchMapper.selectList(new QueryWrapper<FootballMatchDO>().lambda().le(FootballMatchDO::getDeadline, DateUtil.now()).eq(FootballMatchDO::getState, "1"));
         //循环查找看比赛截止时间是否到了，到了就关闭这个比赛下注

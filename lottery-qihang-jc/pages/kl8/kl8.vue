@@ -5,7 +5,7 @@
 			@rightText="rightBtn">
 		</cmd-nav-bar>
 		<div style="height:100%">
-			<p class="fc_index">第{{issueNo}}期，每天一期 开奖</p>
+			<p class="fc_index">第{{issueNo}}期，每天一期 21:30开奖</p>
 			<view>
 				<u-sticky bgColor="#fff"
 					style="margin-bottom: 30px;display: flex;justify-content: center;align-items: center;">

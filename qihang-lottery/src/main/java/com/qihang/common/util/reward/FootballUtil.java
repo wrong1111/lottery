@@ -10,6 +10,7 @@ import com.qihang.controller.racingball.app.vo.BallOptimizationVO;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -277,26 +278,48 @@ public class FootballUtil {
         double[] range = new double[2];
         int[][] Indexgroup = getIndexgroup(footballMatchList.size(), pssTypeList.get(0));
         int betsnum = getallbetsnum(footballMatchDTOalls, Indexgroup);
-        range = getallrange(footballMatchDTOalls, Indexgroup);
-        double allmax = range[0];
-        double allmin = range[1];
-        List<BallOptimizationVO> footballOptimization = new ArrayList<>();
+//        range = getallrange(footballMatchDTOalls, Indexgroup);
+//        double allmax = range[0];
+//        double allmin = range[1];
         List<List<BallCombinationVO>> footballOptimizationz = getallfootballOptimization(footballMatchList, Indexgroup);
 
         for (int i = 1; i < pssTypeList.size(); i++) {
             int[][] Indexgroup1 = getIndexgroup(footballMatchList.size(), pssTypeList.get(i));
             betsnum = betsnum + getallbetsnum(footballMatchDTOalls, Indexgroup1);
-            range = getallrange(footballMatchDTOalls, Indexgroup1);
-            allmax = range[0] + allmax;
-            if (allmin > range[1]) {
-                allmin = range[1];
-            }
+//            range = getallrange(footballMatchDTOalls, Indexgroup1);
+//            allmax = range[0] + allmax;
+//            if (allmin > range[1]) {
+//                allmin = range[1];
+//            }
             footballOptimizationz.addAll(getallfootballOptimization(footballMatchList, Indexgroup1));
+        }
+        List<BallOptimizationVO> nomralOptimizationList = new ArrayList<>();
 
+        BigDecimal allmax = BigDecimal.ZERO;
+        BigDecimal allmin = BigDecimal.ZERO;
+        int idx = 0;
+        for (List<BallCombinationVO> p : footballOptimizationz) {
+            BallOptimizationVO vo = new BallOptimizationVO();
+            vo.setBallCombinationList(p);
+            vo.setType(p.size() + "串1");
+            vo.setNotes(multiple);
+            BigDecimal forest = foreast(vo.getBallCombinationList()).multiply(BigDecimal.valueOf(multiple));
+            vo.setForecastBonus(forest.setScale(2, RoundingMode.HALF_UP));
+            if (idx == 0) {
+                allmin = vo.getForecastBonus();
+            }
+            if (vo.getForecastBonus().compareTo(allmax) > 0) {
+                allmax = vo.getForecastBonus();
+            }
+            if (vo.getForecastBonus().compareTo(allmin) < 0) {
+                allmin = vo.getForecastBonus();
+            }
+            nomralOptimizationList.add(vo);
+            idx++;
         }
         footballCalculation.setNotes(betsnum);
-        footballCalculation.setMaxPrice(NumberUtil.round(allmax * 2 * multiple, 2));
-        footballCalculation.setMinPrice(NumberUtil.round(allmin * 2 * multiple, 2));
+        footballCalculation.setMaxPrice(allmax);
+        footballCalculation.setMinPrice(allmin);
         List<BallOptimizationVO>[] FootballOptimizationVOlist = BasketballUtil.getFootballOptimizationVOlist(footballOptimizationz, multiple);
 
         FootballOptimizationVOlist[0] = FootballOptimizationVOlist[0].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
@@ -306,10 +329,20 @@ public class FootballUtil {
         footballCalculation.setAverageOptimizationList(FootballOptimizationVOlist[0]);
         footballCalculation.setColdOptimizationList(FootballOptimizationVOlist[1]);
         footballCalculation.setHeatOptimizationList(FootballOptimizationVOlist[2]);
-
+        footballCalculation.setNormalOptimizatinList(nomralOptimizationList);
         return footballCalculation;
     }
 
+    public static BigDecimal foreast(List<BallCombinationVO> vos) {
+        BigDecimal bigDecimal = BigDecimal.ONE;
+        for (BallCombinationVO v : vos) {
+            int idx = v.getContent().indexOf("(");
+            int last = v.getContent().indexOf(")");
+            String odd = v.getContent().substring(idx + 1, last);
+            bigDecimal = bigDecimal.multiply(BigDecimal.valueOf(Double.valueOf(odd)));
+        }
+        return bigDecimal.multiply(BigDecimal.valueOf(2));
+    }
 
     static class FootballMatchDTOall {
         private Integer id;
@@ -778,7 +811,7 @@ public class FootballUtil {
         return odds;
     }
 
-    static BigDecimal sumItem(List<String> strings) {
+    public static BigDecimal sumItem(List<String> strings) {
         BigDecimal all = BigDecimal.valueOf(Double.valueOf(strings.get(0)));
         for (int i = 1; i < strings.size(); i++) {
             all = all.multiply(new BigDecimal(Double.valueOf(strings.get(i))));

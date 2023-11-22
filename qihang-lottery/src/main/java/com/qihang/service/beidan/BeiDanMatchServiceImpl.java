@@ -3,16 +3,19 @@ package com.qihang.service.beidan;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.util.reward.BeiDanUtil;
+import com.qihang.common.util.reward.FootballUtil;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.beidan.dto.BeiDanMatchDTO;
 import com.qihang.controller.beidan.vo.BeiDanMatchVO;
 import com.qihang.controller.beidan.vo.BeiDanVO;
+import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsListVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
@@ -37,6 +40,7 @@ import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
 import com.qihang.service.documentary.DocumentaryCommissionHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -272,6 +276,8 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
         //查询北单已经下注的订单列表
         List<LotteryOrderDO> orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()).eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.SINGLE.getKey()));
         log.debug("=======>[北单][待开奖] 记录数: {} ", orderList.size());
+
+        Map<Integer, BeiDanMatchDO> matchMap = new HashMap<>();
         for (LotteryOrderDO order : orderList) {
             //查询下注的列表
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
@@ -282,11 +288,19 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
             //出奖赔率
             List<String> bonusOddsList = new ArrayList<>();
             Boolean flag = true;
+            Map<String, String> resultMatch = new HashMap<>();
+            Map<String, String> bonusMap = new HashMap<>();
             for (RacingBallDO racingBallDO : racingBallList) {
                 //下注結果組成list
                 beiDanMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), BeiDanMatchDTO.class));
                 //查询下注对应的比赛赛果
-                BeiDanMatchDO beiDanMatch = beiDanMatchMapper.selectById(racingBallDO.getTargetId());
+                BeiDanMatchDO beiDanMatch = null;
+                if (matchMap.get(racingBallDO.getTargetId()) != null) {
+                    beiDanMatch = matchMap.get(racingBallDO.getTargetId());
+                } else {
+                    beiDanMatch = beiDanMatchMapper.selectById(racingBallDO.getTargetId());
+                    matchMap.put(racingBallDO.getTargetId(), beiDanMatch);
+                }
                 //如果比赛和赔率还没有出结果直接跳出 由于赔率不是同时出的，所有也需要做如下判断处理
                 if (StrUtil.isBlank(beiDanMatch.getAward()) || beiDanMatch.getBonusOdds().indexOf("-") != -1) {
                     log.debug("=======>[北单][待开奖] 订单 [{}] 赛事[{}]未出赛果 或赔率 ", order.getOrderId(), beiDanMatch.getNumber());
@@ -295,14 +309,21 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
                 }
                 list.add(beiDanMatch.getAward());
                 bonusOddsList.add(beiDanMatch.getBonusOdds());
+                resultMatch.put(beiDanMatch.getNumber(), beiDanMatch.getAward());
+                bonusMap.put(beiDanMatch.getNumber(), beiDanMatch.getBonusOdds());
             }
             if (flag) {
-                //过关类型
-                List<Integer> pssTypeList = Convert.toList(Integer.class, racingBallList.get(0).getType());
-                //倍数
-                Integer multiple = racingBallList.get(0).getTimes();
+                //对schemeDetails兑奖
+                if (StringUtils.isBlank(order.getSchemeDetails())) {
+                    log.error("============订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
+                    continue;
+                }
+                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
+                BeiDanUtil.awardSchemeDetails(listVOList, resultMatch, bonusMap);
                 //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
-                Double price = BeiDanUtil.award(beiDanMatchList, multiple, pssTypeList, list, bonusOddsList);
+                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
+                //反向保存一下数据
+                order.setSchemeDetails(JSON.toJSONString(listVOList));
                 //等于0相当于没有中奖
                 log.debug("=======>[北单][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
                 if (price == 0) {

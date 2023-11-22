@@ -5,6 +5,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.qihang.common.util.PermutationUtils;
 import com.qihang.constant.CrawlingAddressConstant;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
@@ -104,18 +105,29 @@ public class LotteryPipeline implements Pipeline {
             PermutationAwardDO permutationAward = resultItems.get("permutation");
             log.info(" 排列开奖 ： {} 场 ", permutationAward);
             if (StrUtil.isNotBlank(permutationAward.getReward())) {
-                permutationAward.setCreateTime(new Date());
                 permutationAward.setUpdateTime(new Date());
                 PermutationAwardDO permutationAwardDO = permutationAwardService.getOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getStageNumber, permutationAward.getStageNumber()).eq(PermutationAwardDO::getType, permutationAward.getType()));
-                if (ObjectUtil.isNotNull(permutationAwardDO)) {
-                    return;
+                if (ObjectUtil.isNotNull(permutationAwardDO) && StringUtils.isBlank(permutationAwardDO.getReward())) {
+                    permutationAward.setId(permutationAwardDO.getId());
+                    permutationAwardService.updateById(permutationAward);
+                } else if (ObjectUtil.isNull(permutationAwardDO)) {
+                    permutationAward.setCreateTime(new Date());
+                    permutationAwardService.save(permutationAward);
                 }
-                permutationAwardService.save(permutationAward);
 
                 //修改此期下注的开奖结果
-                PermutationDO permutation = new PermutationDO();
-                permutation.setReward(permutationAward.getReward());
-                permutationService.update(permutation, new QueryWrapper<PermutationDO>().lambda().eq(PermutationDO::getStageNumber, permutationAward.getStageNumber()).eq(PermutationDO::getType, permutationAward.getType()));
+//                PermutationDO permutation = new PermutationDO();
+//                permutation.setReward(permutationAward.getReward());
+//                permutationService.update(permutation, new QueryWrapper<PermutationDO>().lambda().eq(PermutationDO::getStageNumber, permutationAward.getStageNumber()).eq(PermutationDO::getType, permutationAward.getType()));
+
+                //生成下一期 数据
+                PermutationAwardDO next = PermutationUtils.next(permutationAwardDO);
+                if (null != next) {
+                    PermutationAwardDO existNextIssue = permutationAwardService.getOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getStageNumber, next.getStageNumber()).eq(PermutationAwardDO::getType, next.getType()));
+                    if (ObjectUtil.isNull(existNextIssue)) {
+                        permutationAwardService.save(next);
+                    }
+                }
                 //计算用户有没有中奖
                 permutationService.calculation(permutationAward);
             }

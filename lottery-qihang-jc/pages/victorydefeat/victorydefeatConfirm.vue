@@ -141,8 +141,7 @@
 			},
 			//删除比赛
 			close(idx) {
-				//必须14场比赛
-				if (this.selectItem.length <= 9) {
+				if (this.selectItem.length < 9) {
 					uni.showToast({
 						title: '至少选择9场比赛',
 						icon: 'none'
@@ -206,6 +205,7 @@
 				this.confirmIsShow = false;
 				this.calculationParam.notes = this.notes
 				this.calculationParam.forecast = this.maxPrice
+				this.optimizationDate.averageOptimizationList.map(item=>item.notes=this.times)
 				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.averageOptimizationList)
 				createOrder(this.calculationParam).then(res => {
 					if (res.success) {

@@ -75,6 +75,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -363,6 +364,8 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         Page<LotteryOrderDO> lotteryOrderPage = lotteryOrderMapper.selectPage(page, qw);
         commonList.setTotal(lotteryOrderPage.getTotal());
         List<LotteryOrderQueryVO> lotteryOrderQueryList = new ArrayList<>();
+        Map<String, Object> matchMap = new HashMap<>(100);
+
         for (LotteryOrderDO lotteryOrder : lotteryOrderPage.getRecords()) {
             LotteryOrderQueryVO lotteryOrderQueryVO = new LotteryOrderQueryVO();
             BeanUtils.copyProperties(lotteryOrder, lotteryOrderQueryVO);
@@ -477,36 +480,103 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             } else {
                 List<RacingBallDO> ballList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, lotteryOrder.getTargetIds()));
                 List<RacingBallVO> racingBallVOList = new ArrayList<>();
+                List<Integer> matchIdsList = new ArrayList<>();
+
                 for (RacingBallDO racingBallDO : ballList) {
-                    RacingBallVO racingBall = new RacingBallVO();
-                    BeanUtils.copyProperties(racingBallDO, racingBall);
-                    //根据订单类型查询对应的比赛赛果
-                    if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FOOTBALL.getKey())) {
-                        FootballMatchDO footballMatchDO = footballMatchMapper.selectById(racingBallDO.getTargetId());
-                        if (ObjectUtil.isNotNull(footballMatchDO)) {
-                            racingBall.setReward(footballMatchDO.getHalfFullCourt());
-                            racingBall.setAward(footballMatchDO.getAward());
-                        }
-                    } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey())) {
-                        BasketballMatchDO basketballMatchDO = basketballMatchMapper.selectById(racingBallDO.getTargetId());
-                        if (ObjectUtil.isNotNull(basketballMatchDO)) {
-                            racingBall.setReward(basketballMatchDO.getHalfFullCourt());
-                            racingBall.setAward(basketballMatchDO.getAward());
-                        }
-                    } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SINGLE.getKey())) {
-                        BeiDanMatchDO beiDanMatchDO = beiDanMatchMapper.selectById(racingBallDO.getTargetId());
-                        if (ObjectUtil.isNotNull(beiDanMatchDO)) {
-                            racingBall.setReward(beiDanMatchDO.getHalfFullCourt());
-                            racingBall.setAward(beiDanMatchDO.getAward());
-                        }
-                    } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey())) {
-                        WinBurdenMatchDO winBurdenMatchDO = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
-                        if (ObjectUtil.isNotNull(winBurdenMatchDO)) {
-                            racingBall.setReward(winBurdenMatchDO.getAward());
-                            racingBall.setAward(winBurdenMatchDO.getAward());
+                    String key = getKeys(lotteryOrder.getType(), racingBallDO.getTargetId());
+                    if (!matchIdsList.contains(racingBallDO.getTargetId()) && !matchMap.containsKey(key)) {
+                        matchIdsList.add(racingBallDO.getTargetId());
+                    }
+                }
+                if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FOOTBALL.getKey())) {
+                    if (!CollectionUtils.isEmpty(matchIdsList)) {
+                        List<FootballMatchDO> footballMatchDOS = footballMatchMapper.selectBatchIds(matchIdsList);
+
+                        if (!CollectionUtils.isEmpty(footballMatchDOS)) {
+                            footballMatchDOS.stream().forEach(p -> {
+                                String key = getKeys(lotteryOrder.getType(), p.getId());
+                                matchMap.put(key, p);
+                            });
                         }
                     }
-                    racingBallVOList.add(racingBall);
+                    for (RacingBallDO racingBallDO : ballList) {
+                        RacingBallVO racingBall = new RacingBallVO();
+                        BeanUtils.copyProperties(racingBallDO, racingBall);
+                        String key = getKeys(lotteryOrder.getType(), racingBallDO.getTargetId());
+                        FootballMatchDO matchDO = (FootballMatchDO) matchMap.get(key);
+                        if (ObjectUtil.isNotNull(matchDO)) {
+                            racingBall.setReward(matchDO.getHalfFullCourt());
+                            racingBall.setAward(matchDO.getAward());
+                            racingBall.setDeadline(matchDO.getDeadline());
+                        }
+                        racingBallVOList.add(racingBall);
+                    }
+                } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey())) {
+                    if (!CollectionUtils.isEmpty(matchIdsList)) {
+                        List<BasketballMatchDO> basketballMatchDOS = basketballMatchMapper.selectBatchIds(matchIdsList);
+                        if (!CollectionUtils.isEmpty(basketballMatchDOS)) {
+                            basketballMatchDOS.stream().forEach(p -> {
+                                String key = getKeys(lotteryOrder.getType(), p.getId());
+                                matchMap.put(key, p);
+                            });
+                        }
+                    }
+                    for (RacingBallDO racingBallDO : ballList) {
+                        RacingBallVO racingBall = new RacingBallVO();
+                        BeanUtils.copyProperties(racingBallDO, racingBall);
+                        String key = getKeys(lotteryOrder.getType(), racingBallDO.getTargetId());
+                        BasketballMatchDO matchDO = (BasketballMatchDO) matchMap.get(key);
+                        if (ObjectUtil.isNotNull(matchDO)) {
+                            racingBall.setReward(matchDO.getHalfFullCourt());
+                            racingBall.setAward(matchDO.getAward());
+                            racingBall.setDeadline(matchDO.getDeadline());
+                        }
+                        racingBallVOList.add(racingBall);
+                    }
+                } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SINGLE.getKey())) {
+                    if (!CollectionUtils.isEmpty(matchIdsList)) {
+                        List<BeiDanMatchDO> basketballMatchDOS = beiDanMatchMapper.selectBatchIds(matchIdsList);
+                        if (!CollectionUtils.isEmpty(basketballMatchDOS)) {
+                            basketballMatchDOS.stream().forEach(p -> {
+                                String key = getKeys(lotteryOrder.getType(), p.getId());
+                                matchMap.put(key, p);
+                            });
+                        }
+                    }
+                    for (RacingBallDO racingBallDO : ballList) {
+                        RacingBallVO racingBall = new RacingBallVO();
+                        BeanUtils.copyProperties(racingBallDO, racingBall);
+                        String key = getKeys(lotteryOrder.getType(), racingBallDO.getTargetId());
+                        BeiDanMatchDO matchDO = (BeiDanMatchDO) matchMap.get(key);
+                        if (ObjectUtil.isNotNull(matchDO)) {
+                            racingBall.setReward(matchDO.getHalfFullCourt());
+                            racingBall.setAward(matchDO.getAward());
+                            racingBall.setDeadline(matchDO.getDeadline());
+                        }
+                        racingBallVOList.add(racingBall);
+                    }
+                } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey())) {
+                    if (!CollectionUtils.isEmpty(matchIdsList)) {
+                        List<WinBurdenMatchDO> basketballMatchDOS = winBurdenMatchMapper.selectBatchIds(matchIdsList);
+                        if (!CollectionUtils.isEmpty(basketballMatchDOS)) {
+                            basketballMatchDOS.stream().forEach(p -> {
+                                String key = getKeys(lotteryOrder.getType(), p.getId());
+                                matchMap.put(key, p);
+                            });
+                        }
+                    }
+                    for (RacingBallDO racingBallDO : ballList) {
+                        RacingBallVO racingBall = new RacingBallVO();
+                        BeanUtils.copyProperties(racingBallDO, racingBall);
+                        String key = getKeys(lotteryOrder.getType(), racingBallDO.getTargetId());
+                        WinBurdenMatchDO matchDO = (WinBurdenMatchDO) matchMap.get(key);
+                        if (ObjectUtil.isNotNull(matchDO)) {
+                            racingBall.setReward(matchDO.getAward());
+                            racingBall.setAward(matchDO.getAward());
+                            racingBall.setDeadline(matchDO.getDeadline());
+                        }
+                        racingBallVOList.add(racingBall);
+                    }
                 }
                 lotteryOrderQueryVO.setRacingBallList(racingBallVOList);
             }
@@ -516,6 +586,10 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         return commonList;
     }
 
+
+    private String getKeys(String type, Integer id) {
+        return type + "-" + id;
+    }
 
     public String getBallAll(List<BallState> states) {
         return states.stream()

@@ -55,13 +55,16 @@ public class SpiderRunner {
     public void runHour() {
         Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
                         CrawlingAddressConstant.URL1 //足彩比赛
-                         ,CrawlingAddressConstant.URL4 // 篮彩比赛
+                        , CrawlingAddressConstant.URL4 // 篮彩比赛
                         , CrawlingAddressConstant.URL8 //北京单场
                         , CrawlingAddressConstant.URL9 //北京单场 进球
                         , CrawlingAddressConstant.URL10 //北京单场 上下单双
                         , CrawlingAddressConstant.URL11 //北京单场 比分
                         , CrawlingAddressConstant.URL12 //北京单场 半全场进球
                         , CrawlingAddressConstant.URL18 //胜负彩比赛
+                        , CrawlingAddressConstant.URL3 //足彩对局分析
+                        , CrawlingAddressConstant.URL5 //篮球对局分析
+                        , CrawlingAddressConstant.URL15 //北单分析
                 ).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover()))
 //                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
 //                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
@@ -120,18 +123,19 @@ public class SpiderRunner {
 
     }
 
+    /*
+     比赛 赛果
+     */
     public void run() {
         Spider.create(new LotteryProcessor()).addUrl(
-                //CrawlingAddressConstant.URL6 //足球开奖
-                 CrawlingAddressConstant.URL7 //篮球开奖
-//                , CrawlingAddressConstant.URL19 //胜负彩开奖
-//                , CrawlingAddressConstant.URL13 //北单开奖
-//                , CrawlingAddressConstant.URL3 //足彩对局分析
-//                , CrawlingAddressConstant.URL5 //篮球对局分析
-//                , CrawlingAddressConstant.URL14 //篮球大小分查询
-//                , CrawlingAddressConstant.URL15 //北单分析
+                CrawlingAddressConstant.URL6 //足球开奖
+                , CrawlingAddressConstant.URL7 //篮球开奖
+                , CrawlingAddressConstant.URL19 //胜负彩开奖
+                , CrawlingAddressConstant.URL13 //北单开奖
+                , CrawlingAddressConstant.URL14 //篮球大小分查询
         ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
 
+        runpre();
 //        Spider.create(new LotteryProcessor()).addUrl(
 ////                        CrawlingAddressConstant.URL1 //足彩比赛
 ////                        , CrawlingAddressConstant.URL2 //排列三出奖

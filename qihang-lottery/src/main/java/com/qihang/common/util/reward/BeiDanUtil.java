@@ -2,10 +2,15 @@ package com.qihang.common.util.reward;
 
 import cn.hutool.core.util.NumberUtil;
 import com.qihang.controller.beidan.dto.BeiDanMatchDTO;
+import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsListVO;
+import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsVO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.controller.racingball.app.vo.BallCombinationVO;
 import com.qihang.controller.racingball.app.vo.BallOptimizationVO;
+import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -270,8 +275,8 @@ public class BeiDanUtil {
         int[][] Indexgroup = getIndexgroup(beiDanMatchList.size(), pssTypeList.get(0));
         int betsnum = getallbetsnum(beiDanMatchDTOall, Indexgroup);
         range = getallrange(beiDanMatchDTOall, Indexgroup);
-        double allmax = range[0];
-        double allmin = range[1];
+//        double allmax = range[0];
+//        double allmin = range[1];
 
         List<List<BallCombinationVO>> basketballOptimizationz = getallfootballOptimization(beiDanMatchList, Indexgroup);
 
@@ -279,15 +284,40 @@ public class BeiDanUtil {
             int[][] Indexgroup1 = getIndexgroup(beiDanMatchList.size(), pssTypeList.get(i));
             betsnum = betsnum + getallbetsnum(beiDanMatchDTOall, Indexgroup1);
             range = getallrange(beiDanMatchDTOall, Indexgroup1);
-            allmax = range[0] + allmax;
-            if (allmin > range[1]) {
-                allmin = range[1];
-            }
+//            allmax = range[0] + allmax;
+//            if (allmin > range[1]) {
+//                allmin = range[1];
+//            }
             basketballOptimizationz.addAll(getallfootballOptimization(beiDanMatchList, Indexgroup1));
         }
+        List<BallOptimizationVO> nomralOptimizationList = new ArrayList<>();
+
+        BigDecimal allmax = BigDecimal.ZERO;
+        BigDecimal allmin = BigDecimal.ZERO;
+        int idx = 0;
+        for (List<BallCombinationVO> p : basketballOptimizationz) {
+            BallOptimizationVO vo = new BallOptimizationVO();
+            vo.setBallCombinationList(p);
+            vo.setType(p.size() + "串1");
+            vo.setNotes(multiple);
+            BigDecimal forest = FootballUtil.foreast(vo.getBallCombinationList()).multiply(BigDecimal.valueOf(multiple)).multiply(BigDecimal.valueOf(0.65d));
+            vo.setForecastBonus(forest.setScale(2, RoundingMode.HALF_UP));
+            if (idx == 0) {
+                allmin = vo.getForecastBonus();
+            }
+            if (vo.getForecastBonus().compareTo(allmax) > 0) {
+                allmax = vo.getForecastBonus();
+            }
+            if (vo.getForecastBonus().compareTo(allmin) < 0) {
+                allmin = vo.getForecastBonus();
+            }
+            nomralOptimizationList.add(vo);
+            idx++;
+        }
+
         beiDanCalculation.setNotes(betsnum);
-        beiDanCalculation.setMaxPrice(NumberUtil.round(allmax * 2 * multiple * 0.65, 2));
-        beiDanCalculation.setMinPrice(NumberUtil.round(allmin * 2 * multiple * 0.65, 2));
+        beiDanCalculation.setMaxPrice(allmax);
+        beiDanCalculation.setMinPrice(allmin);
         List<BallOptimizationVO>[] FootballOptimizationVOlist = BasketballUtil.getFootballOptimizationVOlist(basketballOptimizationz, multiple);
         FootballOptimizationVOlist[0] = FootballOptimizationVOlist[0].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
         FootballOptimizationVOlist[1] = FootballOptimizationVOlist[1].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
@@ -296,6 +326,7 @@ public class BeiDanUtil {
         beiDanCalculation.setAverageOptimizationList(FootballOptimizationVOlist[0]);
         beiDanCalculation.setColdOptimizationList(FootballOptimizationVOlist[1]);
         beiDanCalculation.setHeatOptimizationList(FootballOptimizationVOlist[2]);
+        beiDanCalculation.setNormalOptimizatinList(nomralOptimizationList);
 
         return beiDanCalculation;
     }
@@ -510,5 +541,64 @@ public class BeiDanUtil {
             }
             footballCombinationVOList.remove(footballCombinationVOList.size() - 1);
         }
+    }
+
+    public static void awardSchemeDetails(List<SportSchemeDetailsListVO> sportsDetails, Map<String, String> awardMap, Map<String, String> bonuseMap) {
+
+        for (SportSchemeDetailsListVO detailsVOS : sportsDetails) {
+
+            Map<String, String> matchMaps = detailsVOS.getBallCombinationList().stream().collect(Collectors.toMap(SportSchemeDetailsVO::getNumber, SportSchemeDetailsVO::getContent, (a, b) -> a));
+            boolean allFinished = true;
+            for (Map.Entry<String, String> keyEntity : matchMaps.entrySet()) {
+                if (awardMap.get(keyEntity.getKey()) == null) {
+                    //没有开奖
+                    allFinished = false;
+                    break;
+                }
+            }
+            if (allFinished) {
+                List<String> resultOddsList = new ArrayList<>();
+                for (Map.Entry<String, String> keyEntity : matchMaps.entrySet()) {
+                    String content = keyEntity.getValue();
+                    String award = awardMap.get(keyEntity.getKey());
+                    String bonuse = bonuseMap.get(keyEntity.getKey());
+                    String odd = getOddByResult(content, award, bonuse);
+                    if (StringUtils.isBlank(odd)) {
+                        resultOddsList.add(odd);
+                    }
+                }
+                if (resultOddsList.size() == matchMaps.size()) {
+                    //中了
+                    BigDecimal money = FootballUtil.sumItem(resultOddsList).multiply(BigDecimal.valueOf(Integer.valueOf(detailsVOS.getNotes()))).multiply(BigDecimal.valueOf(0.65d));
+                    detailsVOS.setMoney("" + money.setScale(2, RoundingMode.HALF_DOWN));
+                    detailsVOS.setAward(true);
+                }
+            }
+        }
+
+    }
+
+    private static String getOddByResult(String content, String award, String bouns) {
+        String[] awards = StringUtils.splitByWholeSeparatorPreserveAllTokens(award, ",");
+        String[] bonuse = StringUtils.splitByWholeSeparatorPreserveAllTokens(bouns, ",");
+        int idx = content.indexOf("(");
+        int last = content.indexOf(")");
+        String bet = content.substring(0, idx);
+
+        int index = 0;
+        for (String a : awards) {
+            //返本金
+            if ("-".equals(a)) {
+                return "1";
+            }
+            if ("7".equals(a)) {
+                a = "7+";
+            }
+            if (a.equals(bet)) {
+                return bonuse[index];
+            }
+            index++;
+        }
+        return "";
     }
 }

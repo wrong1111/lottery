@@ -6,6 +6,7 @@ import com.qihang.common.vo.BaseVO;
 import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import com.qihang.reptile.SpiderRunner;
+import com.qihang.schedul.StaticScheduleTask;
 import com.qihang.service.basketball.IBasketballMatchService;
 import com.qihang.service.beidan.IBeiDanMatchService;
 import com.qihang.service.football.IFootballMatchService;
@@ -26,6 +27,9 @@ public class NomalScheduleController {
 
     @Resource
     private SpiderRunner spiderRunner;
+
+    @Resource
+    StaticScheduleTask staticScheduleTask;
 
     @Resource
     IFootballMatchService footballMatchService;
@@ -52,26 +56,30 @@ public class NomalScheduleController {
         switch (type) {
             //runday
             case "1":
-                log.info(" >>>> 手动触发 runday start ");
+                log.info(" >>>> 手动触发  双色球，快乐8，福彩3D，七乐彩,排列3,排列5，七星彩， 开奖 runday start ");
                 spiderRunner.runDay();
-                log.info(">>>> 手动触发 runday end ");
+                log.info(">>>> 手动触发   双色球，快乐8，福彩3D，七乐彩,排列3,排列5，七星彩， 开奖runday end ");
                 break;
             case "2":
-                log.info(" >>>> 手动触发 runOmit start ");
+                log.info(" >>>> 手动触发 遗漏 七星彩，排列3，排列5，大乐透 runOmit start ");
                 spiderRunner.runOmit();
-                log.info(">>>> 手动触发 runday end ");
+                log.info(">>>> 手动触发 遗漏 七星彩，排列3，排列5，大乐透 runday end ");
                 break;
             case "3":
-                log.info(" >>>> 手动触发 runHour start ");
+                log.info(" >>>> 手动触发  比赛 赛事 runHour start ");
                 spiderRunner.runHour();
-                log.info(">>>> 手动触发 runHour end ");
+                log.info(">>>> 手动触发   比赛 赛事 runHour end ");
                 break;
             case "4":
                 log.info(" >>>> 手动触发 run start ");
                 spiderRunner.run();
                 log.info(">>>> 手动触发 run end ");
                 break;
-
+            case "5":
+                log.info(" >>>> 手动触发 比赛兑奖 start ");
+                staticScheduleTask.runAward();
+                log.info(">>>> 手动触发 比赛兑奖 end ");
+                break;
             case "10":
                 log.info("竞猜足球开奖");
                 footballMatchService.award();

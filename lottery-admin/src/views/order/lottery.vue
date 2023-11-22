@@ -137,11 +137,14 @@
                           <span>{{ inner.row.content.visitingTeam }}</span>
                         </template>
                       </el-table-column>
+                      <el-table-column prop="deadline" label="比赛时间" align="center">
+
+                      </el-table-column>
                       <el-table-column label="下注内容" align="center">
                         <template slot-scope="inner">
                           <div v-if="showDan(inner.row)" class="blue">[胆]</div>
 
-                          {{ getRaceContent(inner.row) }}
+                          {{ getRaceContent(scope.row.type,inner.row) }}
                         </template>
                       </el-table-column>
                       <el-table-column label="赛果(全/半)" align="center">
@@ -252,7 +255,8 @@
           </el-table-column>
         </el-table>
 
-        <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2" :height="drawerHeight" :key="sportId">
+        <el-table :data="sportItemInfo" border v-if="sportItemInfo.length>0" name="table2" :height="drawerHeight"
+          :key="sportId">
           <el-table-column prop="id" width="80" align="center" label="序 号"> </el-table-column>
           <el-table-column prop="reawardx" width="80" align="center" label="结果">
             <template slot-scope="scope">
@@ -261,7 +265,7 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="types" width="100" align="center" label="玩法"/>
+          <el-table-column prop="types" width="100" align="center" label="玩法" />
           <el-table-column prop="ballCombinationList" width="380" align="center" label="投注内容">
             <template slot-scope="scope">
               <span v-for="(item,index) in scope.row.ballCombinationList">
@@ -303,8 +307,8 @@
     props: {},
     data() {
       return {
-        sportId:Math.random(),
-        digitId:Math.random(),
+        sportId: Math.random(),
+        digitId: Math.random(),
         bills: [{
           label: "无票据",
           value: "0",
@@ -493,16 +497,17 @@
           let idx = 1
           let items = row.schemeDetails
           for (let i = 0; i < items.length; i++) {
-            that.sportItemInfo.push({
+            const o = {
               id: idx++,
               types: items[i]['type'],
-              reawardx: (typeof(items[i]['award']) == 'undefined' || !item[i]['award']) ? false : true,
+              reawardx: (typeof(items[i]['award']) == 'undefined' || !items[i]['award']) ? false : true,
               awardx: typeof(items[i]['award']) == 'undefined' ? false : items[i]['award'],
               moneyx: typeof(items[i]['money']) == 'undefined' ? '0' : items[i]['money'],
-              ballCombinationList: items[i]['ballCombinationList']
-            })
+              ballCombinationList: items[i]['ballCombinationList'],
+            }
+            that.sportItemInfo.push(o)
           }
-          console.log('sportItemInfo',that.sportItemInfo)
+          console.log('sportItemInfo', that.sportItemInfo)
           return
         } else if (!that.isSportRace(row)) {
           //数字展示
@@ -614,74 +619,127 @@
         return result ? "red" : "blue";
       },
       // 下注内容
-      getRaceContent(row) {
-        const content = row.content;
+      getRaceContent(type, row) {
         let result = "";
-        //对于任选9场来说有胆
-        // if (typeof(content.isGallbladder) != 'undefined' && content.isGallbladder) {
-        //   result = "[胆]"
-        // }
-        // 让球胜平负
-        if (content.letOddsList && content.letOddsList.length) {
-          let oddsList = [];
-          for (let index = 0; index < content.letOddsList.length; index++) {
-            const element = content.letOddsList[index];
-            const result = "让" + element.describe + "(" + element.odds + ")";
-            oddsList.push(result);
+        console.log(' show content', type, row)
+        if (type == 1) {
+          let content = row.content
+          //胜分
+          if (content.winNegativeOddsList && content.winNegativeOddsList.length) {
+            if (result) {
+              result = result + "|";
+            }
+            let oddsList = [];
+            for (let index = 0; index < content.winNegativeOddsList.length; index++) {
+              const element = content.winNegativeOddsList[index];
+              const result = element.describe + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
           }
-          result = result + oddsList.join(",");
-        }
-        // 胜平负
-        if (content.notLetOddsList && content.notLetOddsList.length) {
-          if (result) {
-            result = result + "|";
+          //让分胜负
+          if (content.cedePointsOddsList && content.cedePointsOddsList.length) {
+            if (result) {
+              result = result + "|";
+            }
+            let oddsList = [];
+            for (let index = 0; index < content.cedePointsOddsList.length; index++) {
+              const element = content.cedePointsOddsList[index];
+              const result = '让分'+element.describe + "[" + content.cedePoints + "]" + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
           }
-          let oddsList = [];
-          for (let index = 0; index < content.notLetOddsList.length; index++) {
-            const element = content.notLetOddsList[index];
-            const result = element.describe + "(" + element.odds + ")";
-            oddsList.push(result);
+          //总分
+          if (content.sizeOddsList && content.sizeOddsList.length) {
+            if (result) {
+              result = result + "|";
+            }
+            let oddsList = [];
+            for (let index = 0; index < content.sizeOddsList.length; index++) {
+              const element = content.sizeOddsList[index];
+              const result = element.describe + "[" + element.score + "]" + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
           }
-          result = result + oddsList.join(",");
-        }
-        // 总进球数
-        if (content.goalOddsList && content.goalOddsList.length) {
-          if (result) {
-            result = result + "|";
+          //胜分差
+          if (content.differenceOddsList && content.differenceOddsList.length) {
+            if (result) {
+              result = result + "|";
+            }
+            let oddsList = [];
+            for (let index = 0; index < content.differenceOddsList.length; index++) {
+              const element = content.differenceOddsList[index];
+              const result = element.describe + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
           }
-          let oddsList = [];
-          for (let index = 0; index < content.goalOddsList.length; index++) {
-            const element = content.goalOddsList[index];
-            const result = element.describe + "(" + element.odds + ")";
-            oddsList.push(result);
+        } else {
+          const content = row.content;
+          // 让球胜平负
+          if (content.letOddsList && content.letOddsList.length) {
+            let oddsList = [];
+            for (let index = 0; index < content.letOddsList.length; index++) {
+              const element = content.letOddsList[index];
+              const result = "让" + element.describe + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
           }
-          result = result + oddsList.join(",");
-        }
-        // 半全场
-        if (content.halfWholeOddsList && content.halfWholeOddsList.length) {
-          if (result) {
-            result = result + "|";
+          // 胜平负
+          if (content.notLetOddsList && content.notLetOddsList.length) {
+            if (result) {
+              result = result + "|";
+            }
+            let oddsList = [];
+            for (let index = 0; index < content.notLetOddsList.length; index++) {
+              const element = content.notLetOddsList[index];
+              const result = element.describe + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
           }
-          let oddsList = [];
-          for (let index = 0; index < content.halfWholeOddsList.length; index++) {
-            const element = content.halfWholeOddsList[index];
-            const result = element.describe + "(" + element.odds + ")";
-            oddsList.push(result);
+          // 总进球数
+          if (content.goalOddsList && content.goalOddsList.length) {
+            if (result) {
+              result = result + "|";
+            }
+            let oddsList = [];
+            for (let index = 0; index < content.goalOddsList.length; index++) {
+              const element = content.goalOddsList[index];
+              const result = element.describe + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
           }
-          result = result + oddsList.join(",");
-        }
-        // 比分
-        if (content.scoreOddsList && content.scoreOddsList.length) {
-          if (result) {
-            result = result + "|";
+          // 半全场
+          if (content.halfWholeOddsList && content.halfWholeOddsList.length) {
+            if (result) {
+              result = result + "|";
+            }
+            let oddsList = [];
+            for (let index = 0; index < content.halfWholeOddsList.length; index++) {
+              const element = content.halfWholeOddsList[index];
+              const result = element.describe + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
           }
-          let oddsList = [];
-          for (let index = 0; index < content.scoreOddsList.length; index++) {
-            const element = content.scoreOddsList[index];
-            const result = element.describe + "(" + element.odds + ")";
-            oddsList.push(result);
+          // 比分
+          if (content.scoreOddsList && content.scoreOddsList.length) {
+            if (result) {
+              result = result + "|";
+            }
+            let oddsList = [];
+            for (let index = 0; index < content.scoreOddsList.length; index++) {
+              const element = content.scoreOddsList[index];
+              const result = element.describe + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
           }
-          result = result + oddsList.join(",");
         }
         return result;
       },

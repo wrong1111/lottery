@@ -247,10 +247,9 @@ public class LotteryProcessor implements PageProcessor {
                 String result = "";
                 if (StrUtil.isNotBlank(score) && !score.equals("-")) {
                     int[] scoreArr = StrUtil.splitToInt(score, ":");
-                    //判断让分后是客胜还是主胜
-                    //500 客队在前，主队在后
-                    score = scoreArr[1] + ":" + scoreArr[0];
-                    if (scoreArr[0] > scoreArr[1] + Double.valueOf(str)) {
+                    //
+                    //500 客队在前，主队在后 让分为正，为客让分，负数为主让分。
+                    if (scoreArr[0] - Double.valueOf(str) > scoreArr[1]) {
                         result = "主负";
                     } else {
                         result = "主胜";

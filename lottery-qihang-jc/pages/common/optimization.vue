@@ -3,12 +3,12 @@
 	<view class="box">
 		<nav-bar :title="'奖金优化'" :back="true"></nav-bar>
 		<view class="body">
-			<u-sticky style="margin-top: 30px;">
+			<u-sticky style="margin-top: 10px;">
 				<u-subsection :list="list" mode="subsection" inactiveColor="#FF3F43" fontSize="14" :current="current"
 					activeColor="#FF3F43" @change="subsectionChange">
 				</u-subsection>
 			</u-sticky>
-			<uni-table border stripe emptyText="暂无更多数据" style="margin-top: 30px;" v-if="current==0">
+			<uni-table border stripe emptyText="暂无更多数据" style="margin-top: 10px;" v-if="current==0">
 				<!-- 表头行 -->
 				<uni-tr>
 					<uni-th width="75px" align="center">过关</uni-th>
@@ -52,7 +52,7 @@
 				</tbody>
 			</uni-table>
 
-			<uni-table border stripe emptyText="暂无更多数据" style="margin-top: 30px;" v-if="current==1">
+			<uni-table border stripe emptyText="暂无更多数据" style="margin-top: 10px;" v-if="current==1">
 				<!-- 表头行 -->
 				<uni-tr>
 					<uni-th width="75px" align="center">过关</uni-th>
@@ -97,7 +97,7 @@
 			</uni-table>
 
 
-			<uni-table border stripe emptyText="暂无更多数据" style="margin-top: 30px;" v-if="current==2">
+			<uni-table border stripe emptyText="暂无更多数据" style="margin-top: 10px;" v-if="current==2" >
 				<!-- 表头行 -->
 				<uni-tr>
 					<uni-th width="75px" align="center">过关</uni-th>
@@ -141,18 +141,20 @@
 				</tbody>
 			</uni-table>
 		</view>
-		<view style="position: fixed;bottom: 0px; left: 0;width: 100%;">
+		<view style="position: fixed;bottom: 0px; left: 0;width: 100%;" class="calcuate" >
 			<u-line></u-line>
-			<p style="text-align: center;padding: 5px 0px;">单注预测奖金:<span style="color: #FF3F43;">{{this.min}}~{{this.max}}</span></p>
+			<p style="text-align: center;padding: 5px 0px;">单注预测奖金:<span
+					style="color: #FF3F43;">{{this.min}}~{{this.max}}</span></p>
 			<u-line></u-line>
 			<view style="display: flex;justify-content: space-between;align-items: center;height: 50px;">
 				<view style="margin-left: 10px;">
 					方案共:<span
 						style="color: #FF3F43;">{{this.calculationParam.notes*this.calculationParam.multiple*2}}元</span>
 				</view>
-				
+
 				<view style="position: fixed;right: 0;bottom: 0px;">
-					<u-button style="background-color: #FF3F43; color: #ffffff;border-radius: 10px 0px 0px 10px;padding: 10px 35px;"
+					<u-button
+						style="background-color: #FF3F43; color: #ffffff;border-radius: 10px 0px 0px 10px;padding: 10px 35px;"
 						text="提交" @tap="confirmIsShow=true"></u-button>
 				</view>
 			</view>
@@ -180,17 +182,22 @@
 				list: ['奖金平均', '博热优化', '博冷优化'],
 				current: 0,
 				value: 1,
-				min:"",
-				max:"",
+				min: "",
+				max: "",
 				calculationParam: {},
 				averageOptimizationList: [],
 				heatOptimizationList: [],
-				coldOptimizationList: []
+				coldOptimizationList: [],
+				scrollHeight:0
 			}
 		},
+		mounted() {
+			
+		},
 		methods: {
-			betting(){
-				if(this.calculationParam.notes*2*this.calculationParam.multiple<10){
+			
+			betting() {
+				if (this.calculationParam.notes * 2 * this.calculationParam.multiple < 10) {
 					uni.showToast({
 						title: '下单金额最低10元起投',
 						icon: 'none'
@@ -199,7 +206,10 @@
 				}
 				uni.showLoading();
 				this.confirmIsShow = false;
-				this.calculationParam.schemeDetails=JSON.stringify(this.averageOptimizationList)
+				this.calculationParam.schemeDetails = this.current == 0 ? JSON.stringify(this.averageOptimizationList) : (
+					this.current == 1 ? JSON.stringify(this.heatOptimizationList) : JSON.stringify(this
+						.coldOptimizationList))
+				console.log(" 现在选择的是 ", this.current, this.calculationParam)
 				createOrder(this.calculationParam).then(res => {
 					if (res.success) {
 						//标识为已经下单了
@@ -216,7 +226,7 @@
 				})
 			},
 			//展开
-			open(index, item,type) {
+			open(index, item, type) {
 				if (type == 0) {
 					this.$set(this.averageOptimizationList[index], "isShow", !item.isShow)
 				} else if (type == 1) {
@@ -229,19 +239,31 @@
 				this.current = index;
 				if (this.current == 0) {
 					// 最大值
-					this.max=Math.max.apply(null, this.averageOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.max = Math.max.apply(null, this.averageOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 					// 最小值
-					this.min=Math.min.apply(null, this.averageOptimizationList.map(function (item) {return item.forecastBonus}))
-				}else if(this.current == 1){
+					this.min = Math.min.apply(null, this.averageOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
+				} else if (this.current == 1) {
 					// 最大值
-					this.max=Math.max.apply(null, this.heatOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.max = Math.max.apply(null, this.heatOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 					// 最小值
-					this.min=Math.min.apply(null, this.heatOptimizationList.map(function (item) {return item.forecastBonus}))
-				}else if(this.current == 2){
+					this.min = Math.min.apply(null, this.heatOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
+				} else if (this.current == 2) {
 					// 最大值
-					this.max=Math.max.apply(null, this.coldOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.max = Math.max.apply(null, this.coldOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 					// 最小值
-					this.min=Math.min.apply(null, this.coldOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.min = Math.min.apply(null, this.coldOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 				}
 			},
 			valChange(e, item, index, type) {
@@ -253,21 +275,33 @@
 				if (type == 0) {
 					this.$set(this.averageOptimizationList[index], "forecastBonus", (odds * 2 * e.value).toFixed(2))
 					// 最大值
-					this.max=Math.max.apply(null, this.averageOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.max = Math.max.apply(null, this.averageOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 					// 最小值
-					this.min=Math.min.apply(null, this.averageOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.min = Math.min.apply(null, this.averageOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 				} else if (type == 1) {
 					this.$set(this.heatOptimizationList[index], "forecastBonus", (odds * 2 * e.value).toFixed(2))
 					// 最大值
-					this.max=Math.max.apply(null, this.heatOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.max = Math.max.apply(null, this.heatOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 					// 最小值
-					this.min=Math.min.apply(null, this.heatOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.min = Math.min.apply(null, this.heatOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 				} else if (type == 2) {
 					this.$set(this.coldOptimizationList[index], "forecastBonus", (odds * 2 * e.value).toFixed(2))
 					// 最大值
-					this.max=Math.max.apply(null, this.coldOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.max = Math.max.apply(null, this.coldOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 					// 最小值
-					this.min=Math.min.apply(null, this.coldOptimizationList.map(function (item) {return item.forecastBonus}))
+					this.min = Math.min.apply(null, this.coldOptimizationList.map(function(item) {
+						return item.forecastBonus
+					}))
 				}
 			}
 		},
@@ -276,9 +310,13 @@
 			let obj = JSON.parse(decodeURIComponent(option.obj));
 			this.averageOptimizationList = obj.averageOptimizationList
 			// 最大值
-			this.max=Math.max.apply(null, this.averageOptimizationList.map(function (item) {return item.forecastBonus}))
+			this.max = Math.max.apply(null, this.averageOptimizationList.map(function(item) {
+				return item.forecastBonus
+			}))
 			// 最小值
-			this.min=Math.min.apply(null, this.averageOptimizationList.map(function (item) {return item.forecastBonus}))
+			this.min = Math.min.apply(null, this.averageOptimizationList.map(function(item) {
+				return item.forecastBonus
+			}))
 			this.heatOptimizationList = obj.heatOptimizationList
 			this.coldOptimizationList = obj.coldOptimizationList
 		}
@@ -293,5 +331,17 @@
 
 	/deep/.uni-table-td {
 		padding: 8px 5px !important;
+	}
+
+	.u-sticky {
+		top: 80px;
+	}
+
+	.calcuate {
+		background-color: antiquewhite;
+	}
+
+	.uni-table-scroll {
+		height: ;
 	}
 </style>

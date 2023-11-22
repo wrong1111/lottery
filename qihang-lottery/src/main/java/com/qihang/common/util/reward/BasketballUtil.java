@@ -2,11 +2,19 @@ package com.qihang.common.util.reward;
 
 import cn.hutool.core.util.NumberUtil;
 import com.qihang.controller.basketball.dto.BasketballMatchDTO;
+import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsListVO;
+import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsVO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.controller.racingball.app.vo.BallCombinationVO;
 import com.qihang.controller.racingball.app.vo.BallOptimizationVO;
+import com.qihang.domain.basketball.BasketballMatchDO;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author: bright
@@ -194,14 +202,20 @@ public class BasketballUtil {
      * @param footballMatchDTO 比赛表
      * @return
      */
-    public static List<BallCombinationVO> getOptions(BasketballMatchDTO footballMatchDTO, List<Map<String, Object>> oddlist) {
+    public static List<BallCombinationVO> getOptions(BasketballMatchDTO footballMatchDTO, List<Map<String, Object>> oddlist, int type) {
         List<BallCombinationVO> footballCombinationVOList = new ArrayList<>();
         for (int i = 0; i < oddlist.size(); i++) {
             BallCombinationVO footballCombinationVO = new BallCombinationVO();
             footballCombinationVO.setHomeTeam(footballMatchDTO.getHomeTeam());
             footballCombinationVO.setNumber(footballMatchDTO.getNumber());
             footballCombinationVO.setVisitingTeam(footballMatchDTO.getVisitingTeam());
-            footballCombinationVO.setContent(oddlist.get(i).get("describe").toString() + "(" + Double.parseDouble(oddlist.get(i).get("odds").toString()) + ")");
+            String fen = "";
+            if (type == 1) {
+                fen = footballMatchDTO.getSizeOddsList().get(0).get("score").toString();
+            } else if (type == 2) {
+                fen = footballMatchDTO.getCedePoints();
+            }
+            footballCombinationVO.setContent((type == 2 ? "让" : "") + oddlist.get(i).get("describe").toString() + (StringUtils.isNotBlank(fen) ? "[" + fen + "]" : "") + "(" + Double.parseDouble(oddlist.get(i).get("odds").toString()) + ")");
             footballCombinationVOList.add(footballCombinationVO);
 
         }
@@ -216,84 +230,75 @@ public class BasketballUtil {
      */
     public static List<BallCombinationVO> getAllOptions(BasketballMatchDTO footballMatchDTO) {
         List<BallCombinationVO> footballCombinationVOList = new ArrayList<>();
-        footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getDifferenceOddsList()));
-        footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getSizeOddsList()));
-        footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getCedePointsOddsList()));
-        footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getWinNegativeOddsList()));
+        footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getDifferenceOddsList(), 0));//
+        footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getSizeOddsList(), 1));//大小分，需要加上大分值
+        footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getCedePointsOddsList(), 2));//让分，需要加上让分值
+        footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getWinNegativeOddsList(), 3));
         return footballCombinationVOList;
     }
 
 
-    public static double[] getOptimizationodds( List<List<BallCombinationVO>> basketballOptimization){
-        double[] odds=new double[basketballOptimization.size()];
-        for(int i=0;i<basketballOptimization.size();i++)
-        {
-            double odd=1.0;
-            List<BallCombinationVO> ballOptimizationVO=basketballOptimization.get(i);
-            for(int j=0;j<ballOptimizationVO.size();j++)
-            {
-                odd=odd*Double.valueOf(ballOptimizationVO.get(j).getContent().split("\\(")[1].split("\\)")[0]);
+    public static double[] getOptimizationodds(List<List<BallCombinationVO>> basketballOptimization) {
+        double[] odds = new double[basketballOptimization.size()];
+        for (int i = 0; i < basketballOptimization.size(); i++) {
+            double odd = 1.0;
+            List<BallCombinationVO> ballOptimizationVO = basketballOptimization.get(i);
+            for (int j = 0; j < ballOptimizationVO.size(); j++) {
+                odd = odd * Double.valueOf(ballOptimizationVO.get(j).getContent().split("\\(")[1].split("\\)")[0]);
             }
-            odds[i]=odd;
+            odds[i] = odd;
         }
         return odds;
     }
-    public static int findIndex(double[]odds,String type)
-    {
-        double re=odds[0];
-        int d=0;
-        if(type.equals("max"))
-        {
-            for(int i=1;i<odds.length;i++)
-            {
-                if(re<odds[i])
-                {
-                    re=odds[i];
-                    d=i;
+
+    public static int findIndex(double[] odds, String type) {
+        double re = odds[0];
+        int d = 0;
+        if (type.equals("max")) {
+            for (int i = 1; i < odds.length; i++) {
+                if (re < odds[i]) {
+                    re = odds[i];
+                    d = i;
                 }
             }
         }
-        if(type.equals("min"))
-        {
-            for(int i=1;i<odds.length;i++)
-            {
-                if(re>odds[i])
-                {
-                    re=odds[i];
-                    d=i;
+        if (type.equals("min")) {
+            for (int i = 1; i < odds.length; i++) {
+                if (re > odds[i]) {
+                    re = odds[i];
+                    d = i;
                 }
             }
         }
         return d;
     }
-    public static double sumodds(double[]odds){
-        double res=0.0;
-        for(int i=0;i<odds.length;i++)
-        {
-            res=res+1.0/odds[i];
+
+    public static double sumodds(double[] odds) {
+        double res = 0.0;
+        for (int i = 0; i < odds.length; i++) {
+            res = res + 1.0 / odds[i];
         }
         return res;
     }
-    public static int findminabs(Integer[] Notes,double[] odds,double oddsum)
-    {
-        double abs=oddsum;
-        int minabsindex=0;
+
+    public static int findminabs(Integer[] Notes, double[] odds, double oddsum) {
+        double abs = oddsum;
+        int minabsindex = 0;
         double absx;
-        for(int i=0;i<Notes.length;i++)
-        {
-            absx=Math.abs((Notes[i]-1)*odds[i]-oddsum);
-                if ( abs> absx) {
-                    abs = absx;
-                    minabsindex = i;
-                }
+        for (int i = 0; i < Notes.length; i++) {
+            absx = Math.abs((Notes[i] - 1) * odds[i] - oddsum);
+            if (abs > absx) {
+                abs = absx;
+                minabsindex = i;
+            }
 
         }
         return minabsindex;
     }
-    public static Integer[][] getNote(double[] odds,Integer multiple)
-    {
-        Integer[][] Notes=new Integer[3][odds.length];
-        if(multiple!=1) {
+
+    public static Integer[][] getNote(double[] odds, Integer multiple) {
+        Integer[][] Notes = new Integer[3][odds.length];
+        if (multiple != 1) {
             double oddsum = sumodds(odds);
             int sum = odds.length * multiple;
             int maxinedx = findIndex(odds, "max"), minindex = findIndex(odds, "min");
@@ -324,15 +329,15 @@ public class BasketballUtil {
                 Notes[0][avgabsminindex]--;
                 avgsum--;
             }
-        }
-        else if(multiple==1){
-            for(int i=0;i<3;i++)
-              for(int j=0;j<odds.length;j++)
-                  Notes[i][j]=1;
+        } else if (multiple == 1) {
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < odds.length; j++)
+                    Notes[i][j] = 1;
         }
 
         return Notes;
     }
+
     /**
      * 计算每一注奖金并将List<List<FootballCombinationVO>>返回为List<FootballOptimizationVO>
      *
@@ -340,18 +345,17 @@ public class BasketballUtil {
      * @return
      */
     public static List<BallOptimizationVO>[] getFootballOptimizationVOlist(List<List<BallCombinationVO>> footballOptimization, Integer multiple) {
-        double[] odds=getOptimizationodds(footballOptimization);
-        Integer[][] Notes=getNote(odds,multiple);
-        List<BallOptimizationVO>[] footballOptimizationVOList=new ArrayList[3];
-        for(int m=0;m<3;m++)
-        {
-           footballOptimizationVOList[m] = new ArrayList<>();
+        double[] odds = getOptimizationodds(footballOptimization);
+        Integer[][] Notes = getNote(odds, multiple);
+        List<BallOptimizationVO>[] footballOptimizationVOList = new ArrayList[3];
+        for (int m = 0; m < 3; m++) {
+            footballOptimizationVOList[m] = new ArrayList<>();
             for (int i = 0; i < footballOptimization.size(); i++) {
                 BallOptimizationVO footballOptimizationVO = new BallOptimizationVO();
                 footballOptimizationVO.setBallCombinationList(footballOptimization.get(i));
-                footballOptimizationVO.setType(footballOptimization.get(i).size()+"串1");
+                footballOptimizationVO.setType(footballOptimization.get(i).size() + "串1");
                 footballOptimizationVO.setNotes(Notes[m][i]);
-                footballOptimizationVO.setForecastBonus(NumberUtil.round(Notes[m][i]*2*odds[i],2));
+                footballOptimizationVO.setForecastBonus(NumberUtil.round(Notes[m][i] * 2 * odds[i], 2));
                 footballOptimizationVOList[m].add(footballOptimizationVO);
             }
         }
@@ -378,8 +382,8 @@ public class BasketballUtil {
         int[][] Indexgroup = getIndexgroup(basketballMatchList.size(), pssTypeList.get(0));
         int betsnum = getallbetsnum(basketballMatchDTOalls, Indexgroup);
         range = getallrange(basketballMatchDTOalls, Indexgroup);
-        double allmax = range[0];
-        double allmin = range[1];
+//        double allmax = range[0];
+//        double allmin = range[1];
         List<BallOptimizationVO> basketballOptimization = new ArrayList<>();
         List<List<BallCombinationVO>> basketballOptimizationz = getallfootballOptimization(basketballMatchList, Indexgroup);
 
@@ -387,20 +391,44 @@ public class BasketballUtil {
             int[][] Indexgroup1 = getIndexgroup(basketballMatchList.size(), pssTypeList.get(i));
             betsnum = betsnum + getallbetsnum(basketballMatchDTOalls, Indexgroup1);
             range = getallrange(basketballMatchDTOalls, Indexgroup1);
-            allmax = range[0] + allmax;
-            if (allmin > range[1]) {
-                allmin = range[1];
-            }
+//            allmax = range[0] + allmax;
+//            if (allmin > range[1]) {
+//                allmin = range[1];
+//            }
             basketballOptimizationz.addAll(getallfootballOptimization(basketballMatchList, Indexgroup1));
         }
+        BigDecimal allmax = BigDecimal.ZERO;
+        BigDecimal allmin = BigDecimal.ZERO;
+        int idx = 0;
+        for (List<BallCombinationVO> p : basketballOptimizationz) {
+            BallOptimizationVO vo = new BallOptimizationVO();
+            vo.setBallCombinationList(p);
+            vo.setType(p.size() + "串1");
+            vo.setNotes(multiple);
+            BigDecimal forest = FootballUtil.foreast(vo.getBallCombinationList()).multiply(BigDecimal.valueOf(multiple));
+            vo.setForecastBonus(forest.setScale(2, RoundingMode.HALF_UP));
+            if (idx == 0) {
+                allmin = vo.getForecastBonus();
+            }
+            if (vo.getForecastBonus().compareTo(allmax) > 0) {
+                allmax = vo.getForecastBonus();
+            }
+            if (vo.getForecastBonus().compareTo(allmin) < 0) {
+                allmin = vo.getForecastBonus();
+            }
+            basketballOptimization.add(vo);
+            idx++;
+        }
+
+
         List<BallOptimizationVO>[] FootballOptimizationVOlist = getFootballOptimizationVOlist(basketballOptimizationz, multiple);
         baskeballCalculation.setNotes(betsnum);
-        baskeballCalculation.setMaxPrice(NumberUtil.round(allmax * 2 * multiple, 2));
-        baskeballCalculation.setMinPrice(NumberUtil.round(allmin * 2 * multiple, 2));
+        baskeballCalculation.setMaxPrice(allmax);
+        baskeballCalculation.setMinPrice(allmin);
         baskeballCalculation.setAverageOptimizationList(FootballOptimizationVOlist[0]);
         baskeballCalculation.setColdOptimizationList(FootballOptimizationVOlist[1]);
         baskeballCalculation.setHeatOptimizationList(FootballOptimizationVOlist[2]);
-
+        baskeballCalculation.setNormalOptimizatinList(basketballOptimization);
 
         return baskeballCalculation;
     }
@@ -697,5 +725,133 @@ public class BasketballUtil {
             }
             footballCombinationVOList.remove(footballCombinationVOList.size() - 1);
         }
+    }
+
+    public static void awardSchemeDetails(List<SportSchemeDetailsListVO> sportsDetails, Map<String, BasketballMatchDO> awardMap) {
+
+        for (SportSchemeDetailsListVO detailsVOS : sportsDetails) {
+
+            Map<String, String> matchMaps = detailsVOS.getBallCombinationList().stream().collect(Collectors.toMap(SportSchemeDetailsVO::getNumber, SportSchemeDetailsVO::getContent, (a, b) -> a));
+
+            boolean allFinished = true;
+            for (Map.Entry<String, String> keyEntity : matchMaps.entrySet()) {
+                if (awardMap.get(keyEntity.getKey()) == null) {
+                    //没有开奖
+                    allFinished = false;
+                    break;
+                }
+            }
+            if (allFinished) {
+                List<String> resultOddsList = new ArrayList<>();
+                for (Map.Entry<String, String> keyEntity : matchMaps.entrySet()) {
+                    String content = keyEntity.getValue();
+
+                    BasketballMatchDO match = awardMap.get(keyEntity.getKey());
+                    //官方开奖结果
+                    // 主负,主负,主负11-15,大
+                    //String[] allfootconse = StringUtils.split(match.getAward(), ",");
+                    //比分,120:108
+                    String[] scores = match.getHalfFullCourt().split(":");
+                    String odd = getOddByResult(content, scores);
+                    if (StringUtils.isNotBlank(odd)) {
+                        resultOddsList.add(odd);
+                    }
+                }
+                if (resultOddsList.size() == matchMaps.size()) {
+                    //中了
+                    BigDecimal money = FootballUtil.sumItem(resultOddsList).multiply(BigDecimal.valueOf(Integer.valueOf(detailsVOS.getNotes())));
+                    detailsVOS.setMoney("" + money.setScale(2, RoundingMode.HALF_DOWN));
+                    detailsVOS.setAward(true);
+                }
+            }
+        }
+
+    }
+
+    static String getOddByResult(String bets, String[] score) {
+        //赛果
+        int a = Integer.valueOf(score[0]);//客队
+        int b = Integer.valueOf(score[1]);//主队
+        //让分胜负
+        if (bets.indexOf("[") > 0 && bets.indexOf("让") > -1) {
+            int idx = bets.indexOf("[");
+            int last = bets.indexOf("]");
+            String bet = bets.substring(0, idx);
+            String rf = bets.substring(idx + 1, last);
+            String odd = bets.substring(last + 2, bets.length() - 1);
+            if (a - Integer.valueOf(rf) > b) {
+                //主负
+                if ("主负".equals(bet)) {
+                    return odd;
+                }
+            } else {
+                if ("主胜".equals(bet)) {
+                    return odd;
+                }
+            }
+        } else if (bets.indexOf("[") > 0) {
+            //大小分 大[241.5](1.70)
+            int idx = bets.indexOf("[");
+            int last = bets.indexOf("]");
+            String bet = bets.substring(0, idx);
+            String rf = bets.substring(idx + 1, last);
+            String odd = bets.substring(last + 2, bets.length() - 1);
+            if (a + b > Integer.valueOf(rf)) {
+                if ("大".equals(bet)) {
+                    return odd;
+                }
+            } else {
+                if ("小".equals(bet)) {
+                    return odd;
+                }
+            }
+        }
+
+        //胜负
+        String win = "";
+        if (a < b) {
+            win = "主胜";
+        } else if (a > b) {
+            win = "主负";
+        }
+        //胜分差   主负16-20(9.6) 主胜1-5(5.5) 主负26+(19.00)
+        String sub = (a > b ? "主负" : "主胜") + getChaName(a - b);
+        if (bets.startsWith(sub)) {
+            int idx = bets.indexOf("(");
+            return bets.substring(idx + 1, bets.length() - 1);
+        }
+        int idx = bets.indexOf("(");
+        int last = bets.indexOf(")");
+        String bet = bets.substring(0, idx);
+        if (win.equals(bet)) {
+            return bets.substring(idx + 1, last);
+        }
+        return "";
+    }
+
+    private static String getChaName(int cha) {
+        int c = Math.abs(cha);
+        if (c <= 5) {
+            return "1-5";
+        } else if (c <= 10) {
+            return "6-10";
+        } else if (c <= 15) {
+            return "11-15";
+        } else if (c <= 20) {
+            return "16-20";
+        } else if (c <= 25) {
+            return "21-25";
+        } else {
+            return "26+";
+        }
+    }
+
+    static String[] getBetContentAndOddFromContent(String content) {
+        int idx = content.indexOf("(");
+        int last = content.indexOf(")");
+        String[] odds = new String[2];
+        odds[0] = content.substring(0, idx);
+        odds[1] = content.substring(idx + 1, last);
+        return odds;
     }
 }
