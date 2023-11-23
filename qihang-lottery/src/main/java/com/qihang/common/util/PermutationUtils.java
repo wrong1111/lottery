@@ -33,7 +33,7 @@ public class PermutationUtils {
             case "4"://排列5  每日 开奖 21：25 截止 21：00
             case "21"://福彩3D 每日开奖 21:15 截止21：00
             case "23"://快乐8 每日开奖 21:30 截止21：00
-                next.setDeadTime(DateUtil.parse(nowString + " 21:00:00", "yyyy-MM-dd HH:mm:ss"));
+                next.setDeadTime(DateUtils.addDays(DateUtil.parse(nowString + " 21:00:00", "yyyy-MM-dd HH:mm:ss"), 1));
                 break;
             case "5"://七星彩每周二、五、日开奖 dayOfweek 周日0
                 int days = 0;
