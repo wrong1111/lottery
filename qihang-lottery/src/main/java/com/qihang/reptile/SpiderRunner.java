@@ -32,6 +32,9 @@ public class SpiderRunner {
     @Value("${webdriver.chrome.driver.path}")
     private String chromeDriverPath;
 
+    @Value("${webdriver.chrome.driver.exec}")
+    String chromeExecPath;
+
     @Value("${webdriver.firefox.driver.path}")
     String firefoxDriverPath;
 
@@ -120,7 +123,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
                 , CrawlingAddressConstant.URL13 + "?d=" + preday //北单开奖
                 , CrawlingAddressConstant.URL14 + "&date=" + preday //篮球大小分查询
-        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
+        ).setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
 
     }
 
@@ -134,9 +137,9 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL19 //胜负彩开奖
                 , CrawlingAddressConstant.URL13 //北单开奖
                 , CrawlingAddressConstant.URL14 //篮球大小分查询
-        ).setDownloader(new DownloadChrome(chromeDriverPath)).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
+        ).setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
 
-        //runpre();
+        runpre();
 //        Spider.create(new LotteryProcessor()).addUrl(
 ////                        CrawlingAddressConstant.URL1 //足彩比赛
 ////                        , CrawlingAddressConstant.URL2 //排列三出奖

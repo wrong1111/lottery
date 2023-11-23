@@ -184,13 +184,15 @@ tencent:
 
 #chromedriver 驱动路径
 webdriver:
-  type: firefox #chrome ,firefox
+  type: chrome #chrome ,firefox
   chrome:
     driver:
       path: D:\\work\\chromedriver\\chromedriver-win64\\chromedriver.exe
+      exec: D:\\work\\chromedriver\\chrome-win64\\chrome.exe
   firefox:
     driver:
       path: D:\\work\\chromedriver\\geckodriver.exe
+      exec: D:\\work\\chromedriver\\firefox.exe
 
 #支付宝支付配置
 alipay:

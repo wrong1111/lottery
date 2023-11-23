@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import us.codecraft.webmagic.downloader.AbstractDownloader;
+import us.codecraft.webmagic.downloader.selenium.DownloadChrome;
 import us.codecraft.webmagic.downloader.selenium.FirefoxDownloader;
 import us.codecraft.webmagic.downloader.selenium.SeleniumDownloader;
 
@@ -34,6 +35,9 @@ public class BeanConfig {
     @Value("${webdriver.firefox.driver.path}")
     String firefoxDriverPath;
 
+    @Value("${webdriver.chrome.driver.exec}")
+    String chromeExecPath;
+
 
     //TODO
     /*
@@ -45,7 +49,7 @@ public class BeanConfig {
     public AbstractDownloader downloader() {
         switch (webdriverType) {
             case "chrome":
-                return new SeleniumDownloader(chromeDriverPath);
+                return new DownloadChrome(chromeDriverPath, chromeExecPath);
             case "firefox":
                 return new FirefoxDownloader(firefoxDriverPath);
             default:

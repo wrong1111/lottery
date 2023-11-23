@@ -8,8 +8,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.phantomjs.PhantomJSDriverService;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
@@ -20,7 +18,6 @@ import us.codecraft.webmagic.selector.PlainText;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Properties;
 
@@ -31,28 +28,14 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
     WebDriver driver = null;
     int sleepTime = 3;
     protected static Properties sConfig;
-    private static final String DEFAULT_CONFIG_FILE = "selenium.properties";
 
-    public void config() throws IOException {
-        // Read config file
-        sConfig = new Properties();
-        String configFile = DEFAULT_CONFIG_FILE;
-        if (System.getProperty("selenuim_config") != null) {
-            configFile = System.getProperty("selenuim_config");
-        }
-        sConfig.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(configFile));
-
-    }
 
     @SneakyThrows
-    public DownloadChrome(String driver) {
-        if (this.sConfig == null) {
-            config();
-        }
-        System.setProperty("webdriver.chrome.driver", sConfig.getProperty("chrome_driver_path"));
-        System.setProperty("webdriver.chrome.bin", sConfig.getProperty("chrome_exec_path"));
+    public DownloadChrome(String driver, String exec) {
+        System.setProperty("webdriver.chrome.driver", driver);
+        System.setProperty("webdriver.chrome.bin", exec);
         ChromeOptions options = new ChromeOptions();
-        options.setBinary(sConfig.getProperty("chrome_exec_path"));
+        options.setBinary(exec);
         //远程 执行
         options.addArguments("--remote-allow-origins=*");
         //  浏览器不提供可视化页面（无头模式
