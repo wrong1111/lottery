@@ -56,7 +56,7 @@ public class SpiderRunner {
      比赛 赛事
      */
     public void runHour() {
-        Spider.create(new LotteryProcessor()).setDownloader(downloader).addUrl(
+        Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
                         CrawlingAddressConstant.URL1 //足彩比赛
                         , CrawlingAddressConstant.URL4 // 篮彩比赛
                         , CrawlingAddressConstant.URL8 //北京单场
@@ -95,7 +95,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
                 , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
                 , CrawlingAddressConstant.URL24 //数字彩 遗漏大乐透
-        ).setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).runAsync();
+        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).runAsync();
     }
 
     /*
@@ -111,7 +111,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL17 //七星彩开奖
                 , CrawlingAddressConstant.URL16 //排列5开奖
                 , CrawlingAddressConstant.URL2 //排列三出奖
-        ).setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).thread(5).runAsync();
+        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).thread(5).runAsync();
     }
 
 
@@ -122,7 +122,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
                 , CrawlingAddressConstant.URL13 + "?d=" + preday //北单开奖
                 , CrawlingAddressConstant.URL14 + "&date=" + preday //篮球大小分查询
-        ).setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
+        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
 
     }
 
@@ -136,7 +136,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL19 //胜负彩开奖
                 , CrawlingAddressConstant.URL13 //北单开奖
                 , CrawlingAddressConstant.URL14 //篮球大小分查询
-        ).setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
+        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
 
         runpre();
 //        Spider.create(new LotteryProcessor()).addUrl(
