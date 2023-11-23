@@ -22,8 +22,8 @@ public class SpiderRunner {
     LotteryPipeline lotteryPipeline;
 
 
-    @Resource
-    AbstractDownloader downloader;
+//    @Resource
+//    AbstractDownloader downloader;
 
     @Value("${webdriver.type}")
     String webdriverType;
