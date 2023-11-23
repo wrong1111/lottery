@@ -117,8 +117,8 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             userMapper.updateById(user);
         }
         // 1.先查询出奖的最后一条数据从而得出这次买的是第几期
-        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).orderByDesc(PermutationAwardDO::getCreateTime).last("limit 1"));
-        Integer stageNumber = permutationAward.getStageNumber() + 1;
+        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).gt(PermutationAwardDO::getDeadTime, new Date()).orderByAsc(PermutationAwardDO::getId).last("limit 1"));
+        Integer stageNumber = permutationAward.getStageNumber();
 
         logUtil.record(LotteryOrderTypeEnum.valueOFS(type).getValue() + "下单,下单金额【" + price + "】,期号[" + stageNumber + "]");
         //添加钱包消费记录
