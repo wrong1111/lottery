@@ -72,23 +72,23 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
         this.driver.quit();
 
         //根据不同的操作系统结束残留的chrome进程
-        String os = System.getProperty("os.name");
-        if (os != null && os.toLowerCase().startsWith("windows")) {
-            try {
-                log.info("{}清理残留进程", os);
-                Runtime.getRuntime().exec("taskkill /F /im " + "chromedriver.exe");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else if (os != null && os.toLowerCase().startsWith("linux")) {
-            try {
-                log.info("{}清理残留进程", os);
-                Runtime.getRuntime().exec("ps -ef | grep Chrome | grep -v grep  | awk '{print \"kill -9 \"$2}'  | sh");
-                Runtime.getRuntime().exec("ps -ef | grep chromedriver | grep -v grep  | awk '{print \"kill -9 \"$2}'  | sh");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+//        String os = System.getProperty("os.name");
+//        if (os != null && os.toLowerCase().startsWith("windows")) {
+//            try {
+//                log.info("{}清理残留进程", os);
+//                Runtime.getRuntime().exec("taskkill /F /im " + "chromedriver.exe");
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        } else if (os != null && os.toLowerCase().startsWith("linux")) {
+//            try {
+//                log.info("{}清理残留进程", os);
+//                Runtime.getRuntime().exec("ps -ef | grep Chrome | grep -v grep  | awk '{print \"kill -9 \"$2}'  | sh");
+//                Runtime.getRuntime().exec("ps -ef | grep chromedriver | grep -v grep  | awk '{print \"kill -9 \"$2}'  | sh");
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
     }
 
     @Override
