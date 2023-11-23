@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration;
 import us.codecraft.webmagic.downloader.AbstractDownloader;
 import us.codecraft.webmagic.downloader.selenium.DownloadChrome;
 import us.codecraft.webmagic.downloader.selenium.FirefoxDownloader;
-import us.codecraft.webmagic.downloader.selenium.SeleniumDownloader;
 
 @Configuration
 public class BeanConfig {

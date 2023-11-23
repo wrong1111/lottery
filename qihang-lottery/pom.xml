@@ -41,11 +41,11 @@
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/us.codecraft/webmagic-selenium -->
-        <!--        <dependency>-->
-        <!--            <groupId>us.codecraft</groupId>-->
-        <!--            <artifactId>webmagic-selenium</artifactId>-->
-        <!--            <version>${webmagic.version}</version>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>us.codecraft</groupId>
+            <artifactId>webmagic-selenium</artifactId>
+            <version>${webmagic.version}</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/us.codecraft/webmagic-extension -->
         <dependency>
             <groupId>us.codecraft</groupId>

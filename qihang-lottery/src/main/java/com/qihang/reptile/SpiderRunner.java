@@ -9,7 +9,6 @@ import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.downloader.AbstractDownloader;
 import us.codecraft.webmagic.downloader.selenium.DownloadChrome;
 import us.codecraft.webmagic.downloader.selenium.FirefoxDownloader;
-import us.codecraft.webmagic.downloader.selenium.SeleniumDownloader;
 import us.codecraft.webmagic.scheduler.QueueScheduler;
 import us.codecraft.webmagic.scheduler.component.HashSetDuplicateRemover;
 
