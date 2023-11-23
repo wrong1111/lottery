@@ -178,7 +178,7 @@ tencent:
     end_point: sms.tencentcloudapi.com
     region: ap-guangzhou
     template_id: 1581748
-    sign_name: 小九最稳预测公众号
+    sign_name: 公众号
 
 
 #chromedriver 驱动路径 ,生产用firefox /www/bet/chromedriver

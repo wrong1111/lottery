@@ -26,7 +26,7 @@ public class FirefoxDownloader extends AbstractDownloader implements Closeable {
 
     private int sleepTime = 0;
 
-    private int poolSize = 1;
+    private int poolSize = 10;
 
     private static final String DRIVER_PHANTOMJS = "phantomjs";
 
@@ -38,7 +38,7 @@ public class FirefoxDownloader extends AbstractDownloader implements Closeable {
     public FirefoxDownloader(String firefoxDriverPath) {
         System.getProperties().setProperty("webdriver.gecko.driver",
                 firefoxDriverPath);
-        System.getProperties().setProperty("", "");
+//        System.getProperties().setProperty("", "");
     }
 
     /**

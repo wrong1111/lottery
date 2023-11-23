@@ -15,7 +15,6 @@ import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
@@ -23,7 +22,6 @@ import us.codecraft.webmagic.processor.PageProcessor;
 import us.codecraft.webmagic.selector.Html;
 import us.codecraft.webmagic.selector.Selectable;
 
-import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -38,13 +36,7 @@ import java.util.List;
 @Component
 public class LotteryProcessor implements PageProcessor {
 
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(300);
-
-    @Resource
-    private LotteryPipeline lotteryPipeline;
-
-    @Value("${webdriver.chrome.driver.path}")
-    private String chromeDriverPath;
+    private Site site = Site.me().setRetryTimes(1).setSleepTime(300);
 
     @Override
     public void process(Page page) {

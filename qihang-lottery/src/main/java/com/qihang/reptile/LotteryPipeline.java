@@ -382,7 +382,7 @@ public class LotteryPipeline implements Pipeline {
                 WinBurdenMatchDO winBurdenMatch = winBurdenMatchService.getOne(new QueryWrapper<WinBurdenMatchDO>().lambda()
                         .eq(WinBurdenMatchDO::getIssueNo, winBurdenMatchDO.getIssueNo())
                         .like(WinBurdenMatchDO::getHomeTeam, winBurdenMatchDO.getHomeTeam()));
-                if (StrUtil.isBlank(winBurdenMatch.getAward()) || winBurdenMatch.getMoneyAward().indexOf("--") != -1) {
+                if (StrUtil.isBlank(winBurdenMatch.getAward()) || StringUtils.isBlank(winBurdenMatch.getMoneyAward()) || winBurdenMatch.getMoneyAward().indexOf("--") != -1) {
                     winBurdenMatch.setUpdateTime(new Date());
                     winBurdenMatch.setAward(winBurdenMatchDO.getAward());
                     winBurdenMatch.setMoneyAward(winBurdenMatchDO.getMoneyAward());
