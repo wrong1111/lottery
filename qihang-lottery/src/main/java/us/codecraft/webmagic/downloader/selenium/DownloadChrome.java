@@ -25,52 +25,62 @@ import java.util.Properties;
 public class DownloadChrome extends AbstractDownloader implements Closeable {
 
     // 创建WebDriver对象
-    WebDriver driver = null;
+    static WebDriver driver = null;
     int sleepTime = 3;
-    protected static Properties sConfig;
 
+    String driverPath;
+    String execPath;
+
+
+    static void initWebDriver(String exec) {
+        if (driver == null) {
+            ChromeOptions options = new ChromeOptions();
+            options.setBinary(exec);
+            //远程 执行
+            options.addArguments("--remote-allow-origins=*");
+            //  浏览器不提供可视化页面（无头模式
+            options.addArguments("headless");
+            // 谷歌禁用GPU加速
+            options.addArguments("disable-gpu");
+            //隐身模式（无痕模式）
+            options.addArguments("incognito");
+            // 禁用3D软件光栅化器
+            options.addArguments("disable-software-rasterizer");
+            //解决DevToolsActivePort文件不存在的报错
+            options.addArguments("no-sandbox");
+            //不加载图片, 提升速度
+            options.addArguments("blink-settings=imagesEnabled=false");
+            //
+            options.addArguments("disable-dev-shm-usage");
+            // 禁用GPU缓存
+            options.addArguments("disable-gpu-program-cache");
+            // 禁用扩展
+            options.addArguments("disable-extensions");
+            // 禁用JS
+            options.addArguments("disable-javascript");
+            // 禁用java
+            options.addArguments("disable-java");
+            //禁止加载所有插件，可以增加速度。可以通过about:plugins页面查看效果
+            options.addArguments("disable-plugins");
+            // 禁用图像
+            options.addArguments("disable-images");
+            driver = new ChromeDriver(options);
+        }
+    }
 
     @SneakyThrows
     public DownloadChrome(String driver, String exec) {
+        this.driverPath = driver;
+        this.execPath = exec;
         System.setProperty("webdriver.chrome.driver", driver);
         System.setProperty("webdriver.chrome.bin", exec);
-        ChromeOptions options = new ChromeOptions();
-        options.setBinary(exec);
-        //远程 执行
-        options.addArguments("--remote-allow-origins=*");
-        //  浏览器不提供可视化页面（无头模式
-        options.addArguments("headless");
-        // 谷歌禁用GPU加速
-        options.addArguments("disable-gpu");
-        //隐身模式（无痕模式）
-        options.addArguments("incognito");
-        // 禁用3D软件光栅化器
-        options.addArguments("disable-software-rasterizer");
-        //解决DevToolsActivePort文件不存在的报错
-        options.addArguments("no-sandbox");
-        //不加载图片, 提升速度
-        options.addArguments("blink-settings=imagesEnabled=false");
-        //
-        options.addArguments("disable-dev-shm-usage");
-        // 禁用GPU缓存
-        options.addArguments("disable-gpu-program-cache");
-        // 禁用扩展
-        options.addArguments("disable-extensions");
-        // 禁用JS
-        options.addArguments("disable-javascript");
-        // 禁用java
-        options.addArguments("disable-java");
-        //禁止加载所有插件，可以增加速度。可以通过about:plugins页面查看效果
-        options.addArguments("disable-plugins");
-        // 禁用图像
-        options.addArguments("disable-images");
-        this.driver = new ChromeDriver(options);
+        initWebDriver(exec);
     }
 
     @Override
     public void close() throws IOException {
         //this.driver.quit();
-        this.driver.close();
+        //this.driver.close();
 
         //根据不同的操作系统结束残留的chrome进程
 //        String os = System.getProperty("os.name");
@@ -96,8 +106,12 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
     public Page download(Request request, Task task) {
         Page page = Page.fail();
         try {
+            if (driver == null) {
+                initWebDriver(this.execPath);
+                log.error("ERROR<<<<<<<<<<<<<<<<< 初始化driver {} >>>>>>>>>>", request.getUrl());
+            }
             log.info("<<<<<<<<<<<<<<<<< downloading page {} >>>>>>>>>>", request.getUrl());
-            this.driver.get(request.getUrl());
+            driver.get(request.getUrl());
             try {
                 if (sleepTime > 0) {
                     Thread.sleep(sleepTime * 1000);
@@ -105,7 +119,8 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            WebDriver.Options manage = this.driver.manage();
+
+            WebDriver.Options manage = driver.manage();
             Site site = task.getSite();
             if (site.getCookies() != null) {
                 for (Map.Entry<String, String> cookieEntry : site.getCookies()
@@ -126,7 +141,7 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            WebElement webElement = this.driver.findElement(By.xpath("/html"));
+            WebElement webElement = driver.findElement(By.xpath("/html"));
             log.info("<<<<<<<<<<<<<<<<<  page {} Ok >>>>>>>>>>>>>>>>>>>>" + request.getUrl());
             String content = webElement.getAttribute("outerHTML");
             page.setDownloadSuccess(true);

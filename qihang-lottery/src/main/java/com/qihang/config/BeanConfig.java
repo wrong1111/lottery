@@ -44,17 +44,17 @@ public class BeanConfig {
      2,需要放置浏览器版本匹配的驱动程序。
      目前好像firefox没有这个要求，chrome要求比较严格，版本不匹配执行有问题。
      */
-    @Bean
-    public AbstractDownloader downloader() {
-        switch (webdriverType) {
-            case "chrome":
-                return new DownloadChrome(chromeDriverPath, chromeExecPath);
-            case "firefox":
-                return new FirefoxDownloader(firefoxDriverPath);
-            default:
-                throw new RuntimeException("未设置 爬虫使用的浏览器驱动");
-        }
-    }
+//    @Bean
+//    public AbstractDownloader downloader() {
+//        switch (webdriverType) {
+//            case "chrome":
+//                return new DownloadChrome(chromeDriverPath, chromeExecPath);
+//            case "firefox":
+//                return new FirefoxDownloader(firefoxDriverPath);
+//            default:
+//                throw new RuntimeException("未设置 爬虫使用的浏览器驱动");
+//        }
+//    }
 
 
     @Bean
