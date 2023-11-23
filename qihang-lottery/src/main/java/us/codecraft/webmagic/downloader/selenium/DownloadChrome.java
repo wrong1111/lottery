@@ -69,7 +69,8 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
 
     @Override
     public void close() throws IOException {
-        this.driver.quit();
+        //this.driver.quit();
+        this.driver.close();
 
         //根据不同的操作系统结束残留的chrome进程
 //        String os = System.getProperty("os.name");
