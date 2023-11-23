@@ -42,7 +42,7 @@ public class SpiderRunner {
     public AbstractDownloader downloaderA() {
         switch (webdriverType) {
             case "chrome":
-                return new SeleniumDownloader(chromeDriverPath);
+                return new DownloadChrome(chromeDriverPath, chromeExecPath);
             case "firefox":
                 return new FirefoxDownloader(firefoxDriverPath);
             default:
@@ -57,7 +57,7 @@ public class SpiderRunner {
      比赛 赛事
      */
     public void runHour() {
-        Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
+        Spider.create(new LotteryProcessor()).setDownloader(downloader).addUrl(
                         CrawlingAddressConstant.URL1 //足彩比赛
                         , CrawlingAddressConstant.URL4 // 篮彩比赛
                         , CrawlingAddressConstant.URL8 //北京单场
@@ -96,7 +96,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
                 , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
                 , CrawlingAddressConstant.URL24 //数字彩 遗漏大乐透
-        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).runAsync();
+        ).setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).runAsync();
     }
 
     /*
@@ -112,7 +112,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL17 //七星彩开奖
                 , CrawlingAddressConstant.URL16 //排列5开奖
                 , CrawlingAddressConstant.URL2 //排列三出奖
-        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).thread(5).runAsync();
+        ).setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).thread(5).runAsync();
     }
 
 
