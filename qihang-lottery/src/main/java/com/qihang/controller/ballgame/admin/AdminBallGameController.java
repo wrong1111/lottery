@@ -33,4 +33,10 @@ public class AdminBallGameController {
     public BaseVO updateLine(@PathVariable("id") Integer id, @PathVariable("type") String type) {
         return ballGameService.updateLine(id, type);
     }
+
+    @GetMapping("/listTransfer")
+    @ApiOperation("未开通收单彩种接口")
+    public BaseVO listTransfer() {
+        return ballGameService.listNoOpenTransfer();
+    }
 }

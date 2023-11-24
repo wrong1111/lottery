@@ -123,8 +123,6 @@ public class NomalScheduleController {
                 break;
 
         }
-        BaseDataVO vo = new BaseDataVO();
-        vo.setData("cost:" + (System.currentTimeMillis() - s));
-        return vo;
+        return BaseDataVO.builder().data("cost:" + (System.currentTimeMillis() - s)).build();
     }
 }

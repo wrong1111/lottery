@@ -55,4 +55,6 @@ public class BallGameDO implements Serializable {
      * 更新时间
      */
     private Date updateTime;
+
+    Integer lotid;
 }

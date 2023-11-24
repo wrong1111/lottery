@@ -98,13 +98,22 @@ public class LotteryOrderDO implements Serializable {
      */
     private Date ticketingTime;
 
-    /*
-    下单期号
-    * */
+    /**
+     * 下单期号
+     */
     Integer stageNumber;
 
 
     Integer winCounts;
 
     Integer times;
+
+    /**
+     * 转单shopId
+     */
+    Integer transferShopId;
+    /**
+     * '0 收单,1 转单'
+     */
+    Integer transferType;
 }

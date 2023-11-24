@@ -43,6 +43,7 @@ public class LogUtil {
         Integer userId = Integer.valueOf(servletRequestAttributes.getRequest().getAttribute("User-ID").toString());
         UserDO user = userMapper.selectById(userId);
         LogDO log = new LogDO();
+        log.setTypes(0);
         log.setNickname(user.getNickname());
         log.setCreateTime(new Date());
         log.setDescriptor(desc);
@@ -62,6 +63,7 @@ public class LogUtil {
         Integer tenantId = Integer.valueOf(servletRequestAttributes.getRequest().getHeader("x-tenant-id"));
         UserDO user = userMapper.selectOne(new QueryWrapper<UserDO>().lambda().eq(UserDO::getPhone, phone).eq(UserDO::getTenantId, tenantId));
         LogDO log = new LogDO();
+        log.setTypes(0);
         log.setNickname(user.getNickname());
         log.setCreateTime(new Date());
         log.setDescriptor(desc);
@@ -79,6 +81,7 @@ public class LogUtil {
     public void record(String desc, String phone, Integer tenantId) {
         UserDO user = userMapper.selectOne(new QueryWrapper<UserDO>().lambda().eq(UserDO::getPhone, phone).eq(UserDO::getTenantId, tenantId));
         LogDO log = new LogDO();
+        log.setTypes(0);
         log.setNickname(user.getNickname());
         log.setCreateTime(new Date());
         log.setDescriptor(desc);
@@ -96,6 +99,7 @@ public class LogUtil {
     public void adminRecord(String desc, String phone, Integer tenantId) {
         SysUserDO user = sysUserMapper.selectOne(new QueryWrapper<SysUserDO>().lambda().eq(SysUserDO::getUsername, phone).eq(SysUserDO::getTenantId, tenantId));
         LogDO log = new LogDO();
+        log.setTypes(1);
         log.setNickname(user.getName());
         log.setCreateTime(new Date());
         log.setDescriptor(desc);
@@ -115,6 +119,7 @@ public class LogUtil {
         String username = servletRequestAttributes.getRequest().getHeader("x-user");
         SysUserDO user = sysUserMapper.selectOne(new QueryWrapper<SysUserDO>().lambda().eq(SysUserDO::getUsername, username));
         LogDO log = new LogDO();
+        log.setTypes(1);
         log.setNickname(user.getName());
         log.setCreateTime(new Date());
         log.setDescriptor(desc);

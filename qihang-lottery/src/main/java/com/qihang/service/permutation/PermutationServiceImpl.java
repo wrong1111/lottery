@@ -463,9 +463,7 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
-        BaseDataVO base = new BaseDataVO();
-        base.setData(result);
-        return base;
+        return BaseDataVO.builder().data(result).build();
     }
 
     private void addRecord(LotteryOrderDO lotteryOrder) {

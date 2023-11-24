@@ -73,4 +73,9 @@ public class LogDO implements Serializable {
     private Integer tenantId;
 
 
+    /**
+     * 0 默认前端会员操作记录
+     * 1 后端操作记录
+     */
+    Integer types;
 }

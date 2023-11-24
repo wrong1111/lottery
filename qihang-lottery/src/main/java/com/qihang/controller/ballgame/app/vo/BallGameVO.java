@@ -21,4 +21,9 @@ public class BallGameVO {
     @ApiModelProperty(value = "url")
     private String url;
 
+    @ApiModelProperty(value = "彩种id")
+    Integer lotid;
+
+    Boolean selected;
+
 }

@@ -30,8 +30,7 @@ import Layout from "@/layout";
  * a base page that does not have permission requirements
  * all roles can be accessed
  */
-export const constantRoutes = [
-  {
+export const constantRoutes = [{
     path: "/login",
     component: () => import("@/views/login/index"),
     hidden: true,
@@ -47,38 +46,48 @@ export const constantRoutes = [
     path: "/",
     component: Layout,
     redirect: "/dashboard",
-    children: [
-      {
-        path: "dashboard",
-        name: "Dashboard",
-        component: () => import("@/views/dashboard/index"),
-        meta: { title: "首页", icon: "el-icon-data-board", affix: true },
+    children: [{
+      path: "dashboard",
+      name: "Dashboard",
+      component: () => import("@/views/dashboard/index"),
+      meta: {
+        title: "首页",
+        icon: "el-icon-data-board",
+        affix: true
       },
-    ],
+    }, ],
   },
   {
     path: "/client",
     component: Layout,
     redirect: "/client/manager",
-    meta: { title: "用户管理", icon: "el-icon-user" },
-    children: [
-      {
+    meta: {
+      title: "用户管理",
+      icon: "el-icon-user"
+    },
+    children: [{
         path: "manager",
         name: "ClientManager",
         component: () => import("@/views/client/manager"),
-        meta: { title: "用户管理" },
+        meta: {
+          title: "用户管理"
+        },
       },
       {
         path: "statistics",
         name: "ClientStatistics",
         component: () => import("@/views/client/statistics"),
-        meta: { title: "客户统计" },
+        meta: {
+          title: "客户统计"
+        },
       },
       {
         path: "system",
         name: "ClientSystem",
         component: () => import("@/views/client/system"),
-        meta: { title: "系统用户" },
+        meta: {
+          title: "系统用户"
+        },
       },
     ],
   },
@@ -87,25 +96,33 @@ export const constantRoutes = [
     path: "/ballgame",
     component: Layout,
     redirect: "/ballgame/set",
-    meta: { title: "网站管理", icon: "el-icon-menu" },
-    children: [
-      {
+    meta: {
+      title: "网站管理",
+      icon: "el-icon-menu"
+    },
+    children: [{
         path: "set",
         name: "BallgameSet",
         component: () => import("@/views/ballgame/set.vue"),
-        meta: { title: "栏目设置" },
+        meta: {
+          title: "栏目设置"
+        },
       },
       {
         path: "notice",
         name: "BallgameNotice",
         component: () => import("@/views/ballgame/notice.vue"),
-        meta: { title: "公告设置" },
+        meta: {
+          title: "公告设置"
+        },
       },
       {
         path: "domain",
         name: "BallgameDomain",
         component: () => import("@/views/ballgame/domain.vue"),
-        meta: { title: "域名设置" },
+        meta: {
+          title: "域名设置"
+        },
       },
     ],
   },
@@ -114,19 +131,25 @@ export const constantRoutes = [
     path: "/order",
     component: Layout,
     redirect: "/order/pay",
-    meta: { title: "订单管理", icon: "el-icon-s-operation" },
-    children: [
-      {
+    meta: {
+      title: "订单管理",
+      icon: "el-icon-s-operation"
+    },
+    children: [{
         path: "pay",
         name: "OrderPay",
         component: () => import("@/views/order/pay.vue"),
-        meta: { title: "流水订单" },
+        meta: {
+          title: "流水订单"
+        },
       },
       {
         path: "lottery",
         name: "OrderLottery",
         component: () => import("@/views/order/lottery.vue"),
-        meta: { title: "体彩订单" },
+        meta: {
+          title: "体彩订单"
+        },
       },
     ],
   },
@@ -136,15 +159,19 @@ export const constantRoutes = [
     component: Layout,
     redirect: "/log/list",
     alwaysShow: true,
-    meta: { title: "日志管理", icon: "el-icon-notebook-2", affix: true },
-    children: [
-      {
-        path: "list",
-        name: "Log",
-        component: () => import("@/views/log/index.vue"),
-        meta: { title: "操作日志" },
+    meta: {
+      title: "日志管理",
+      icon: "el-icon-notebook-2",
+      affix: true
+    },
+    children: [{
+      path: "list",
+      name: "Log",
+      component: () => import("@/views/log/index.vue"),
+      meta: {
+        title: "操作日志"
       },
-    ],
+    }, ],
   },
 
   {
@@ -152,15 +179,19 @@ export const constantRoutes = [
     component: Layout,
     redirect: "/withdrawal/list",
     alwaysShow: true,
-    meta: { title: "提现管理", icon: "el-icon-wallet", affix: true },
-    children: [
-      {
-        path: "list",
-        name: "WithdrawalList",
-        component: () => import("@/views/withdrawal/index.vue"),
-        meta: { title: "提现列表" },
+    meta: {
+      title: "提现管理",
+      icon: "el-icon-wallet",
+      affix: true
+    },
+    children: [{
+      path: "list",
+      name: "WithdrawalList",
+      component: () => import("@/views/withdrawal/index.vue"),
+      meta: {
+        title: "提现列表"
       },
-    ],
+    }, ],
   },
 
   {
@@ -168,25 +199,54 @@ export const constantRoutes = [
     component: Layout,
     redirect: "/shop/list",
     alwaysShow: true,
-    meta: { title: "店铺管理", icon: "el-icon-s-shop", affix: true },
-    children: [
-      {
-        path: "list",
-        name: "ShopList",
-        component: () => import("@/views/shop/index.vue"),
-        meta: { title: "店铺管理" },
+    meta: {
+      title: "店铺管理",
+      icon: "el-icon-s-shop",
+      affix: true
+    },
+    children: [{
+      path: "list",
+      name: "ShopList",
+      component: () => import("@/views/shop/index.vue"),
+      meta: {
+        title: "店铺管理"
       },
-    ],
+    }, ],
+  },
+  {
+    path: "/transferin",
+    component: Layout,
+    redirect: "/transferin/list",
+    alwaysShow: true,
+    meta: {
+      title: "收单管理",
+      icon: "el-icon-s-shop",
+      affix: true
+    },
+    children: [{
+      path: "list",
+      name: "transfein",
+      component: () => import("@/views/transfer/in.vue"),
+      meta: {
+        title: "收单彩种设置"
+      },
+    }, ],
   },
 
   // 404 page must be placed at the end !!!
-  { path: "*", redirect: "/404", hidden: true },
+  {
+    path: "*",
+    redirect: "/404",
+    hidden: true
+  },
 ];
 
 const createRouter = () =>
   new Router({
     // mode: 'history', // require service support
-    scrollBehavior: () => ({ y: 0 }),
+    scrollBehavior: () => ({
+      y: 0
+    }),
     routes: constantRoutes,
   });
 

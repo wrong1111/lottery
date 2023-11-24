@@ -33,4 +33,6 @@ public interface IBallGameService {
      * @return
      */
     BaseVO updateLine(Integer id, String type);
+
+    CommonListVO<BallGameVO> listNoOpenTransfer();
 }
