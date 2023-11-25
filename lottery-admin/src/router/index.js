@@ -235,7 +235,7 @@ export const constantRoutes = [{
       name: "platin",
       component: () => import("@/views/transfer/inplat.vue"),
       meta: {
-        title: "下游商家管理"
+        title: "接口管理"
       },
     },],
   },
