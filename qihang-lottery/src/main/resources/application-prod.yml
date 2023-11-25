@@ -221,3 +221,6 @@ mro:
       - t_omit
 server:
   port: 48081
+
+config:
+  domain: http://localhost/app/transfer/create

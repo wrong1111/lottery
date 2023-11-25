@@ -1,9 +1,42 @@
 <template>
   <div class="app-container">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" size="mini">
+      <el-form-item label="彩种状态" prop="name">
+        <el-select v-model="queryParams.state">
+          <el-option v-for="(item,index) in states" :key="item.id" :value="item.value" :label="item.label"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
+    <el-row :gutter="10" class="mb8" style="width: 50%;align-items: center;display: flex;flex-wrap: wrap;"  v-if="isOpen">
+      <el-col :span="1.5" class="shop">
+        店铺名: {{transfer.shopName}}
+      </el-col>
+      <el-col :span="1.5" class="shop">
+        联系方式: {{transfer.shopConcatPhone}}
+      </el-col>
+      <el-col :span="1.5" class="shop">
+        联系人: {{transfer.shopConcatName}}
+      </el-col>
+    </el-row>
+    <el-row :gutter="10" class="mb8" style="width: 50%;align-items: center;display: flex;flex-wrap: wrap;"  v-if="isOpen">
+      <el-col :span="1.5" class="shop">
+        key: {{transfer.transferKey}}
+      </el-col>
+      <el-col :span="1.5" class="shop">
+        秘钥: {{transfer.transferSecurty}}
+      </el-col>
+      <el-col :span="1.5" class="shop">
+        接口地址: {{transfer.transferInterface}}
+      </el-col>
+    </el-row>
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="danger" icon="el-icon-circle-plus-outline" size="mini" @click="addNewShop"
-          plain>添加收单彩种</el-button>
+          plain>设置收单</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -45,8 +78,8 @@
     <!-- <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
       @pagination="getList" /> -->
 
-    <AddLotteryTransfer title="开通彩种收单" :visible.sync="dialogAddVisible" @confirm="addShopReq" :lots="lots" :form="form">
-    </AddLotteryTransfer>
+    <AddOutTransfer title="获取上游收单设置" :visible.sync="dialogAddVisible" @confirm="addShopReq" :lots="lots" :form="form">
+    </AddOutTransfer>
 
   </div>
 </template>
@@ -67,12 +100,12 @@
     Message,
     MessageBox
   } from "element-ui";
-  import AddLotteryTransfer from "./components/AddLotteryTransfer.vue";
+  import AddOutTransfer from "./components/AddOutTransfer.vue";
 
   export default {
-    name: "transfein",
+    name: "transfeout",
     components: {
-      AddLotteryTransfer,
+      AddOutTransfer,
     },
     props: {},
     data() {

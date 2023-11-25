@@ -222,3 +222,5 @@ mro:
       - t_sys_domain
       - t_omit
 
+config:
+  domain: http://localhost/app/transfer/create

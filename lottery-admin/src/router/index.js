@@ -148,7 +148,7 @@ export const constantRoutes = [{
         name: "OrderLottery",
         component: () => import("@/views/order/lottery.vue"),
         meta: {
-          title: "体彩订单"
+          title: "订单列表"
         },
       },
     ],
@@ -220,7 +220,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     meta: {
       title: "收单管理",
-      icon: "el-icon-s-shop",
+      icon: "el-icon-s-operation",
       affix: true
     },
     children: [{
@@ -230,9 +230,36 @@ export const constantRoutes = [{
       meta: {
         title: "收单彩种设置"
       },
-    }, ],
+    }, {
+      path: "platin",
+      name: "platin",
+      component: () => import("@/views/transfer/inplat.vue"),
+      meta: {
+        title: "下游商家管理"
+      },
+    },],
   },
+  {
+    path: "/transferout",
+    component: Layout,
+    redirect: "/transferout/list",
+    alwaysShow: true,
+    meta: {
+      title: "转单管理",
+      icon: "el-icon-s-operation",
+      affix: true
+    },
+    children: [{
+        path: "list",
+        name: "transfeout",
+        component: () => import("@/views/transfer/out.vue"),
+        meta: {
+          title: "转单设置"
+        },
+      },
 
+    ],
+  },
   // 404 page must be placed at the end !!!
   {
     path: "*",

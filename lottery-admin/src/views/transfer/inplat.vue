@@ -3,27 +3,30 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="danger" icon="el-icon-circle-plus-outline" size="mini" @click="addNewShop"
-          plain>添加收单彩种</el-button>
+          plain>添加下游商家</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="voList" border v-if="isOpen">
-      <el-table-column label="ID" align="center" prop="lotteryType" />
-      <el-table-column label="彩种名称" align="center" prop="lotteryName" />
-      <el-table-column label="LOGO" align="center">
-        <template slot-scope="scope">
-          <el-image style="width: 60px; height: 60px" :src="scope.row.icon" fit="cover"></el-image>
-        </template>
-      </el-table-column>
-
+    <el-table v-loading="loading" :data="voList" border>
+      <el-table-column label="ID" align="center" prop="id" />
+      <el-table-column label="下游 店名" align="center" prop="shopName" />
       <el-table-column label="开通收单" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.states == "0" ? "开通" : "停止" }}</span>
+          <span>{{ scope.row.interfaceState == "0" ? "开通" : "停止" }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="截止前(秒)" align="center" prop="transferBeforeTime" />
-      <el-table-column label="返点(%)" align="center" prop="commiss" />
+      <el-table-column label="下游联系人" align="center" prop="shopConcatName" />
+      <el-table-column label="下游联系方式" align="center" prop="shopConcatPhone" />
+      <el-table-column label="接口账号" align="center" prop="transferKey" />
+      <el-table-column label="接口秘钥" align="center" prop="transferSecurty">
+        <template slot-scope="scope">
+          <span> {{scope.row.transferSecurty}}</span>
+          </br>
+          <el-button size="mini" type="primary" @click="resetSecurity(scope.row)">重置</el-button>
+        </template>
+      </el-table-column>
+      <el-table-column label="接口地址" align="center" prop="transferInterface" />
       <el-table-column label="创建时间" align="center" width="200">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -32,33 +35,26 @@
       <el-table-column label="操作" align="center">
         <template slot-scope="scope">
           <el-button size="mini" type="danger" plain @click="editStateRow(scope.row,0)"
-            v-if="scope.row.states==1">开通</el-button>
+            v-if="scope.row.interfaceState==1">开通</el-button>
           <el-button size="mini" type="primary" plain @click="editStateRow(scope.row,1)"
-            v-if="scope.row.states==0">停止</el-button>
+            v-if="scope.row.interfaceState==0">停止</el-button>
           <el-button size="mini" type="success" plain @click="editTransfer(scope.row)">修改</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-table v-else>
-      <el-table-column> 暂未开通</el-table-column>
-    </el-table>
-    <!-- <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
-      @pagination="getList" /> -->
 
-    <AddLotteryTransfer title="开通彩种收单" :visible.sync="dialogAddVisible" @confirm="addShopReq" :lots="lots" :form="form">
-    </AddLotteryTransfer>
+    <AddPlatTransfer title="开通下游账号" :visible.sync="dialogAddVisible" @confirm="addShopReq" :lots="lots" :form="form">
+    </AddPlatTransfer>
 
   </div>
 </template>
 
 <script>
   import {
-    shopTransferList,
-    editShopTransfer,
-    addLotteryTransfer,
-    editState,
-    editCommiss,
-    noOpenLottery
+    platlist,
+    platSecurityReset,
+    editPlatState,
+    editShopTransfer
   } from "@/api/transfer/in";
   import {
     deepClone
@@ -67,51 +63,35 @@
     Message,
     MessageBox
   } from "element-ui";
-  import AddLotteryTransfer from "./components/AddLotteryTransfer.vue";
+  import AddPlatTransfer from "./components/AddPlatTransfer.vue";
 
   export default {
     name: "transfein",
     components: {
-      AddLotteryTransfer,
+      AddPlatTransfer,
     },
     props: {},
     data() {
       return {
+        showSearch: false,
         form: {
-          lotteryType: '',
-          commiss: 5,
-          state: 0,
-          //目前只用于平台一家，写死
-          shopId: 1,
-          beforeTime: 600,
+          id:'',
+          shopName: '',
+          shopConcatPhone: '',
+          shopConcatName: '',
+          transferKey: '',
+          transferSecurty: '',
+          interfaceState: 0
         },
-        states: [{
-          'value': '',
-          'label': '所有'
-        }, {
-          'value': 0,
-          'label': '正常'
-        }, {
-          'value': 1,
-          'label': '停止'
-        }],
-        // 显示搜索条件
-        showSearch: true,
         // 总条数
         total: 0,
         isOpen: false, //未设置
-        // 彩种列表
+        // 商家列表
         voList: [],
         lots: [],
         transfer: undefined, //设置信息
         // 遮罩层
         loading: true,
-        // 用户查询
-        queryParams: {
-          pageNo: 1,
-          pageSize: 10,
-          state: undefined,
-        },
         // 添加用户弹窗
         dialogAddVisible: false,
         // 当前需要修改的用户
@@ -123,45 +103,51 @@
     created() {},
     mounted() {
       this.getList()
-      this.loadLotid()
     },
     methods: {
-      loadLotid() {
-        noOpenLottery().then((res) => {
-          this.lots = res.voList
-        })
-      },
       //修改
       editTransfer(row) {
         this.form = {
-            lotteryType: row.lotteryType,
-            commiss: row.commiss,
-            state: row.states,
-            //目前只用于平台一家，写死
-            shopId: 1,
-            beforeTime: row.transferBeforeTime,
+            id:row.id,
+            shopName: row.shopName,
+            shopConcatPhone: row.shopConcatPhone,
+            shopConcatName: row.shopConcatName,
+            transferKey: row.transferKey,
+            transferSecurty: row.transferSecurty,
+            interfaceState: row.interfaceState
           },
           this.dialogAddVisible = true;
       },
+      resetSecurity(row) {
+        this.$confirm('此操作将重置收单秘钥, 会导致下游收单接口出现异常,您是否已经清楚其中的风险，是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          platSecurityReset(row.id, '').then((res) => {
+            this.getList()
+          })
+
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消重置'
+          });
+        });
+
+      },
       editStateRow(row, state) {
-        editState({
-          id: row.id,
-          states: state
-        }).then((res) => {
+        console.log(row)
+        editPlatState(row.id, state).then((res) => {
           this.getList()
         })
       },
       // 获取用户列表
       getList() {
         this.loading = true;
-        shopTransferList().then((response) => {
+        platlist().then((response) => {
           this.loading = false;
-          this.isOpen = response.data.transfer == 1 ? true : false
-          if (this.isOpen) {
-            this.voList = response.data.lotterys
-            this.transfer = response.data.shop
-          }
-
+          this.voList = response.data
         });
       },
       // 条件查询
@@ -182,7 +168,7 @@
 
       // 发送新增 收单彩种请求
       addShopReq(data) {
-        addLotteryTransfer(data).then((response) => {
+        editShopTransfer(data).then((response) => {
           if (!response.errorCode) {
             this.getList()
             this.loadLotid()

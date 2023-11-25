@@ -3,9 +3,7 @@ package com.qihang.controller.transferIn.admin.dto;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 
@@ -14,7 +12,6 @@ public class AdminShopTransferInDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty(value = "ID")
-    @NotNull(message = "ID不能为空")
     Integer id;
 
     @ApiModelProperty(value = "对外联系方式")
@@ -26,11 +23,19 @@ public class AdminShopTransferInDTO implements Serializable {
     String shopConcatName;
 
     @ApiModelProperty(value = "收单 接口秘钥")
-    @NotNull(message = "收单 接口秘钥不能为空")
-    @Size(min = 32, max = 32)
     String transferSecurty;
 
-    @ApiModelProperty(value = "收单 接口地址")
-    @NotNull(message = "收单 接口地址不能为空")
+    @ApiModelProperty(value = "店名")
+    @NotNull(message = "店名不能为空")
+    String shopName;
+
+    @ApiModelProperty(value = "是否开通")
+    @NotNull(message = "开通状态 不能为空")
+    String interfaceState;
+
+    @ApiModelProperty(value = "接口地址")
     String transferInterface;
+
+    @ApiModelProperty(value = "接口 账号")
+    String transferKey;
 }

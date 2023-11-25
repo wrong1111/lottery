@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
-public class AdminShopTransferDTO extends PageDTO {
+public class AdminPlatDTO extends PageDTO {
 
     @ApiModelProperty(value = "ID")
     Integer id;
