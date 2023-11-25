@@ -65,10 +65,7 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
         if (vo.getId() == null) {
             QueryWrapper<ShopTransferDO> queryWrapper = new QueryWrapper<ShopTransferDO>();
             queryWrapper.lambda().eq(ShopTransferDO::getTransferType, TransferEnum.TransferIn.code);
-
-            queryWrapper.or().lambda().eq(ShopTransferDO::getShopName, vo.getShopName());
-            queryWrapper.or().lambda().eq(ShopTransferDO::getShopConcatPhone, vo.getShopConcatPhone());
-
+            queryWrapper.and(item -> (item.lambda().eq(ShopTransferDO::getShopName, vo.getShopName())).or().eq(ShopTransferDO::getShopConcatPhone, vo.getShopConcatPhone()));
             List<ShopTransferDO> shopTransferDOS = shopTransferMapper.selectList(queryWrapper);
             if (!CollectionUtils.isEmpty(shopTransferDOS)) {
                 BaseVO baseVO = new BaseVO();
@@ -85,31 +82,29 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
                 return baseVO;
             }
             UserAddDTO userAddDTO = new UserAddDTO();
-            userAddDTO.setPassword(MD5.create().digestHex("123abc"));
+            userAddDTO.setPassword(MD5.create().digestHex("123ABCabc"));
             userAddDTO.setPhone(vo.getShopConcatPhone());
             BaseVO returnBo = userService.addUser(userAddDTO);
             if (!returnBo.getSuccess()) {
                 return returnBo;
             }
-            if (CollectionUtils.isEmpty(shopTransferDOS)) {
-                ShopTransferDO shopTransferDO = new ShopTransferDO();
-                BeanUtil.copyProperties(vo, shopTransferDO);
-                shopTransferDO.setCreateTime(new Date());
-                shopTransferDO.setUpdateTime(new Date());
-                if (StringUtils.isBlank(vo.getTransferInterface())) {
-                    shopTransferDO.setTransferInterface(configDomain);
-                }
-                if (StringUtils.isBlank(vo.getTransferKey())) {
-                    shopTransferDO.setTransferKey(RandomStringUtils.randomAlphanumeric(5));
-                }
-                if (StringUtils.isBlank(vo.getTransferSecurty())) {
-                    shopTransferDO.setTransferSecurty(RandomStringUtils.randomAlphanumeric(32));
-                }
-                shopTransferDO.setTransferType(TransferEnum.TransferIn.code);
-                shopTransferMapper.insert(shopTransferDO);
-
-
+            ShopTransferDO shopTransferDO = new ShopTransferDO();
+            BeanUtil.copyProperties(vo, shopTransferDO);
+            shopTransferDO.setCreateTime(new Date());
+            shopTransferDO.setUpdateTime(new Date());
+            if (StringUtils.isBlank(vo.getTransferInterface())) {
+                shopTransferDO.setTransferInterface(configDomain);
             }
+            if (StringUtils.isBlank(vo.getTransferKey())) {
+                shopTransferDO.setTransferKey(RandomStringUtils.randomAlphanumeric(5));
+            }
+            if (StringUtils.isBlank(vo.getTransferSecurty())) {
+                shopTransferDO.setTransferSecurty(RandomStringUtils.randomAlphanumeric(32));
+            }
+            shopTransferDO.setTransferType(TransferEnum.TransferIn.code);
+            shopTransferMapper.insert(shopTransferDO);
+            return new BaseVO();
+
         } else {
             ShopTransferDO transferDO = shopTransferMapper.selectById(vo.getId());
             if (ObjectUtil.isNotNull(transferDO)) {

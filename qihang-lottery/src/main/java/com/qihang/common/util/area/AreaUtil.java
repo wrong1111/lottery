@@ -80,6 +80,9 @@ public class AreaUtil {
     }
 
     public String getAreaByIp(String ip) {
+        if ("127.0.0.0".equals(ip)) {
+            return "localhost";
+        }
         try {
             // 创建 GeoLite2 数据库
             File database = new File(this.getClass().getClassLoader().getResource("GeoLite2-City.mmdb").getPath());
@@ -101,6 +104,6 @@ public class AreaUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return "";
     }
 }

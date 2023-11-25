@@ -75,7 +75,7 @@
       return {
         showSearch: false,
         form: {
-          id:'',
+          id: '',
           shopName: '',
           shopConcatPhone: '',
           shopConcatName: '',
@@ -108,7 +108,7 @@
       //修改
       editTransfer(row) {
         this.form = {
-            id:row.id,
+            id: row.id,
             shopName: row.shopName,
             shopConcatPhone: row.shopConcatPhone,
             shopConcatName: row.shopConcatName,
@@ -168,11 +168,15 @@
 
       // 发送新增 收单彩种请求
       addShopReq(data) {
-        editShopTransfer(data).then((response) => {
-          if (!response.errorCode) {
-            this.getList()
-            this.loadLotid()
+        editShopTransfer(data).then((res) => {
+          if (!res.success) {
+            this.$message({
+              type: 'info',
+              message: res.errorMsg
+            });
+            return
           }
+          this.getList()
         });
       },
 
