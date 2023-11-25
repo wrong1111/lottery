@@ -11,7 +11,28 @@
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
-
+    <el-row :gutter="10" class="mb8" style="width: 50%;align-items: center;display: flex;flex-wrap: wrap;"  v-if="isOpen">
+      <el-col :span="1.5" class="shop">
+        店铺名: {{transfer.shopName}}
+      </el-col>
+      <el-col :span="1.5" class="shop">
+        联系方式: {{transfer.shopConcatPhone}}
+      </el-col>
+      <el-col :span="1.5" class="shop">
+        联系人: {{transfer.shopConcatName}}
+      </el-col>
+    </el-row>
+    <el-row :gutter="10" class="mb8" style="width: 50%;align-items: center;display: flex;flex-wrap: wrap;"  v-if="isOpen">
+      <el-col :span="1.5" class="shop">
+        key: {{transfer.transferKey}}
+      </el-col>
+      <el-col :span="1.5" class="shop">
+        秘钥: {{transfer.transferSecurty}}
+      </el-col>
+      <el-col :span="1.5" class="shop">
+        接口地址: {{transfer.transferInterface}}
+      </el-col>
+    </el-row>
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="danger" icon="el-icon-circle-plus-outline" size="mini" @click="addNewShop"
@@ -21,7 +42,7 @@
     </el-row>
 
     <el-table v-loading="loading" :data="voList" border v-if="isOpen">
-      <el-table-column label="ID" align="center" prop="id" />
+      <el-table-column label="ID" align="center" prop="lotteryType" />
       <el-table-column label="彩种名称" align="center" prop="lotteryName" />
       <el-table-column label="LOGO" align="center">
         <template slot-scope="scope">
@@ -179,7 +200,7 @@
           this.isOpen = response.data.transfer == 1 ? true : false
           if (this.isOpen) {
             this.voList = response.data.lotterys
-            this.transfer = response.data.transfer
+            this.transfer = response.data.shop
           }
 
         });
@@ -214,4 +235,8 @@
   };
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+  .shop {
+    width: 30%
+  }
+</style>
