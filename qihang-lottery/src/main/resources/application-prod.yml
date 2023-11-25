@@ -224,4 +224,5 @@ server:
   port: 48081
 
 config:
-  domain: http://localhost/app/transfer/create
+  domain: http://139.199.175.124:48090/app/transfer/info
+  runtime: prod

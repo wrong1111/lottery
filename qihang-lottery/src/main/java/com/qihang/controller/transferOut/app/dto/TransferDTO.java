@@ -3,9 +3,7 @@ package com.qihang.controller.transferOut.app.dto;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
-import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 
@@ -29,9 +27,12 @@ public class TransferDTO implements Serializable {
     String key;
 
     @NotNull(message = "sign不能为空")
-    @Length(message = "长度必须是{min}字符", min = 32, max = 32)
+    @Length(message = "sign长度必须是{min}字符", min = 32, max = 32)
     String sign;
 
     @NotNull(message = "version不能为空")
     String version;
+
+    @NotNull(message = "timestamp不能为空")
+    Long timestamp;
 }

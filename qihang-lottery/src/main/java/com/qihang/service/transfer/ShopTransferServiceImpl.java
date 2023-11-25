@@ -84,7 +84,7 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
             UserAddDTO userAddDTO = new UserAddDTO();
             userAddDTO.setPassword(MD5.create().digestHex("123ABCabc"));
             userAddDTO.setPhone(vo.getShopConcatPhone());
-            BaseVO returnBo = userService.addUser(userAddDTO);
+            BaseDataVO returnBo = (BaseDataVO) userService.addUser(userAddDTO);
             if (!returnBo.getSuccess()) {
                 return returnBo;
             }
@@ -92,8 +92,9 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
             BeanUtil.copyProperties(vo, shopTransferDO);
             shopTransferDO.setCreateTime(new Date());
             shopTransferDO.setUpdateTime(new Date());
+            shopTransferDO.setUid(Long.valueOf(((Map<String, String>) returnBo.getData()).get("uid")));
             if (StringUtils.isBlank(vo.getTransferInterface())) {
-                shopTransferDO.setTransferInterface(configDomain);
+                shopTransferDO.setTransferInterface(configDomain+"/"+shopTransferDO.getTransferKey());
             }
             if (StringUtils.isBlank(vo.getTransferKey())) {
                 shopTransferDO.setTransferKey(RandomStringUtils.randomAlphanumeric(5));
@@ -138,6 +139,7 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
         return new BaseVO();
     }
 
+    @TenantIgnore
     @Override
     public BaseVO listShopTransfer(TransferEnum transferEnum) {
         List<ShopTransferDO> shopTransferDOList = shopTransferMapper.selectList(new QueryWrapper<ShopTransferDO>().lambda().eq(ShopTransferDO::getTransferType, transferEnum.code));
@@ -179,14 +181,16 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
         return null;
     }
 
+    @TenantIgnore
     @Override
     public ShopTransferDO findShopTransfer(String key) {
-        if (null == TransferServiceImpl.SHOP_TRANSFER_MAP.get(key)) {
-            ShopTransferDO shopTransferDO = getOne(new QueryWrapper<ShopTransferDO>().lambda().eq(ShopTransferDO::getTransferKey, key).eq(ShopTransferDO::getTransferType, TransferEnum.TransferIn.code));
+        ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(key);
+        if (null == shopTransferDO) {
+            shopTransferDO = getOne(new QueryWrapper<ShopTransferDO>().lambda().eq(ShopTransferDO::getTransferKey, key).eq(ShopTransferDO::getTransferType, TransferEnum.TransferIn.code));
             TransferServiceImpl.SHOP_TRANSFER_MAP.put(key, shopTransferDO);
             return shopTransferDO;
         }
-        return null;
+        return shopTransferDO;
     }
 
 

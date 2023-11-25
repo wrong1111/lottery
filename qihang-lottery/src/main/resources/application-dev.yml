@@ -224,4 +224,5 @@ mro:
       - t_omit
 
 config:
-  domain: http://localhost/app/transfer/create
+  domain: http://localhost:48080/app/transfer/info
+  runtime: dev

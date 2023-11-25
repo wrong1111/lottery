@@ -22,6 +22,7 @@ import com.qihang.common.util.security.BcryptPasswordUtil;
 import com.qihang.common.util.security.SecurityFrameworkUtils;
 import com.qihang.common.util.sms.SmsUtil;
 import com.qihang.common.util.upload.S3Util;
+import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.constant.Constant;
@@ -672,7 +673,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         userDO.setQrCode(codeUrl);
         userDO.setAvatar(sysDomain.getAppUrl() + "/static/default1.jpg");
         userMapper.insert(userDO);
-        return new BaseVO();
+        Map<String, String> userMap = new HashMap<>();
+        userMap.put("id", "" + userDO.getId());
+        userMap.put("uid", "" + userDO.getUid());
+        return BaseDataVO.builder().data(userMap).build();
+
     }
 
     private Map<String, Object> statistics(List<UserDO> records, Date startTime, Date endTime) {

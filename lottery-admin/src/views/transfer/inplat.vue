@@ -3,7 +3,7 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="danger" icon="el-icon-circle-plus-outline" size="mini" @click="addNewShop"
-          plain>添加下游商家</el-button>
+          plain>添加收单商家</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -43,7 +43,7 @@
       </el-table-column>
     </el-table>
 
-    <AddPlatTransfer title="开通下游账号" :visible.sync="dialogAddVisible" @confirm="addShopReq" :lots="lots" :form="form">
+    <AddPlatTransfer title="开通收单账号" :visible.sync="dialogAddVisible" @confirm="addShopReq" :lots="lots" :form="form">
     </AddPlatTransfer>
 
   </div>
