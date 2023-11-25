@@ -2,6 +2,7 @@ package com.qihang.service.transfer;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.crypto.digest.MD5;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.annotation.TenantIgnore;
@@ -11,11 +12,15 @@ import com.qihang.constant.TransferEnum;
 import com.qihang.controller.transferIn.admin.dto.AdminPlatDTO;
 import com.qihang.controller.transferIn.admin.dto.AdminShopTransferInDTO;
 import com.qihang.controller.transferIn.admin.vo.AdminShopTransferInVO;
+import com.qihang.controller.user.admin.dto.UserAddDTO;
 import com.qihang.domain.ballgame.BallGameDO;
 import com.qihang.domain.transfer.LotteryTransferDO;
 import com.qihang.domain.transfer.ShopTransferDO;
+import com.qihang.domain.user.UserDO;
 import com.qihang.mapper.ballgame.BallGameMapper;
 import com.qihang.mapper.transfer.ShopTransferMapper;
+import com.qihang.mapper.user.UserMapper;
+import com.qihang.service.user.IUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -24,8 +29,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,14 +51,46 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
     @Value("${config.domain}")
     String configDomain;
 
+
+    @Resource
+    UserMapper userMapper;
+
+    @Resource
+    IUserService userService;
+
+
     @TenantIgnore
     @Override
     public BaseVO editShopTransfer(AdminShopTransferInDTO vo) {
         if (vo.getId() == null) {
-            List<ShopTransferDO> shopTransferDOS = shopTransferMapper.selectList(new QueryWrapper<ShopTransferDO>().lambda().eq(ShopTransferDO::getTransferType, TransferEnum.TransferIn.code)
-                    .or(new QueryWrapper<ShopTransferDO>().lambda().eq(ShopTransferDO::getShopName, vo.getShopName()))
-                    .or());
+            QueryWrapper<ShopTransferDO> queryWrapper = new QueryWrapper<ShopTransferDO>();
+            queryWrapper.lambda().eq(ShopTransferDO::getTransferType, TransferEnum.TransferIn.code);
 
+            queryWrapper.or().lambda().eq(ShopTransferDO::getShopName, vo.getShopName());
+            queryWrapper.or().lambda().eq(ShopTransferDO::getShopConcatPhone, vo.getShopConcatPhone());
+
+            List<ShopTransferDO> shopTransferDOS = shopTransferMapper.selectList(queryWrapper);
+            if (!CollectionUtils.isEmpty(shopTransferDOS)) {
+                BaseVO baseVO = new BaseVO();
+                baseVO.setSuccess(false);
+                baseVO.setErrorMsg("店名/手机号已经存在");
+                return baseVO;
+            }
+            //查询手机号对应的会员账户是否存在
+            UserDO userDO = userMapper.selectOne(new QueryWrapper<UserDO>().lambda().eq(UserDO::getPhone, vo.getShopConcatPhone()));
+            if (null != userDO) {
+                BaseVO baseVO = new BaseVO();
+                baseVO.setSuccess(false);
+                baseVO.setErrorMsg("手机号已经存在,请确认此手机号用于会员账户");
+                return baseVO;
+            }
+            UserAddDTO userAddDTO = new UserAddDTO();
+            userAddDTO.setPassword(MD5.create().digestHex("123abc"));
+            userAddDTO.setPhone(vo.getShopConcatPhone());
+            BaseVO returnBo = userService.addUser(userAddDTO);
+            if (!returnBo.getSuccess()) {
+                return returnBo;
+            }
             if (CollectionUtils.isEmpty(shopTransferDOS)) {
                 ShopTransferDO shopTransferDO = new ShopTransferDO();
                 BeanUtil.copyProperties(vo, shopTransferDO);

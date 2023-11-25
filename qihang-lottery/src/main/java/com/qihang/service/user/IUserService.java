@@ -202,4 +202,5 @@ public interface IUserService extends IService<UserDO> {
      * @return
      */
     BaseVO addUser(UserAddDTO userAdd);
+
 }

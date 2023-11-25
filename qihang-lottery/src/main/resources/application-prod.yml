@@ -148,6 +148,7 @@ exclude:
     - /sys/user/token/*
     - /app/domain/query
     - /sch/run
+    - /app/transfer/**
 
 #============== S3对象存储 ===================
 s3:
