@@ -105,6 +105,7 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
             }
             shopTransferDO.setTransferType(TransferEnum.TransferIn.code);
             shopTransferMapper.insert(shopTransferDO);
+            TransferServiceImpl.SHOP_TRANSFER_MAP.put(shopTransferDO.getTransferKey(), shopTransferDO);
             return new BaseVO();
 
         } else {
@@ -133,6 +134,7 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
                 }
 
                 if (update) {
+                    TransferServiceImpl.SHOP_TRANSFER_MAP.put(transferDO.getTransferKey(), transferDO);
                     shopTransferMapper.updateById(transferDO);
                 }
             }

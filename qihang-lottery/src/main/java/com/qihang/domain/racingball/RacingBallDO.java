@@ -72,5 +72,15 @@ public class RacingBallDO implements Serializable {
      */
     private Date updateTime;
 
+    /**
+     * 统一赛 事ID
+     * jz竞足
+     * lq竞彩篮球
+     * bd北单
+     * gg 胜负过关
+     * sf胜负彩
+     */
+    String gameNo;
+
 
 }

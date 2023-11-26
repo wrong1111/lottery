@@ -1,6 +1,11 @@
 package com.qihang.service.transfer;
 
 import com.qihang.common.vo.BaseVO;
+import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.permutation.PermutationDO;
+import com.qihang.domain.racingball.RacingBallDO;
+
+import java.util.List;
 
 /**
  * @Author: wyong
@@ -19,4 +24,10 @@ public interface ITransferOutService {
     public BaseVO listLottery(String key);
 
     public BaseVO getAccountMoney(String key);
+
+    public BaseVO createOrder(String data, String key);
+
+    public BaseVO createSportOrder(LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, String key);
+
+    public BaseVO createDigitOrder(LotteryOrderDO lotteryOrderDO, List<PermutationDO> permutationDOS, String key);
 }

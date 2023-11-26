@@ -160,13 +160,15 @@
 					forecast: "",
 					schemeDetails: ""
 				},
-				optimizationDate: {}
+				optimizationDate: {},
+				issueNo:''
 			}
 		},
 		onLoad(option) {
 			//获取传过滤的数据
 			let obj = JSON.parse(decodeURIComponent(option.obj));
 			this.flag = eval(option.flag);
+			this.issueNo = option.issueNo
 			//数组通过id进行排序
 			this.selectItem = obj.sort(function(a, b) {
 				return a.id - b.id
@@ -348,6 +350,7 @@
 				this.calculationParam.notes = this.notes
 				this.calculationParam.forecast = this.maxPrice
 				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.normalOptimizatinList)
+				this.calculationParam.issueNo = this.issueNo
 				createOrder(this.calculationParam).then(res => {
 					if (res.success) {
 						//标识为已经下单了

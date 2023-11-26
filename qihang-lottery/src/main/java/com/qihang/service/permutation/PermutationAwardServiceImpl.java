@@ -50,4 +50,21 @@ public class PermutationAwardServiceImpl extends ServiceImpl<PermutationAwardMap
         BeanUtils.copyProperties(permutationAward, issueNo);
         return issueNo;
     }
+
+    @Override
+    public IssueNoVO getLastIssueNo(String type) {
+        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).gt(PermutationAwardDO::getDeadTime, new Date()).orderByAsc(PermutationAwardDO::getDeadTime).last("limit 1"));
+        if (null == permutationAward) {
+            //最后一期的旧期 号
+            permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).gt(PermutationAwardDO::getDeadTime, DateUtils.addMonths(new Date(), -1)).orderByDesc(PermutationAwardDO::getId).last("limit 1"));
+            if (null == permutationAward) {
+                return null;
+            }
+        }
+        IssueNoVO issueNo = new IssueNoVO();
+        BeanUtils.copyProperties(permutationAward, issueNo);
+        return issueNo;
+    }
+
+
 }

@@ -1,11 +1,11 @@
 package com.qihang.common.vo;
 
-import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.SuperBuilder;
 
 
 @Data
-@Builder
+@SuperBuilder
 public class BaseDataVO extends BaseVO {
     Object data;
 }

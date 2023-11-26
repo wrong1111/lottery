@@ -52,4 +52,5 @@ public class FootballMatchDTO implements Serializable {
 
     @ApiModelProperty(value = "客队")
     private String visitingTeam;
+
 }

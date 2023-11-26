@@ -134,4 +134,9 @@ public class FootballMatchDO implements Serializable {
      * 半全场结果
      */
     private String halfFullCourt;
+
+    /**
+     *
+     */
+    String issueNo;
 }

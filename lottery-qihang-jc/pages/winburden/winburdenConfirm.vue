@@ -107,8 +107,10 @@
 					notes: "",
 					type: 6,
 					forecast: "",
-					schemeDetails: ""
+					schemeDetails: "",
+					issueNo:''
 				},
+				issueNo:'',
 				optimizationDate: {}
 			}
 		},
@@ -119,6 +121,7 @@
 			this.selectItem = obj.sort(function(a, b) {
 				return a.number - b.number
 			})
+			this.issueNo = option.issueNo
 			//初始化数据
 			this.init(this.selectItem);
 		},
@@ -128,6 +131,7 @@
 				this.calculationParam.notes = this.notes
 				this.calculationParam.forecast = this.maxPrice
 				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.averageOptimizationList)
+				this.issueNo = this.issueNo
 				uni.navigateTo({
 					url: "pages/documentary/place?obj=" + encodeURIComponent(JSON.stringify(this.calculationParam))
 				});
@@ -163,6 +167,7 @@
 					})
 					this.calculationParam.winBurdenMatchList = this.selectItem;
 					this.calculationParam.multiple = this.times;
+					this.calculationParam.issueNo = this.issueNo
 					this.calculationWinBurden()
 				}
 			},

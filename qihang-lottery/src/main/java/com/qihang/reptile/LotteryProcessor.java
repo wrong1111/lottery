@@ -14,7 +14,9 @@ import com.qihang.domain.omit.OmitDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
+import com.qihang.service.racingball.RacingBallServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
@@ -75,6 +77,7 @@ public class LotteryProcessor implements PageProcessor {
                     footballMatch.setDeadline(LotteryAlgorithmUtil.calculationDeadline(footballMatch.getOpenTime(), footballMatch.getStartTime()));
                     footballMatch.setCreateTime(new Date());
                     footballMatch.setUpdateTime(new Date());
+                    footballMatch.setIssueNo(RacingBallServiceImpl.getDeadline(footballMatch.getDeadline()));
                     footballMatchList.add(footballMatch);
                 }
             }
@@ -185,6 +188,7 @@ public class LotteryProcessor implements PageProcessor {
                     basketballMatch.setDeadline(LotteryAlgorithmUtil.calculationDeadline(basketballMatch.getOpenTime(), basketballMatch.getStartTime()));
                     basketballMatch.setCreateTime(new Date());
                     basketballMatch.setUpdateTime(new Date());
+                    basketballMatch.setIssueNo(RacingBallServiceImpl.getDeadline(basketballMatch.getDeadline()));
                     basketballMatchList.add(basketballMatch);
                 }
             }
@@ -258,6 +262,8 @@ public class LotteryProcessor implements PageProcessor {
             log.info(" 篮球开奖 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(basketballMatchList));
             page.putField("basketballMatchList", basketballMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL8)) {
+            //ID=expect_select
+            String issueNo = html.css("#expect_select option", "text").toString().split(" ")[0];
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
             List<Selectable> nodes = html.css("#vsTable #vs_table tbody").nodes();
             String startTime = "";
@@ -300,12 +306,14 @@ public class LotteryProcessor implements PageProcessor {
                     }
                     beiDanMatch.setDeadline(date);
                     beiDanMatch.setLetOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
+                    beiDanMatch.setIssueNo(issueNo);
                     beiDanMatchList.add(beiDanMatch);
                 }
             }
             log.info(" 北京单场 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(beiDanMatchList));
             page.putField("beiDanMatchList", beiDanMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL9) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL10) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL12)) {
+            String issueNo = html.css("#expect_select option", "text").toString().split(" ")[0];
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
             List<Selectable> nodes = html.css("#vsTable #vs_table tbody").nodes();
             String url = page.getUrl().toString();
@@ -344,6 +352,7 @@ public class LotteryProcessor implements PageProcessor {
                     }
                     beiDanMatch.setCreateTime(new Date());
                     beiDanMatch.setUpdateTime(new Date());
+                    beiDanMatch.setIssueNo(issueNo);
                     beiDanMatchList.add(beiDanMatch);
                 }
             }
@@ -468,9 +477,39 @@ public class LotteryProcessor implements PageProcessor {
             //胜负彩比赛
             List<WinBurdenMatchDO> winBurdenMatchList = new ArrayList<>();
             String deadlineTime = html.css(".zcfilter-l .zcfilter-endtime", "text").toString();
+            if(StringUtils.isBlank(deadlineTime)){
+                deadlineTime = html.css(".zcfilter-l span", "text").toString().replaceAll("官方售彩已截止","").trim();
+            }
             deadlineTime = deadlineTime.substring(deadlineTime.indexOf("：") + 1);
             deadlineTime = DateUtil.year(DateUtil.date()) + "-" + deadlineTime + ":00";
             String issueNo = html.xpath("/html/body/div[6]/div/div[2]/div[1]/div/ul/li[1]/@data-expect").toString();
+            List<Selectable> nodes = html.css(".bet-tb-dg .bet-tb-tr").nodes();
+            for (int i = 0; i < nodes.size(); i++) {
+                WinBurdenMatchDO winBurdenMatch = new WinBurdenMatchDO();
+                winBurdenMatch.setNumber(nodes.get(i).css(".td-no", "text").toString());
+                winBurdenMatch.setMatch(nodes.get(i).css(".td-evt a", "text").toString());
+                String color = nodes.get(i).xpath("//*[@class='td-evt']/a/@style").toString();
+                winBurdenMatch.setColor(color.substring(color.indexOf("#"), color.length() - 1));
+                winBurdenMatch.setOpenTime(nodes.get(i).css(".td-endtime", "text").toString());
+                winBurdenMatch.setHomeTeam(nodes.get(i).css(".team-l i", "text").toString() + nodes.get(i).css(".td-team .team-l a", "text").toString().replaceAll(" ", ""));
+                winBurdenMatch.setVisitingTeam(nodes.get(i).css(".team-r i", "text").toString() + nodes.get(i).css(".td-team .team-r a", "text").toString().replaceAll(" ", ""));
+                winBurdenMatch.setNotLetOdds(StrUtil.join(",", nodes.get(i).css(".td-pei span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
+                winBurdenMatch.setDeadline(DateUtil.parse(deadlineTime));
+                winBurdenMatch.setIssueNo(issueNo);
+                winBurdenMatch.setCreateTime(new Date());
+                winBurdenMatch.setUpdateTime(new Date());
+                winBurdenMatchList.add(winBurdenMatch);
+            }
+            log.info(" 胜负彩比赛 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(winBurdenMatchList));
+            page.putField("winBurdenMatchList", winBurdenMatchList);
+        } else if (page.getUrl().toString().startsWith(CrawlingAddressConstant.URL18_01)) {
+            String issueNo  = page.getUrl().toString().split("=")[1];
+            //胜负彩比赛 下一期
+            List<WinBurdenMatchDO> winBurdenMatchList = new ArrayList<>();
+            String deadlineTime = html.css(".zcfilter-l .zcfilter-endtime", "text").toString();
+            deadlineTime = deadlineTime.substring(deadlineTime.indexOf("：") + 1);
+            deadlineTime = DateUtil.year(DateUtil.date()) + "-" + deadlineTime + ":00";
+            //String issueNo = html.xpath("/html/body/div[6]/div/div[2]/div[1]/div/ul/li[1]/@data-expect").toString();
             List<Selectable> nodes = html.css(".bet-tb-dg .bet-tb-tr").nodes();
             for (int i = 0; i < nodes.size(); i++) {
                 WinBurdenMatchDO winBurdenMatch = new WinBurdenMatchDO();

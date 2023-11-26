@@ -75,7 +75,8 @@
 				that: this,
 				count: "",
 				total: "",
-				selectItem: []
+				selectItem: [],
+				issueNo:''
 			}
 		},
 		filters: {
@@ -183,14 +184,17 @@
 				}
 				uni.navigateTo({
 					url: "pages/winburden/winburdenConfirm?obj=" + encodeURIComponent(JSON.stringify(this
-						.selectItem))
+						.selectItem))+"&issueNo="+this.issueNo
 				});
 			},
 			// 获取竞彩足球数据
 			fecthSoccerData() {
 				uni.showLoading();
 				winBurdenWinEvenLoseList().then(res => {
-					this.winBurdenMatchList = res.voList
+					if(res.voList && res.voList.length>0){
+						this.winBurdenMatchList = [res.voList[0]]
+						this.issueNo = res.voList[0].issueNo
+					}
 					setTimeout(function() {
 						uni.hideLoading();
 					}, 50);

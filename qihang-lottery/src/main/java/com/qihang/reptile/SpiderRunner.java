@@ -2,6 +2,8 @@ package com.qihang.reptile;
 
 import cn.hutool.core.date.DateUtil;
 import com.qihang.constant.CrawlingAddressConstant;
+import com.qihang.controller.permutation.app.vo.IssueNoVO;
+import com.qihang.service.permutation.IPermutationAwardService;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -51,6 +53,24 @@ public class SpiderRunner {
 
     //new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))
 
+    @Resource
+    IPermutationAwardService permutationAwardService;
+
+    public void sfcNext() {
+        IssueNoVO issueNoVO = permutationAwardService.getLastIssueNo("6");
+        if (null == issueNoVO) {
+            return;
+        }
+        Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
+                        CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 2) //胜负彩比赛
+                        , CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 3) //胜负彩比赛
+                        , CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 4) //胜负彩比赛
+                ).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover()))
+//                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
+//                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
+                .addPipeline(lotteryPipeline).runAsync();
+
+    }
 
     /*
      比赛 赛事
@@ -72,7 +92,7 @@ public class SpiderRunner {
 //                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
 //                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
                 .addPipeline(lotteryPipeline).runAsync();
-
+        sfcNext();
     }
 
     /*

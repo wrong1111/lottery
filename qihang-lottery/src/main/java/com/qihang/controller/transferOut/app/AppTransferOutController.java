@@ -49,9 +49,7 @@ public class AppTransferOutController {
             case "getAccountMoney":
                 return transferOutService.getAccountMoney(dto.getKey());
             case "createOrder":
-                baseVO.setSuccess(false);
-                baseVO.setErrorMsg("暂未实现");
-                break;
+                return transferOutService.createOrder(dto.getData(), dto.getKey());
             case "ping":
                 baseVO.setSuccess(true);
                 baseVO.setErrorMsg("ok");

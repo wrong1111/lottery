@@ -348,7 +348,7 @@ public class LotteryPipeline implements Pipeline {
                     beiDanMatchService.updateById(beiDanMatch);
                 }
             }
-        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL18)) {
+        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL18) || url.startsWith(CrawlingAddressConstant.URL18_01)) {
             List<WinBurdenMatchDO> winBurdenMatchList = resultItems.get("winBurdenMatchList");
             for (WinBurdenMatchDO winBurdenMatchDO : winBurdenMatchList) {
                 WinBurdenMatchDO winBurdenMatch = winBurdenMatchService.getOne(new QueryWrapper<WinBurdenMatchDO>().lambda()
@@ -382,35 +382,33 @@ public class LotteryPipeline implements Pipeline {
                 WinBurdenMatchDO winBurdenMatch = winBurdenMatchService.getOne(new QueryWrapper<WinBurdenMatchDO>().lambda()
                         .eq(WinBurdenMatchDO::getIssueNo, winBurdenMatchDO.getIssueNo())
                         .like(WinBurdenMatchDO::getHomeTeam, winBurdenMatchDO.getHomeTeam()));
-                if (StrUtil.isBlank(winBurdenMatch.getAward()) || StringUtils.isBlank(winBurdenMatch.getMoneyAward()) || winBurdenMatch.getMoneyAward().indexOf("--") != -1) {
+                if (winBurdenMatch!=null && (StrUtil.isBlank(winBurdenMatch.getAward()) || StringUtils.isBlank(winBurdenMatch.getMoneyAward()) || winBurdenMatchDO.getMoneyAward().indexOf("--") != -1)) {
                     winBurdenMatch.setUpdateTime(new Date());
                     winBurdenMatch.setAward(winBurdenMatchDO.getAward());
                     winBurdenMatch.setMoneyAward(winBurdenMatchDO.getMoneyAward());
                     winBurdenMatchService.updateById(winBurdenMatch);
                 }
             }
-            if (!CollectionUtils.isEmpty(winBurdenMatchList)) {
-                //存储爬取到的开奖结果
-                List<String> lastList = winBurdenMatchList.stream()
-                        .map(item -> "胜".equals(item.getAward()) ? "3" : ("平".equals(item.getAward()) ? "1" : ("负".equals(item.getAward()) ? "0" : "-")))
-                        .collect(Collectors.toList());
+            //存储爬取到的开奖结果
+            List<String> lastList = winBurdenMatchList.stream()
+                    .map(item -> "胜".equals(item.getAward()) ? "3" : ("平".equals(item.getAward()) ? "1" : ("负".equals(item.getAward()) ? "0" : "-")))
+                    .collect(Collectors.toList());
 
-                log.info(" 胜负彩开奖 ： {} 场 ", lastList);
-                PermutationAwardDO permutationAward = new PermutationAwardDO();
-                permutationAward.setStageNumber(Integer.valueOf(winBurdenMatchList.get(0).getIssueNo()));
-                permutationAward.setType(LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey());
-                permutationAward.setCreateTime(new Date());
-                permutationAward.setReward(StringUtils.join(lastList, ","));
-                PermutationAwardDO permutationAwardDO = permutationAwardService.getOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getStageNumber, permutationAward.getStageNumber()).eq(PermutationAwardDO::getType, permutationAward.getType()));
-                if (ObjectUtil.isNotNull(permutationAwardDO)) {
-                    permutationAwardDO.setReward(permutationAward.getReward());
-                    permutationAwardDO.setUpdateTime(new Date());
-                    permutationAwardService.updateById(permutationAwardDO);
-                    return;
-                }
-                permutationAwardService.save(permutationAward);
-
+            log.info(" 胜负彩开奖 ： {} 场 ", lastList);
+            PermutationAwardDO permutationAward = new PermutationAwardDO();
+            permutationAward.setStageNumber(Integer.valueOf(winBurdenMatchList.get(0).getIssueNo()));
+            permutationAward.setType(LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey());
+            permutationAward.setCreateTime(new Date());
+            permutationAward.setReward(StringUtils.join(lastList, ","));
+            PermutationAwardDO permutationAwardDO = permutationAwardService.getOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getStageNumber, permutationAward.getStageNumber()).eq(PermutationAwardDO::getType, permutationAward.getType()));
+            if (ObjectUtil.isNotNull(permutationAwardDO)) {
+                permutationAwardDO.setReward(permutationAward.getReward());
+                permutationAwardDO.setUpdateTime(new Date());
+                permutationAwardService.updateById(permutationAwardDO);
+                return;
             }
+            permutationAwardService.save(permutationAward);
+
         } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL21)
                 || ObjectUtil.equal(url, CrawlingAddressConstant.URL22)
                 || ObjectUtil.equal(url, CrawlingAddressConstant.URL23)

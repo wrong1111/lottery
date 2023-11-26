@@ -57,4 +57,7 @@ public class BallCalculationDTO implements Serializable {
 
     @ApiModelProperty(value = "方案详情")
     private String schemeDetails;
+
+    @ApiModelProperty(value = "下单期号")
+    String issueNo;
 }

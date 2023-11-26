@@ -1,8 +1,10 @@
 package com.qihang.common.vo;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 
@@ -10,6 +12,7 @@ import java.io.Serializable;
  * @author bright
  */
 @Data
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class BaseVO implements Serializable {

@@ -95,7 +95,10 @@ public class CrawlingAddressConstant {
      * 胜负彩比赛
      */
     public static final String URL18 = "https://trade.500.com/sfc/";
-
+    /**
+     * 胜负彩下一期
+     */
+    public static final String URL18_01 = "https://trade.500.com/sfc/?expect=";
     /**
      * 胜负彩开奖
      */

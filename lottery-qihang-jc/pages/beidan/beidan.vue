@@ -389,7 +389,8 @@
 				childIdx: "",
 				count: "",
 				total: "",
-				selectItem: []
+				selectItem: [],
+				issueNo:'',
 			}
 		},
 		//下完单后返回到该页面数据进行重置
@@ -529,7 +530,7 @@
 				}
 				uni.navigateTo({
 					url: "pages/beidan/beidanConfirm?obj=" + encodeURIComponent(JSON.stringify(this
-						.selectItem)) + "&flag=" + encodeURIComponent(flag)
+						.selectItem)) + "&flag=" + encodeURIComponent(flag)+"&issueNo="+this.issueNo
 				});
 			},
 			analysis(url) {
@@ -549,6 +550,9 @@
 				uni.showLoading();
 				beidanList().then(res => {
 					this.beidanList = res.voList
+					if(this.beidanList && this.beidanList.length>0){
+						this.issueNo = this.beidanList[0].beiDanMatchList[0].issueNo
+					}
 					setTimeout(function() {
 						uni.hideLoading();
 					}, 0);

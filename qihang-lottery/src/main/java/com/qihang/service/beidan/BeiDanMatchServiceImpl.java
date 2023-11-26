@@ -83,6 +83,7 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
 
     @Override
     public CommonListVO<BeiDanVO> beiDanMatchList() {
+        long c = System.currentTimeMillis();
         CommonListVO<BeiDanVO> commonList = new CommonListVO<>();
         List<BeiDanVO> beiDanList = new ArrayList<>();
         //小于当前时间 不展示
@@ -233,6 +234,7 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
             beiDan.setBeiDanMatchList(beiDanMatchList);
             beiDanList.add(beiDan);
         }
+        log.info("=======>[北单]=======cost {}", (System.currentTimeMillis() - c));
         commonList.setVoList(beiDanList);
         return commonList;
     }

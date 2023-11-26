@@ -130,4 +130,10 @@ public class BasketballMatchDO implements Serializable {
      * 球赛开始时间
      */
     private String startTime;
+
+
+    /**
+     *
+     */
+    String issueNo;
 }

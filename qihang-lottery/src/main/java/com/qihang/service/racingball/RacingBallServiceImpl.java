@@ -1,5 +1,6 @@
 package com.qihang.service.racingball;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -30,14 +31,14 @@ import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author bright
@@ -70,21 +71,36 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseVO createOrder(BallCalculationDTO ballCalculation, Integer userId) {
+        String issueNo = ballCalculation.getIssueNo();
         Date date = new Date();
+        Date minDeadline = null;
+        Map<Integer, Date> deadlineMap = new HashMap<>();
         if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.FOOTBALL.getKey())) {
             List<FootballMatchDTO> footballMatchList = ballCalculation.getFootballMatchList();
             for (FootballMatchDTO footballMatchDTO : footballMatchList) {
                 FootballMatchDO footballMatchDO = footballMatchMapper.selectById(footballMatchDTO.getId());
+                if (deadlineMap.get(footballMatchDO.getId()) == null) {
+                    deadlineMap.put(footballMatchDO.getId(), footballMatchDO.getDeadline());
+                }
                 if (date.after(footballMatchDO.getDeadline())) {
                     return new BaseVO(false, ErrorCodeEnum.E084.getKey(), ErrorCodeEnum.E084.getValue());
+                }
+                if (null == minDeadline || footballMatchDO.getDeadline().before(minDeadline)) {
+                    minDeadline = footballMatchDO.getDeadline();
                 }
             }
         } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey())) {
             List<BasketballMatchDTO> basketballMatchList = ballCalculation.getBasketballMatchList();
             for (BasketballMatchDTO basketballMatchDTO : basketballMatchList) {
                 BasketballMatchDO basketballMatchDO = basketballMatchMapper.selectById(basketballMatchDTO.getId());
+                if (deadlineMap.get(basketballMatchDO.getId()) == null) {
+                    deadlineMap.put(basketballMatchDO.getId(), basketballMatchDO.getDeadline());
+                }
                 if (date.after(basketballMatchDO.getDeadline())) {
                     return new BaseVO(false, ErrorCodeEnum.E084.getKey(), ErrorCodeEnum.E084.getValue());
+                }
+                if (null == minDeadline || basketballMatchDO.getDeadline().before(minDeadline)) {
+                    minDeadline = basketballMatchDO.getDeadline();
                 }
             }
         } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.SINGLE.getKey())) {
@@ -135,6 +151,7 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 racingBall.setTimes(ballCalculation.getMultiple());
                 racingBall.setType(StrUtil.join(",", ballCalculation.getPssTypeList()));
                 racingBall.setContent(JSONUtil.toJsonStr(footballMatch));
+                racingBall.setGameNo(getMatchGameNo(footballMatch.getNumber(), deadlineMap.get(footballMatch.getId())));
                 racingBallMapper.insert(racingBall);
                 ids.add(racingBall.getId());
             }
@@ -151,6 +168,7 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 racingBall.setTimes(ballCalculation.getMultiple());
                 racingBall.setType(StrUtil.join(",", ballCalculation.getPssTypeList()));
                 racingBall.setContent(JSONUtil.toJsonStr(basketballMatch));
+                racingBall.setGameNo(getMatchGameNo(basketballMatch.getNumber(), deadlineMap.get(basketballMatch.getId())));
                 racingBallMapper.insert(racingBall);
                 ids.add(racingBall.getId());
             }
@@ -167,6 +185,7 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 racingBall.setTimes(ballCalculation.getMultiple());
                 racingBall.setType(StrUtil.join(",", ballCalculation.getPssTypeList()));
                 racingBall.setContent(JSONUtil.toJsonStr(beiDanMatch));
+                racingBall.setGameNo(issueNo + fillZero(beiDanMatch.getNumber(), 4));
                 racingBallMapper.insert(racingBall);
                 ids.add(racingBall.getId());
             }
@@ -182,6 +201,7 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 racingBall.setTimes(ballCalculation.getMultiple());
                 racingBall.setType(StrUtil.join(",", ballCalculation.getPssTypeList()));
                 racingBall.setContent(JSONUtil.toJsonStr(winBurdenMatch));
+                racingBall.setGameNo(issueNo + fillZero(winBurdenMatch.getNumber(), 3));
                 racingBallMapper.insert(racingBall);
                 ids.add(racingBall.getId());
             }
@@ -197,6 +217,7 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 racingBall.setTimes(ballCalculation.getMultiple());
                 racingBall.setType(StrUtil.join(",", ballCalculation.getPssTypeList()));
                 racingBall.setContent(JSONUtil.toJsonStr(winBurdenMatch));
+                racingBall.setGameNo(issueNo + fillZero(winBurdenMatch.getNumber(), 3));
                 racingBallMapper.insert(racingBall);
                 ids.add(racingBall.getId());
             }
@@ -227,5 +248,59 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
         orderMapper.insert(order);
         racingBallOrder.setId(order.getId());
         return racingBallOrder;
+    }
+
+    public static String fillZero(String str, int len) {
+        if (str.length() >= len) {
+            return str;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < len - str.length(); i++) {
+            sb.append("0");
+        }
+        sb.append(str);
+        return sb.toString();
+    }
+
+    public static String[] WEEK_LIST = new String[]{"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
+
+    public static String getDeadline(Date deadline) {
+        String date = DateUtil.format(deadline, "yyyyMMdd");
+        Date matchDate = DateUtil.parse(date + " 100001", "yyyyMMddHHmmss");
+        String gameNo = date;
+        if (deadline.before(matchDate)) {
+            gameNo = DateUtil.format(DateUtils.addDays(deadline, -1), "yyyyMMdd");
+        }
+        return gameNo;
+    }
+
+    public static String getMatchGameNo(String matchNo, Date deadline) {
+        String week = matchNo.substring(0, 2);
+        String no = matchNo.substring(2);
+        String gameNo = getDeadline(deadline);
+        switch (week) {
+            case "周一":
+                gameNo += "1" + no;
+                break;
+            case "周二":
+                gameNo += "2" + no;
+                break;
+            case "周三":
+                gameNo += "3" + no;
+                break;
+            case "周四":
+                gameNo += "4" + no;
+                break;
+            case "周五":
+                gameNo += "5" + no;
+                break;
+            case "周六":
+                gameNo += "6" + no;
+                break;
+            default:
+                gameNo += "7" + no;
+                break;
+        }
+        return gameNo;
     }
 }

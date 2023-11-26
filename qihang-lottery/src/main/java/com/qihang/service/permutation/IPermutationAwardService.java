@@ -17,5 +17,7 @@ public interface IPermutationAwardService extends IService<PermutationAwardDO> {
      */
     IssueNoVO getIssueNo(String type);
 
+    IssueNoVO getLastIssueNo(String type);
+
 
 }

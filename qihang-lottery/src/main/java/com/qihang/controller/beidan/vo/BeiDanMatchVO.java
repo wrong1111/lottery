@@ -63,4 +63,7 @@ public class BeiDanMatchVO implements Serializable {
 
     @ApiModelProperty(value = "选择项")
     private Integer choiceCount;
+
+    @ApiModelProperty(value = "期号")
+    String issueNo;
 }

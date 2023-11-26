@@ -2,6 +2,7 @@ package com.qihang.controller.racingball.app;
 
 
 import com.alipay.api.AlipayApiException;
+import com.qihang.annotation.Log;
 import com.qihang.common.util.log.LogUtil;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;

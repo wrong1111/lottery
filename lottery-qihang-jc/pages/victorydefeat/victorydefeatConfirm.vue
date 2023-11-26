@@ -107,6 +107,7 @@
 				price: 0,
 				//默认50倍
 				times: 50,
+				issueNo:'',
 				calculationParam: {
 					winBurdenMatchList: [],
 					multiple: 0,
@@ -114,7 +115,8 @@
 					notes: "",
 					type: 7,
 					forecast: "",
-					schemeDetails: ""
+					schemeDetails: "",
+					issueNo:''
 				},
 				optimizationDate: {}
 			}
@@ -126,6 +128,7 @@
 			this.selectItem = obj.sort(function(a, b) {
 				return a.number - b.number
 			})
+			this.issueNo = option.issueNo
 			//初始化数据
 			this.init(this.selectItem);
 		},
@@ -207,6 +210,7 @@
 				this.calculationParam.forecast = this.maxPrice
 				this.optimizationDate.averageOptimizationList.map(item=>item.notes=this.times)
 				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.averageOptimizationList)
+				this.calculationParam.issueNo = this.issueNo
 				createOrder(this.calculationParam).then(res => {
 					if (res.success) {
 						//标识为已经下单了

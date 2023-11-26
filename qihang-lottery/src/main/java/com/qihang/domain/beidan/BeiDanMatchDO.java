@@ -129,4 +129,9 @@ public class BeiDanMatchDO implements Serializable {
      * 出奖赔率
      */
     private String bonusOdds;
+
+    /**
+     *
+     */
+    String issueNo;
 }
