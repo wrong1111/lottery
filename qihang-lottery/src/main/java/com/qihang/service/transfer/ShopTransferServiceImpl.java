@@ -93,14 +93,15 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
             shopTransferDO.setCreateTime(new Date());
             shopTransferDO.setUpdateTime(new Date());
             shopTransferDO.setUid(Long.valueOf(((Map<String, String>) returnBo.getData()).get("uid")));
-            if (StringUtils.isBlank(vo.getTransferInterface())) {
-                shopTransferDO.setTransferInterface(configDomain+"/"+shopTransferDO.getTransferKey());
-            }
+
             if (StringUtils.isBlank(vo.getTransferKey())) {
                 shopTransferDO.setTransferKey(RandomStringUtils.randomAlphanumeric(5));
             }
             if (StringUtils.isBlank(vo.getTransferSecurty())) {
                 shopTransferDO.setTransferSecurty(RandomStringUtils.randomAlphanumeric(32));
+            }
+            if (StringUtils.isBlank(vo.getTransferInterface())) {
+                shopTransferDO.setTransferInterface(configDomain + "/app/transfer/create");
             }
             shopTransferDO.setTransferType(TransferEnum.TransferIn.code);
             shopTransferMapper.insert(shopTransferDO);
@@ -147,6 +148,9 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
             return BaseDataVO.builder().data(Collections.EMPTY_LIST).build();
         } else {
             List<AdminPlatDTO> list = BeanUtil.copyToList(shopTransferDOList, AdminPlatDTO.class);
+            for (AdminPlatDTO adminPlatDTO : list) {
+                adminPlatDTO.setGateinfo(configDomain + "/app/transfer/info/" + adminPlatDTO.getTransferKey() + "/" + adminPlatDTO.getTransferSecurty());
+            }
             return BaseDataVO.builder().data(list).build();
         }
     }

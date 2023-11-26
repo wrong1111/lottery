@@ -4,7 +4,7 @@
       <el-form :model="form" ref="addShopForm"   size="medium" label-width="100px">
         <el-row :gutter="10">
           <el-col :span="12">
-            <el-form-item label="彩种" prop="lotteryType">
+            <el-form-item label="秘钥" prop="lotteryType">
                 <el-select v-model="form.lotteryType">
                   <el-option v-for="(item,index) in lots" :value="item.lotid" :label="item.name + (item.selected?'(已开通)':'') " :key="index"></el-option>
                 </el-select>

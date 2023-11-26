@@ -1,16 +1,27 @@
 package com.qihang.service.transfer;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.http.HttpReq;
 import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
+import com.qihang.common.vo.CommonListVO;
 import com.qihang.constant.TransferEnum;
 import com.qihang.controller.shop.app.vo.ShopVO;
+import com.qihang.controller.transferIn.admin.dto.LotteryAutoStateDTO;
+import com.qihang.controller.transferIn.admin.dto.LotteryOutDTO;
+import com.qihang.controller.transferIn.admin.vo.AdminShopTransferInVO;
+import com.qihang.controller.transferIn.admin.vo.ShopOutVO;
+import com.qihang.domain.ballgame.BallGameDO;
+import com.qihang.domain.log.LogDO;
 import com.qihang.domain.transfer.LotteryTransferDO;
 import com.qihang.domain.transfer.ShopTransferDO;
+import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
+import com.qihang.mapper.ballgame.BallGameMapper;
 import com.qihang.mapper.transfer.LotteryTransferMapper;
 import com.qihang.mapper.transfer.ShopTransferMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +29,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Author: wyong
@@ -40,6 +50,9 @@ public class ChangeServiceImpl implements IChangeService {
 
     @Resource
     IShopTransferService shopTransferService;
+
+    @Resource
+    BallGameMapper ballGameMapper;
 
     @TenantIgnore
     @Override
@@ -128,5 +141,72 @@ public class ChangeServiceImpl implements IChangeService {
             log.error(" url {} ,网络请求异常 {} ", url, e);
         }
         return base;
+    }
+
+
+    @TenantIgnore
+    @Override
+    public CommonListVO<AdminShopTransferInVO> list(LotteryOutDTO dto) {
+        QueryWrapper<LotteryTransferDO> queryWrapper = new QueryWrapper<LotteryTransferDO>();
+        if (ObjectUtil.isNotNull(dto.getLotteryId())) {
+            queryWrapper.lambda().eq(LotteryTransferDO::getLotteryType, dto.getLotteryId());
+        }
+        if (ObjectUtil.isNotNull(dto.getShopId())) {
+            queryWrapper.lambda().eq(LotteryTransferDO::getShopId, dto.getShopId());
+        }
+        if (ObjectUtil.isNotNull(dto.getState())) {
+            queryWrapper.lambda().eq(LotteryTransferDO::getStates, dto.getState());
+        }
+        queryWrapper.lambda().eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferOut.code);
+        //未开通的排最下面
+        queryWrapper.lambda().orderByAsc(LotteryTransferDO::getStates);
+        queryWrapper.lambda().orderByDesc(LotteryTransferDO::getId);
+        //分页
+        Page page = new Page<>(dto.getPageNo(), dto.getPageSize());
+
+        Page<LotteryTransferDO> lotteryTransferDOS = lotteryTransferMapper.selectPage(page, queryWrapper);
+        List<BallGameDO> ballGameDOS = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getTenantId, 1));
+        Map<Integer, BallGameDO> ballGameDOMap = ballGameDOS.stream().collect(Collectors.toMap(BallGameDO::getLotid, item -> item, (a, b) -> a));
+        CommonListVO<AdminShopTransferInVO> base = new CommonListVO<>();
+
+        List<ShopTransferDO> shopTransferDOList = shopTransferMapper.selectList(new QueryWrapper<ShopTransferDO>().lambda().eq(ShopTransferDO::getTransferType, TransferEnum.TransferOut.code));
+        Map<Integer, String> shopMap = shopTransferDOList.stream().collect(Collectors.toMap(ShopTransferDO::getId, ShopTransferDO::getShopName, (a, b) -> a));
+        if (ObjectUtil.isNotNull(lotteryTransferDOS.getRecords())) {
+            List<AdminShopTransferInVO> list = BeanUtil.copyToList(lotteryTransferDOS.getRecords(), AdminShopTransferInVO.class);
+            for (AdminShopTransferInVO adminShopTransferInVO : list) {
+                adminShopTransferInVO.setLotteryName(ballGameDOMap.get(adminShopTransferInVO.getLotteryType()).getName());
+                adminShopTransferInVO.setIcon(ballGameDOMap.get(adminShopTransferInVO.getLotteryType()).getUrl());
+                adminShopTransferInVO.setShopName(shopMap.get(adminShopTransferInVO.getShopId()));
+            }
+            base.setVoList(list);
+            base.setTotal(page.getTotal());
+            return base;
+        }
+        return base;
+    }
+
+    @Override
+    public CommonListVO<ShopOutVO> listShop() {
+        List<ShopTransferDO> shopTransferDOList = shopTransferMapper.selectList(new QueryWrapper<ShopTransferDO>().lambda().eq(ShopTransferDO::getTransferType, TransferEnum.TransferOut.code));
+        CommonListVO<ShopOutVO> commonListVO = new CommonListVO<>();
+        if (ObjectUtil.isNotNull(shopTransferDOList)) {
+            List<ShopOutVO> list = BeanUtil.copyToList(shopTransferDOList, ShopOutVO.class);
+            commonListVO.setVoList(list);
+            commonListVO.setTotal((long) shopTransferDOList.size());
+            return commonListVO;
+        }
+        return commonListVO;
+    }
+
+    @Override
+    public BaseVO editAutoState(LotteryAutoStateDTO autoStateDTO) {
+        LotteryTransferDO lotteryTransferDO = lotteryTransferMapper.selectById(autoStateDTO.getId());
+        if (ObjectUtil.isNotNull(lotteryTransferDO)) {
+            lotteryTransferDO.setTransferOutAuto(autoStateDTO.getStates());
+            lotteryTransferMapper.updateById(lotteryTransferDO);
+            return new BaseVO();
+        } else {
+            return new BaseVO();
+        }
     }
 }

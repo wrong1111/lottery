@@ -220,9 +220,13 @@ mro:
       - t_shop
       - t_sys_domain
       - t_omit
+      - t_order_transfer
+      - t_order_transfer_log
+      - t_shop_transfer
+      - t_lottery_transfer
 server:
   port: 48081
 
 config:
-  domain: http://139.199.175.124:48090/app/transfer/info
+  domain: http://139.199.175.124:48090
   runtime: prod

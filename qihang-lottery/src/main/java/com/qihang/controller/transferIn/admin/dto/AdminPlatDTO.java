@@ -43,7 +43,10 @@ public class AdminPlatDTO extends PageDTO {
     String interfaceState;
 
     Date createTime;
-    
+
     @ApiModelProperty(value = "转单  上游接口状态最后更新时间 ")
     Date updateTime;
+
+    @ApiModelProperty(value = "一键获取地址")
+    String gateinfo;
 }

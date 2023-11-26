@@ -15,6 +15,9 @@ public class AdminShopTransferInVO implements Serializable {
     @ApiModelProperty("shopId")
     Integer shopId;
 
+    @ApiModelProperty("店名")
+    String shopName;
+
     @ApiModelProperty("彩种ID")
     Integer lotteryType;
 
@@ -46,4 +49,11 @@ public class AdminShopTransferInVO implements Serializable {
 
     @ApiModelProperty(value = "收单  返点")
     BigDecimal commiss;
+
+    /**
+     * '1 手动转单' 0 默认，自动转单;
+     */
+    @ApiModelProperty(value = "转单 自动0 1 手动")
+    Integer transferOutAuto;
+
 }

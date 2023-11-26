@@ -11,17 +11,6 @@
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
-    <el-row :gutter="10" class="mb8" style="width: 50%;align-items: center;display: flex;flex-wrap: wrap;"  v-if="isOpen">
-      <el-col :span="1.5" class="shop">
-        店铺名: {{transfer.shopName}}
-      </el-col>
-      <el-col :span="1.5" class="shop">
-        联系方式: {{transfer.shopConcatPhone}}
-      </el-col>
-      <el-col :span="1.5" class="shop">
-        联系人: {{transfer.shopConcatName}}
-      </el-col>
-    </el-row>
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
@@ -31,7 +20,8 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="voList" border v-if="isOpen">
+    <el-table v-loading="loading" :data="voList" border >
+      <el-table-column label="店名" align="center" prop="shopName" />
       <el-table-column label="ID" align="center" prop="lotteryType" />
       <el-table-column label="彩种名称" align="center" prop="lotteryName" />
       <el-table-column label="LOGO" align="center">
@@ -39,12 +29,12 @@
           <el-image style="width: 60px; height: 60px" :src="scope.row.icon" fit="cover"></el-image>
         </template>
       </el-table-column>
-
-      <el-table-column label="开通收单" align="center">
+      <el-table-column label="转单形式" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.states == "0" ? "开通" : "停止" }}</span>
+          <span :style="{ color: scope.row.transferOutAuto=='0' ? 'red' : '' }">{{ scope.row.transferOutAuto == "0" ? "自动" : "手动" }}</span>
         </template>
       </el-table-column>
+
       <el-table-column label="截止前(秒)" align="center" prop="transferBeforeTime" />
       <el-table-column label="返点(%)" align="center" prop="commiss" />
       <el-table-column label="创建时间" align="center" width="200">
@@ -55,34 +45,29 @@
       <el-table-column label="操作" align="center">
         <template slot-scope="scope">
           <el-button size="mini" type="danger" plain @click="editStateRow(scope.row,0)"
-            v-if="scope.row.states==1">开通</el-button>
+            v-if="scope.row.transferOutAuto==1">自动</el-button>
           <el-button size="mini" type="primary" plain @click="editStateRow(scope.row,1)"
-            v-if="scope.row.states==0">停止</el-button>
-          <el-button size="mini" type="success" plain @click="editTransfer(scope.row)">修改</el-button>
+            v-if="scope.row.transferOutAuto==0">手动</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-table v-else>
-      <el-table-column> 暂未开通</el-table-column>
-    </el-table>
-    <!-- <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
-      @pagination="getList" /> -->
 
-    <AddOutTransfer title="获取上游收单设置" :visible.sync="dialogAddVisible" @confirm="addShopReq"  :form="form">
-    </AddOutTransfer>
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
+      @pagination="getList" />
+    <!--
+    <AddOutTransfer title="转单设置" :visible.sync="dialogAddVisible" @confirm="addShopReq"  :form="form">
+    </AddOutTransfer> -->
 
   </div>
 </template>
 
 <script>
   import {
-    shopTransferList,
-    editShopTransfer,
-    addLotteryTransfer,
-    editState,
-    editCommiss,
-    noOpenLottery
-  } from "@/api/transfer/in";
+    getRemoteLotteryInfo,
+    getShopall,
+    getChangeList,
+    editAutoState
+  } from "@/api/transfer/out";
   import {
     deepClone
   } from "@/utils";
@@ -90,24 +75,16 @@
     Message,
     MessageBox
   } from "element-ui";
-  import AddOutTransfer from "./components/AddOutTransfer.vue";
+  // import AddOutTransfer from "./components/AddOutTransfer.vue";
 
   export default {
     name: "transfeout",
     components: {
-      AddOutTransfer,
+
     },
     props: {},
     data() {
       return {
-        form: {
-          lotteryType: '',
-          commiss: 5,
-          state: 0,
-          //目前只用于平台一家，写死
-          shopId: 1,
-          beforeTime: 600,
-        },
         states: [{
           'value': '',
           'label': '所有'
@@ -122,11 +99,8 @@
         showSearch: true,
         // 总条数
         total: 0,
-        isOpen: false, //未设置
         // 彩种列表
         voList: [],
-        lots: [],
-        transfer: undefined, //设置信息
         // 遮罩层
         loading: true,
         // 用户查询
@@ -134,6 +108,8 @@
           pageNo: 1,
           pageSize: 10,
           state: undefined,
+          lotteryId: undefined,
+          shopId: undefined
         },
         // 添加用户弹窗
         dialogAddVisible: false,
@@ -146,28 +122,14 @@
     created() {},
     mounted() {
       this.getList()
-      this.loadLotid()
     },
     methods: {
-      loadLotid() {
-        noOpenLottery().then((res) => {
-          this.lots = res.voList
-        })
-      },
       //修改
       editTransfer(row) {
-        this.form = {
-            lotteryType: row.lotteryType,
-            commiss: row.commiss,
-            state: row.states,
-            //目前只用于平台一家，写死
-            shopId: 1,
-            beforeTime: row.transferBeforeTime,
-          },
-          this.dialogAddVisible = true;
+
       },
       editStateRow(row, state) {
-        editState({
+        editAutoState({
           id: row.id,
           states: state
         }).then((res) => {
@@ -177,12 +139,10 @@
       // 获取用户列表
       getList() {
         this.loading = true;
-        shopTransferList().then((response) => {
+        getChangeList(this.queryParams).then((response) => {
           this.loading = false;
-          this.isOpen = response.data.transfer == 1 ? true : false
-          if (this.isOpen) {
-            this.voList = response.data.lotterys
-            this.transfer = response.data.shop
+          if (response.success) {
+            this.voList = response.voList
           }
 
         });
@@ -200,7 +160,32 @@
       // ---------------- 用户相关操作 -----------------------
       // 新增用户
       addNewShop() {
-        this.dialogAddVisible = true;
+        //this.dialogAddVisible = true;
+        this.$prompt('请输入地址', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+        }).then(({
+          value
+        }) => {
+          getRemoteLotteryInfo({
+            url: value
+          }).then((res) => {
+            if(res.success){
+              this.$message({
+                type: 'success',
+                message: '一键获取成功'
+              });
+               this.getList()
+            }
+           
+          })
+
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '取消输入'
+          });
+        });
       },
 
       // 发送新增 收单彩种请求
@@ -208,7 +193,6 @@
         addLotteryTransfer(data).then((response) => {
           if (!response.errorCode) {
             this.getList()
-            this.loadLotid()
           }
         });
       },
@@ -220,5 +204,10 @@
 <style scoped lang="scss">
   .shop {
     width: 30%
+  }
+
+  .red {
+    color: red;
+    background-color: #c00000;
   }
 </style>

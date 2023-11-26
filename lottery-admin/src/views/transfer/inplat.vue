@@ -18,7 +18,11 @@
       </el-table-column>
       <el-table-column label="下游联系人" align="center" prop="shopConcatName" />
       <el-table-column label="下游联系方式" align="center" prop="shopConcatPhone" />
-      <el-table-column label="接口账号" align="center" prop="transferKey" />
+      <el-table-column label="一键获取" align="center" prop="gateinfo">
+      </el-table-column>
+      <el-table-column label="接口账号" align="center" prop="transferKey">
+      </el-table-column>
+
       <el-table-column label="接口秘钥" align="center" prop="transferSecurty">
         <template slot-scope="scope">
           <span> {{scope.row.transferSecurty}}</span>
@@ -82,6 +86,7 @@
           transferKey: '',
           transferSecurty: '',
           interfaceState: 0
+
         },
         // 总条数
         total: 0,
@@ -146,7 +151,7 @@
       getList() {
         this.loading = true;
         platlist().then((response) => {
-          this.loading = false;
+          this.loading = false
           this.voList = response.data
         });
       },

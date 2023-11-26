@@ -222,7 +222,10 @@ mro:
       - t_shop
       - t_sys_domain
       - t_omit
-
+      - t_order_transfer
+      - t_order_transfer_log
+      - t_shop_transfer
+      - t_lottery_transfer
 config:
-  domain: http://localhost:48080/app/transfer/info
+  domain: http://localhost:48080
   runtime: dev
