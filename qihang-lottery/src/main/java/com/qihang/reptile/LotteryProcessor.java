@@ -83,15 +83,7 @@ public class LotteryProcessor implements PageProcessor {
             }
             log.info(" 足彩比赛 >>>> {} ，result:{}", page.getUrl().toString(), JSON.toJSONString(footballMatchList));
             page.putField("footballGoalList", footballMatchList);
-        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL2)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL16)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL17)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL20)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_FC3D)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_QLC)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_SSQ)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_KL8)
-        ) {
+        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL2) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL16) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL17) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL20) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_FC3D) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_QLC) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_SSQ) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_KL8)) {
             log.info(page.getUrl() + " >> {}", html);
             //排列 开奖结果爬取
             PermutationAwardDO permutationAward = new PermutationAwardDO();
@@ -103,13 +95,7 @@ public class LotteryProcessor implements PageProcessor {
                 permutationAward.setType(LotteryOrderTypeEnum.ARRANGE.getKey());
             } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL17)) {
                 permutationAward.setType(LotteryOrderTypeEnum.SEVEN_STAR.getKey());
-                String r = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[6]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[7]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[8]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[9]/td[3]/text()").toString().trim().replaceAll(",", "");
+                String r = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[6]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[7]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[8]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[9]/td[3]/text()").toString().trim().replaceAll(",", "");
                 permutationAward.setMoneyAward(r);
             } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL20)) {
                 permutationAward.setType(LotteryOrderTypeEnum.GRAND_LOTTO.getKey());
@@ -121,13 +107,7 @@ public class LotteryProcessor implements PageProcessor {
                 permutationAward.setType(LotteryOrderTypeEnum.FCQLC.getKey());
                 //开奖号码
                 rewardList = page.getHtml().css(".ball_box01 li", "text").all();
-                String r = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[6]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[7]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[8]/td[3]/text()").toString().trim().replaceAll(",", "")
-                        + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[9]/td[3]/text()").toString().trim().replaceAll(",", "");
+                String r = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[6]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[7]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[8]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[9]/td[3]/text()").toString().trim().replaceAll(",", "");
                 permutationAward.setMoneyAward(r);
             } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_SSQ)) {
                 permutationAward.setType(LotteryOrderTypeEnum.FCSSQ.getKey());
@@ -477,9 +457,14 @@ public class LotteryProcessor implements PageProcessor {
             //胜负彩比赛
             List<WinBurdenMatchDO> winBurdenMatchList = new ArrayList<>();
             String deadlineTime = html.css(".zcfilter-l .zcfilter-endtime", "text").toString();
-            if(StringUtils.isBlank(deadlineTime)){
-                deadlineTime = html.css(".zcfilter-l span", "text").toString().replaceAll("官方售彩已截止","").trim();
+            if (StringUtils.isBlank(deadlineTime)) {
+                deadlineTime = html.css(".zcfilter-l span", "text").toString();
             }
+            if(StringUtils.isBlank(deadlineTime)){
+                page.putField("winBurdenMatchList", winBurdenMatchList);
+                return;
+            }
+            deadlineTime = deadlineTime.replaceAll("官方售彩已截止", "").trim();
             deadlineTime = deadlineTime.substring(deadlineTime.indexOf("：") + 1);
             deadlineTime = DateUtil.year(DateUtil.date()) + "-" + deadlineTime + ":00";
             String issueNo = html.xpath("/html/body/div[6]/div/div[2]/div[1]/div/ul/li[1]/@data-expect").toString();
@@ -503,10 +488,18 @@ public class LotteryProcessor implements PageProcessor {
             log.info(" 胜负彩比赛 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(winBurdenMatchList));
             page.putField("winBurdenMatchList", winBurdenMatchList);
         } else if (page.getUrl().toString().startsWith(CrawlingAddressConstant.URL18_01)) {
-            String issueNo  = page.getUrl().toString().split("=")[1];
+            String issueNo = page.getUrl().toString().split("=")[1];
             //胜负彩比赛 下一期
             List<WinBurdenMatchDO> winBurdenMatchList = new ArrayList<>();
-            String deadlineTime = html.css(".zcfilter-l .zcfilter-endtime", "text").toString();
+            String deadlineTime = html.css(".zcfilter-endtime", "text").toString();
+            if (StringUtils.isBlank(deadlineTime)) {
+                deadlineTime = html.css(".zcfilter-l span", "text").toString();
+            }
+            if (StringUtils.isBlank(deadlineTime)) {
+                page.putField("winBurdenMatchList", winBurdenMatchList);
+                return;
+            }
+            deadlineTime = deadlineTime.replaceAll("官方售彩已截止", "").trim();
             deadlineTime = deadlineTime.substring(deadlineTime.indexOf("：") + 1);
             deadlineTime = DateUtil.year(DateUtil.date()) + "-" + deadlineTime + ":00";
             //String issueNo = html.xpath("/html/body/div[6]/div/div[2]/div[1]/div/ul/li[1]/@data-expect").toString();
@@ -549,18 +542,12 @@ public class LotteryProcessor implements PageProcessor {
                 } else {
                     winBurdenMatch.setAward("-");
                 }
-                winBurdenMatch.setMoneyAward(
-                        html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().replaceAll(",", "") + ","
-                                + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().replaceAll(",", "") + ","
-                                + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().replaceAll(",", ""));
+                winBurdenMatch.setMoneyAward(html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().replaceAll(",", ""));
                 winBurdenMatchList.add(winBurdenMatch);
             }
             log.info(" 胜负彩开奖 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(winBurdenMatchList));
             page.putField("winBurdenMatchList", winBurdenMatchList);
-        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL21)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL22)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL23)
-                || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL24)) {
+        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL21) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL22) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL23) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL24)) {
             List<OmitDO> omitList = new ArrayList<>();
             OmitDO omit = new OmitDO();
             List<String> list = new ArrayList<>();

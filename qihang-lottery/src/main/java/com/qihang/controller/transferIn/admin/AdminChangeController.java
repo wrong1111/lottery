@@ -2,13 +2,15 @@ package com.qihang.controller.transferIn.admin;
 
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
-import com.qihang.constant.TransferEnum;
 import com.qihang.controller.transferIn.admin.dto.ChangeDTO;
 import com.qihang.controller.transferIn.admin.dto.LotteryAutoStateDTO;
 import com.qihang.controller.transferIn.admin.dto.LotteryOutDTO;
 import com.qihang.service.transfer.IChangeService;
-import com.qihang.service.transfer.IShopTransferService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;

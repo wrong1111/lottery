@@ -61,8 +61,7 @@ public class SpiderRunner {
         if (null == issueNoVO) {
             return;
         }
-        Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
-                        CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 2) //胜负彩比赛
+        Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 2) //胜负彩比赛
                         , CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 3) //胜负彩比赛
                         , CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 4) //胜负彩比赛
                 ).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover()))
@@ -110,8 +109,7 @@ public class SpiderRunner {
 //                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
 //                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
 
-        Spider.create(new LotteryProcessor()).addUrl(
-                CrawlingAddressConstant.URL21 //数字彩 遗漏排列3
+        Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL21 //数字彩 遗漏排列3
                 , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
                 , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
                 , CrawlingAddressConstant.URL24 //数字彩 遗漏大乐透
@@ -122,8 +120,7 @@ public class SpiderRunner {
      双色球，快乐8，福彩3D，七乐彩,排列3,排列5，七星彩， 开奖
      */
     public void runDay() {
-        Spider.create(new LotteryProcessor()).addUrl(
-                CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
+        Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
                 , CrawlingAddressConstant.URL_SSQ // 双色球 开奖
                 , CrawlingAddressConstant.URL_KL8 // 快乐8 开奖
                 , CrawlingAddressConstant.URL_QLC // 七乐彩 开奖
@@ -137,8 +134,7 @@ public class SpiderRunner {
 
     public void runpre() {
         String preday = DateUtil.format(DateUtils.addDays(new Date(), -1), "yyyy-MM-dd");
-        Spider.create(new LotteryProcessor()).addUrl(
-                CrawlingAddressConstant.URL6 + "?d=" + preday //足球开奖
+        Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL6 + "?d=" + preday //足球开奖
                 , CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
                 , CrawlingAddressConstant.URL13 + "?d=" + preday //北单开奖
                 , CrawlingAddressConstant.URL14 + "&date=" + preday //篮球大小分查询
@@ -150,8 +146,7 @@ public class SpiderRunner {
      比赛 赛果
      */
     public void run() {
-        Spider.create(new LotteryProcessor()).addUrl(
-                CrawlingAddressConstant.URL6 //足球开奖
+        Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL6 //足球开奖
                 , CrawlingAddressConstant.URL7 //篮球开奖
                 , CrawlingAddressConstant.URL19 //胜负彩开奖
                 , CrawlingAddressConstant.URL13 //北单开奖

@@ -12,7 +12,6 @@ import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.omit.OmitDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
-import com.qihang.domain.permutation.PermutationDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
 import com.qihang.enumeration.ball.BettingStateEnum;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
@@ -28,7 +27,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import us.codecraft.webmagic.ResultItems;
@@ -80,11 +78,7 @@ public class LotteryPipeline implements Pipeline {
             //存储爬取到的足球的比赛数据
             List<FootballMatchDO> footballMatchList = resultItems.get("footballGoalList");
             for (FootballMatchDO footballMatchDO : footballMatchList) {
-                FootballMatchDO footballMatch = footballMatchService.getOne(new QueryWrapper<FootballMatchDO>().lambda()
-                        .eq(FootballMatchDO::getNumber, footballMatchDO.getNumber())
-                        .eq(FootballMatchDO::getMatch, footballMatchDO.getMatch())
-                        .eq(FootballMatchDO::getStartTime, footballMatchDO.getStartTime())
-                        .eq(FootballMatchDO::getOpenTime, footballMatchDO.getOpenTime()));
+                FootballMatchDO footballMatch = footballMatchService.getOne(new QueryWrapper<FootballMatchDO>().lambda().eq(FootballMatchDO::getNumber, footballMatchDO.getNumber()).eq(FootballMatchDO::getMatch, footballMatchDO.getMatch()).eq(FootballMatchDO::getStartTime, footballMatchDO.getStartTime()).eq(FootballMatchDO::getOpenTime, footballMatchDO.getOpenTime()));
                 if (ObjectUtil.isNotNull(footballMatch)) {
                     footballMatchDO.setId(footballMatch.getId());
                     footballMatchDO.setUpdateTime(new Date());
@@ -92,15 +86,7 @@ public class LotteryPipeline implements Pipeline {
             }
             log.info(" 足球赛事 ： {} 场 ", footballMatchList.size());
             footballMatchService.saveOrUpdateBatch(footballMatchList);
-        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL2)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL16)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL17)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL20)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL_FC3D)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL_KL8)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL_SSQ)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL_QLC)
-        ) {
+        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL2) || ObjectUtil.equal(url, CrawlingAddressConstant.URL16) || ObjectUtil.equal(url, CrawlingAddressConstant.URL17) || ObjectUtil.equal(url, CrawlingAddressConstant.URL20) || ObjectUtil.equal(url, CrawlingAddressConstant.URL_FC3D) || ObjectUtil.equal(url, CrawlingAddressConstant.URL_KL8) || ObjectUtil.equal(url, CrawlingAddressConstant.URL_SSQ) || ObjectUtil.equal(url, CrawlingAddressConstant.URL_QLC)) {
             //存储爬取到的排列开奖结果
             PermutationAwardDO permutationAward = resultItems.get("permutation");
             log.info(" 排列开奖 ： {} 场 ", permutationAward);
@@ -135,9 +121,7 @@ public class LotteryPipeline implements Pipeline {
             List<FootballMatchDO> footballMatchList = resultItems.get("footballGoalList");
             log.info(" 足彩对局分析 ： {} 场 ", footballMatchList.size());
             for (FootballMatchDO footballMatchDO : footballMatchList) {
-                FootballMatchDO footballMatch = footballMatchService.getOne(new QueryWrapper<FootballMatchDO>().lambda()
-                        .eq(FootballMatchDO::getNumber, footballMatchDO.getNumber())
-                        .eq(FootballMatchDO::getState, BettingStateEnum.YES.getKey()));
+                FootballMatchDO footballMatch = footballMatchService.getOne(new QueryWrapper<FootballMatchDO>().lambda().eq(FootballMatchDO::getNumber, footballMatchDO.getNumber()).eq(FootballMatchDO::getState, BettingStateEnum.YES.getKey()));
                 if (ObjectUtil.isNotNull(footballMatch) && StrUtil.isBlank(footballMatch.getAnalysis())) {
                     footballMatch.setAnalysis(footballMatchDO.getAnalysis());
                     footballMatch.setUpdateTime(new Date());
@@ -148,11 +132,7 @@ public class LotteryPipeline implements Pipeline {
             //存储爬取到的篮球的比赛数据
             List<BasketballMatchDO> basketballMatchList = resultItems.get("basketballMatchList");
             for (BasketballMatchDO basketballMatchDO : basketballMatchList) {
-                BasketballMatchDO basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda()
-                        .eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber())
-                        .eq(BasketballMatchDO::getMatch, basketballMatchDO.getMatch())
-                        .eq(BasketballMatchDO::getStartTime, basketballMatchDO.getStartTime())
-                        .eq(BasketballMatchDO::getOpenTime, basketballMatchDO.getOpenTime()));
+                BasketballMatchDO basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda().eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber()).eq(BasketballMatchDO::getMatch, basketballMatchDO.getMatch()).eq(BasketballMatchDO::getStartTime, basketballMatchDO.getStartTime()).eq(BasketballMatchDO::getOpenTime, basketballMatchDO.getOpenTime()));
                 if (ObjectUtil.isNotNull(basketballMatch)) {
                     basketballMatchDO.setId(basketballMatch.getId());
                     basketballMatchDO.setUpdateTime(new Date());
@@ -163,9 +143,7 @@ public class LotteryPipeline implements Pipeline {
         } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL5)) {
             List<BasketballMatchDO> basketballMatchList = resultItems.get("basketballMatchList");
             for (BasketballMatchDO basketballMatchDO : basketballMatchList) {
-                BasketballMatchDO basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda()
-                        .eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber())
-                        .eq(BasketballMatchDO::getState, BettingStateEnum.YES.getKey()));
+                BasketballMatchDO basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda().eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber()).eq(BasketballMatchDO::getState, BettingStateEnum.YES.getKey()));
                 if (ObjectUtil.isNotNull(basketballMatch) && StrUtil.isBlank(basketballMatch.getAnalysis())) {
                     basketballMatch.setAnalysis(basketballMatchDO.getAnalysis());
                     basketballMatch.setUpdateTime(new Date());
@@ -177,9 +155,7 @@ public class LotteryPipeline implements Pipeline {
             //足球开奖
             List<FootballMatchDO> footballMatchList = resultItems.get("footballGoalList");
             for (FootballMatchDO footballMatchDO : footballMatchList) {
-                FootballMatchDO footballMatch = footballMatchService.getOne(new QueryWrapper<FootballMatchDO>().lambda()
-                        .eq(FootballMatchDO::getNumber, footballMatchDO.getNumber())
-                        .eq(FootballMatchDO::getOpenTime, footballMatchDO.getOpenTime()));
+                FootballMatchDO footballMatch = footballMatchService.getOne(new QueryWrapper<FootballMatchDO>().lambda().eq(FootballMatchDO::getNumber, footballMatchDO.getNumber()).eq(FootballMatchDO::getOpenTime, footballMatchDO.getOpenTime()));
                 if (ObjectUtil.isNotNull(footballMatch)) {
                     footballMatch.setAward(footballMatchDO.getAward());
                     footballMatch.setHalfFullCourt(footballMatchDO.getHalfFullCourt());
@@ -193,28 +169,17 @@ public class LotteryPipeline implements Pipeline {
             List<BasketballMatchDO> basketballMatchList = resultItems.get("basketballMatchList");
             log.info(" 篮球开奖 ： {} 场 ", basketballMatchList.size());
             for (BasketballMatchDO basketballMatchDO : basketballMatchList) {
-                BasketballMatchDO basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda()
-                        .eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber())
-                        .like(BasketballMatchDO::getHomeTeam, basketballMatchDO.getHomeTeam())
-                        .like(BasketballMatchDO::getVisitingTeam, basketballMatchDO.getVisitingTeam()));
+                BasketballMatchDO basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda().eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber()).like(BasketballMatchDO::getHomeTeam, basketballMatchDO.getHomeTeam()).like(BasketballMatchDO::getVisitingTeam, basketballMatchDO.getVisitingTeam()));
                 //第二次判断
                 if (ObjectUtil.isNull(basketballMatch)) {
-                    basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda()
-                            .eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber())
-                            .eq(BasketballMatchDO::getOpenTime, basketballMatchDO.getOpenTime()));
+                    basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda().eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber()).eq(BasketballMatchDO::getOpenTime, basketballMatchDO.getOpenTime()));
                 }
                 //第三次判断
                 if (ObjectUtil.isNull(basketballMatch)) {
                     Date start = DateUtil.parse(DateUtil.today() + " 00:00:00");
                     Date end = DateUtil.parse(DateUtil.today() + " 23:59:59");
                     start = DateUtil.offsetDay(start, -3);
-                    basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda()
-                            .eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber())
-                            .ge(BasketballMatchDO::getCreateTime, start)
-                            .le(BasketballMatchDO::getCreateTime, end)
-                            .like(BasketballMatchDO::getHomeTeam, basketballMatchDO.getHomeTeam()).or()
-                            .like(BasketballMatchDO::getVisitingTeam, basketballMatchDO.getVisitingTeam())
-                    );
+                    basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda().eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber()).ge(BasketballMatchDO::getCreateTime, start).le(BasketballMatchDO::getCreateTime, end).like(BasketballMatchDO::getHomeTeam, basketballMatchDO.getHomeTeam()).or().like(BasketballMatchDO::getVisitingTeam, basketballMatchDO.getVisitingTeam()));
                 }
                 if (ObjectUtil.isNotNull(basketballMatch)) {
                     basketballMatch.setAward(basketballMatchDO.getAward());
@@ -266,11 +231,7 @@ public class LotteryPipeline implements Pipeline {
             //北单数据
             List<BeiDanMatchDO> beiDanMatchList = resultItems.get("beiDanMatchList");
             for (BeiDanMatchDO beiDanMatchDO : beiDanMatchList) {
-                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda()
-                        .eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber())
-                        .eq(BeiDanMatchDO::getMatch, beiDanMatchDO.getMatch())
-                        .like(BeiDanMatchDO::getHomeTeam, beiDanMatchDO.getHomeTeam())
-                        .like(BeiDanMatchDO::getVisitingTeam, beiDanMatchDO.getVisitingTeam()));
+                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber()).eq(BeiDanMatchDO::getMatch, beiDanMatchDO.getMatch()).like(BeiDanMatchDO::getHomeTeam, beiDanMatchDO.getHomeTeam()).like(BeiDanMatchDO::getVisitingTeam, beiDanMatchDO.getVisitingTeam()));
                 if (ObjectUtil.isNotNull(beiDanMatch)) {
                     beiDanMatchDO.setId(beiDanMatch.getId());
                     beiDanMatchDO.setUpdateTime(new Date());
@@ -278,18 +239,11 @@ public class LotteryPipeline implements Pipeline {
             }
             log.info(" 北单数据 ： {} 场 ", beiDanMatchList.size());
             beiDanMatchService.saveOrUpdateBatch(beiDanMatchList);
-        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL9)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL10)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL11)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL12)) {
+        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL9) || ObjectUtil.equal(url, CrawlingAddressConstant.URL10) || ObjectUtil.equal(url, CrawlingAddressConstant.URL11) || ObjectUtil.equal(url, CrawlingAddressConstant.URL12)) {
             //北单数据
             List<BeiDanMatchDO> beiDanMatchList = resultItems.get("beiDanMatchList");
             for (BeiDanMatchDO beiDanMatchDO : beiDanMatchList) {
-                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda()
-                        .eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber())
-                        .eq(BeiDanMatchDO::getMatch, beiDanMatchDO.getMatch())
-                        .like(BeiDanMatchDO::getHomeTeam, beiDanMatchDO.getHomeTeam())
-                        .like(BeiDanMatchDO::getVisitingTeam, beiDanMatchDO.getVisitingTeam()));
+                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber()).eq(BeiDanMatchDO::getMatch, beiDanMatchDO.getMatch()).like(BeiDanMatchDO::getHomeTeam, beiDanMatchDO.getHomeTeam()).like(BeiDanMatchDO::getVisitingTeam, beiDanMatchDO.getVisitingTeam()));
                 if (ObjectUtil.isNotNull(beiDanMatch)) {
                     beiDanMatchDO.setId(beiDanMatch.getId());
                     beiDanMatchDO.setUpdateTime(new Date());
@@ -303,11 +257,7 @@ public class LotteryPipeline implements Pipeline {
             //北单开奖
             List<BeiDanMatchDO> beiDanMatchList = resultItems.get("beiDanMatchList");
             for (BeiDanMatchDO beiDanMatchDO : beiDanMatchList) {
-                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda()
-                        .eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber())
-                        .eq(BeiDanMatchDO::getMatch, beiDanMatchDO.getMatch())
-                        .like(BeiDanMatchDO::getHomeTeam, beiDanMatchDO.getHomeTeam())
-                        .like(BeiDanMatchDO::getVisitingTeam, beiDanMatchDO.getVisitingTeam()));
+                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber()).eq(BeiDanMatchDO::getMatch, beiDanMatchDO.getMatch()).like(BeiDanMatchDO::getHomeTeam, beiDanMatchDO.getHomeTeam()).like(BeiDanMatchDO::getVisitingTeam, beiDanMatchDO.getVisitingTeam()));
 
                 if (ObjectUtil.isNotNull(beiDanMatch)) {
                     if (StrUtil.isBlank(beiDanMatch.getBonusOdds()) && StrUtil.isBlank(beiDanMatch.getAward()) && StrUtil.isBlank(beiDanMatch.getHalfFullCourt()) || beiDanMatch.getBonusOdds().indexOf("-") != -1) {
@@ -324,13 +274,7 @@ public class LotteryPipeline implements Pipeline {
             //存储爬取到的篮球的比赛数据
             List<BasketballMatchDO> basketballMatchList = resultItems.get("basketballMatchList");
             for (BasketballMatchDO basketballMatchDO : basketballMatchList) {
-                BasketballMatchDO basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda()
-                        .eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber())
-                        .eq(BasketballMatchDO::getMatch, basketballMatchDO.getMatch())
-                        .eq(BasketballMatchDO::getStartTime, basketballMatchDO.getStartTime())
-                        .eq(BasketballMatchDO::getOpenTime, basketballMatchDO.getOpenTime())
-                        .like(BasketballMatchDO::getHomeTeam, basketballMatchDO.getHomeTeam())
-                        .like(BasketballMatchDO::getVisitingTeam, basketballMatchDO.getVisitingTeam()));
+                BasketballMatchDO basketballMatch = basketballMatchService.getOne(new QueryWrapper<BasketballMatchDO>().lambda().eq(BasketballMatchDO::getNumber, basketballMatchDO.getNumber()).eq(BasketballMatchDO::getMatch, basketballMatchDO.getMatch()).eq(BasketballMatchDO::getStartTime, basketballMatchDO.getStartTime()).eq(BasketballMatchDO::getOpenTime, basketballMatchDO.getOpenTime()).like(BasketballMatchDO::getHomeTeam, basketballMatchDO.getHomeTeam()).like(BasketballMatchDO::getVisitingTeam, basketballMatchDO.getVisitingTeam()));
                 if (ObjectUtil.isNotNull(basketballMatch)) {
                     basketballMatch.setIsSingle("1");
                     basketballMatchService.updateById(basketballMatch);
@@ -339,9 +283,7 @@ public class LotteryPipeline implements Pipeline {
         } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL15)) {
             List<BeiDanMatchDO> beiDanMatchList = resultItems.get("beiDanMatchList");
             for (BeiDanMatchDO beiDanMatchDO : beiDanMatchList) {
-                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda()
-                        .eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber())
-                        .eq(BeiDanMatchDO::getState, BettingStateEnum.YES.getKey()));
+                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber()).eq(BeiDanMatchDO::getState, BettingStateEnum.YES.getKey()));
                 if (ObjectUtil.isNotNull(beiDanMatch) && StrUtil.isBlank(beiDanMatch.getAnalysis())) {
                     beiDanMatch.setAnalysis(beiDanMatchDO.getAnalysis());
                     beiDanMatch.setUpdateTime(new Date());
@@ -351,23 +293,14 @@ public class LotteryPipeline implements Pipeline {
         } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL18) || url.startsWith(CrawlingAddressConstant.URL18_01)) {
             List<WinBurdenMatchDO> winBurdenMatchList = resultItems.get("winBurdenMatchList");
             for (WinBurdenMatchDO winBurdenMatchDO : winBurdenMatchList) {
-                WinBurdenMatchDO winBurdenMatch = winBurdenMatchService.getOne(new QueryWrapper<WinBurdenMatchDO>().lambda()
-                        .eq(WinBurdenMatchDO::getNumber, winBurdenMatchDO.getNumber())
-                        .eq(WinBurdenMatchDO::getMatch, winBurdenMatchDO.getMatch())
-                        .eq(WinBurdenMatchDO::getOpenTime, winBurdenMatchDO.getOpenTime())
-                        .like(WinBurdenMatchDO::getHomeTeam, winBurdenMatchDO.getHomeTeam().substring(winBurdenMatchDO.getHomeTeam().indexOf("]") + 1))
-                        .like(WinBurdenMatchDO::getVisitingTeam, winBurdenMatchDO.getVisitingTeam().substring(winBurdenMatchDO.getVisitingTeam().indexOf("]") + 1)));
+                WinBurdenMatchDO winBurdenMatch = winBurdenMatchService.getOne(new QueryWrapper<WinBurdenMatchDO>().lambda().eq(WinBurdenMatchDO::getNumber, winBurdenMatchDO.getNumber()).eq(WinBurdenMatchDO::getMatch, winBurdenMatchDO.getMatch()).eq(WinBurdenMatchDO::getOpenTime, winBurdenMatchDO.getOpenTime()).like(WinBurdenMatchDO::getHomeTeam, winBurdenMatchDO.getHomeTeam().substring(winBurdenMatchDO.getHomeTeam().indexOf("]") + 1)).like(WinBurdenMatchDO::getVisitingTeam, winBurdenMatchDO.getVisitingTeam().substring(winBurdenMatchDO.getVisitingTeam().indexOf("]") + 1)));
                 if (ObjectUtil.isNull(winBurdenMatch)) {
                     winBurdenMatchService.save(winBurdenMatchDO);
                 } else {
                     //如果不为空就判断当前的分析链接是否有
                     if (StrUtil.isBlank(winBurdenMatch.getAnalysis())) {
                         //如果没有就到北单那里去查询在写入 到数据库
-                        BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda()
-                                .eq(BeiDanMatchDO::getState, BettingStateEnum.YES.getKey())
-                                .like(BeiDanMatchDO::getHomeTeam, winBurdenMatchDO.getHomeTeam().substring(winBurdenMatchDO.getHomeTeam().indexOf("]") + 1))
-                                .like(BeiDanMatchDO::getVisitingTeam, winBurdenMatchDO.getVisitingTeam().substring(winBurdenMatchDO.getVisitingTeam().indexOf("]") + 1))
-                                .eq(BeiDanMatchDO::getMatch, winBurdenMatchDO.getMatch()));
+                        BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getState, BettingStateEnum.YES.getKey()).like(BeiDanMatchDO::getHomeTeam, winBurdenMatchDO.getHomeTeam().substring(winBurdenMatchDO.getHomeTeam().indexOf("]") + 1)).like(BeiDanMatchDO::getVisitingTeam, winBurdenMatchDO.getVisitingTeam().substring(winBurdenMatchDO.getVisitingTeam().indexOf("]") + 1)).eq(BeiDanMatchDO::getMatch, winBurdenMatchDO.getMatch()));
                         if (ObjectUtil.isNotNull(beiDanMatch)) {
                             //写入数据库
                             winBurdenMatch.setAnalysis(beiDanMatch.getAnalysis());
@@ -378,11 +311,12 @@ public class LotteryPipeline implements Pipeline {
             }
         } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL19)) {
             List<WinBurdenMatchDO> winBurdenMatchList = resultItems.get("winBurdenMatchList");
+            if (CollectionUtils.isEmpty(winBurdenMatchList)) {
+                return;
+            }
             for (WinBurdenMatchDO winBurdenMatchDO : winBurdenMatchList) {
-                WinBurdenMatchDO winBurdenMatch = winBurdenMatchService.getOne(new QueryWrapper<WinBurdenMatchDO>().lambda()
-                        .eq(WinBurdenMatchDO::getIssueNo, winBurdenMatchDO.getIssueNo())
-                        .like(WinBurdenMatchDO::getHomeTeam, winBurdenMatchDO.getHomeTeam()));
-                if (winBurdenMatch!=null && (StrUtil.isBlank(winBurdenMatch.getAward()) || StringUtils.isBlank(winBurdenMatch.getMoneyAward()) || winBurdenMatchDO.getMoneyAward().indexOf("--") != -1)) {
+                WinBurdenMatchDO winBurdenMatch = winBurdenMatchService.getOne(new QueryWrapper<WinBurdenMatchDO>().lambda().eq(WinBurdenMatchDO::getIssueNo, winBurdenMatchDO.getIssueNo()).like(WinBurdenMatchDO::getHomeTeam, winBurdenMatchDO.getHomeTeam()));
+                if (winBurdenMatch != null && (StrUtil.isBlank(winBurdenMatch.getAward()) || StringUtils.isBlank(winBurdenMatch.getMoneyAward()) || winBurdenMatchDO.getMoneyAward().indexOf("--") != -1)) {
                     winBurdenMatch.setUpdateTime(new Date());
                     winBurdenMatch.setAward(winBurdenMatchDO.getAward());
                     winBurdenMatch.setMoneyAward(winBurdenMatchDO.getMoneyAward());
@@ -390,9 +324,7 @@ public class LotteryPipeline implements Pipeline {
                 }
             }
             //存储爬取到的开奖结果
-            List<String> lastList = winBurdenMatchList.stream()
-                    .map(item -> "胜".equals(item.getAward()) ? "3" : ("平".equals(item.getAward()) ? "1" : ("负".equals(item.getAward()) ? "0" : "-")))
-                    .collect(Collectors.toList());
+            List<String> lastList = winBurdenMatchList.stream().map(item -> "胜".equals(item.getAward()) ? "3" : ("平".equals(item.getAward()) ? "1" : ("负".equals(item.getAward()) ? "0" : "-"))).collect(Collectors.toList());
 
             log.info(" 胜负彩开奖 ： {} 场 ", lastList);
             PermutationAwardDO permutationAward = new PermutationAwardDO();
@@ -409,10 +341,7 @@ public class LotteryPipeline implements Pipeline {
             }
             permutationAwardService.save(permutationAward);
 
-        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL21)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL22)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL23)
-                || ObjectUtil.equal(url, CrawlingAddressConstant.URL24)) {
+        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL21) || ObjectUtil.equal(url, CrawlingAddressConstant.URL22) || ObjectUtil.equal(url, CrawlingAddressConstant.URL23) || ObjectUtil.equal(url, CrawlingAddressConstant.URL24)) {
             List<OmitDO> omitList = resultItems.get("omitList");
             for (OmitDO omitDO : omitList) {
                 OmitDO omit = omitService.getOne(new QueryWrapper<OmitDO>().lambda().eq(OmitDO::getType, omitDO.getType()));
