@@ -5,9 +5,9 @@ import request from '@/util/ajax'
 发起跟单
 
 */
-export function documentaryDigit(data){
+export function documentaryDigit(data,issueNo){
 	uni.navigateTo({
-		url: "pages/documentary/placeDigit/placeDigit?obj=" + encodeURIComponent(JSON.stringify(data))
+		url: "pages/documentary/placeDigit/placeDigit?obj=" + encodeURIComponent(JSON.stringify(data))+"&issueNo="+issueNo
 	});
 }
 
@@ -15,9 +15,9 @@ export function documentaryDigit(data){
  * 排列下单
  * @param {Object} data
  */
-export function place(data,type) {
+export function place(data,type,issueNo) {
 	return request({
-		url: '/app/permutation/place/'+type,
+		url: '/app/permutation/place/'+type+"/"+issueNo,
 		method: 'post',
 		data
 	})

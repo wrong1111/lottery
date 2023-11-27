@@ -85,11 +85,19 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BaseVO placeOrder(List<PlaceOrderDTO> placeList, Integer userId, String type) {
-        int hour = DateUtil.hour(new Date(), true);
+    public BaseVO placeOrder(List<PlaceOrderDTO> placeList, Integer userId, String type, String issueNo) {
+      //  int hour = DateUtil.hour(new Date(), true);
 //        if (hour >= 21 && hour <= 22) {
 //            return new BaseVO(false, ErrorCodeEnum.E082.getKey(), ErrorCodeEnum.E082.getValue());
 //        }
+        Date date = new Date();
+        //查询当前期号
+        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type)
+                .eq(PermutationAwardDO::getStageNumber, issueNo));
+        if (null == permutationAward || permutationAward.getDeadTime().before(date)) {
+            return new BaseVO(false, ErrorCodeEnum.E095.getKey(), ErrorCodeEnum.E095.getValue());
+        }
+        Integer stageNumber = permutationAward.getStageNumber();
         PlaceOrderVO placeOrder = new PlaceOrderVO();
         //计算需要下注的金额
         BigDecimal price = new BigDecimal(0);
@@ -117,8 +125,8 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             userMapper.updateById(user);
         }
         // 1.先查询出奖的最后一条数据从而得出这次买的是第几期
-        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).gt(PermutationAwardDO::getDeadTime, new Date()).orderByAsc(PermutationAwardDO::getId).last("limit 1"));
-        Integer stageNumber = permutationAward.getStageNumber();
+        //PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).gt(PermutationAwardDO::getDeadTime, new Date()).orderByAsc(PermutationAwardDO::getId).last("limit 1"));
+
 
         logUtil.record(LotteryOrderTypeEnum.valueOFS(type).getValue() + "下单,下单金额【" + price + "】,期号[" + stageNumber + "]");
         //添加钱包消费记录

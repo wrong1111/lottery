@@ -11,6 +11,7 @@ import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.downloader.AbstractDownloader;
 import us.codecraft.webmagic.downloader.selenium.DownloadChrome;
 import us.codecraft.webmagic.downloader.selenium.FirefoxDownloader;
+import us.codecraft.webmagic.scheduler.BloomFilterDuplicateRemover;
 import us.codecraft.webmagic.scheduler.QueueScheduler;
 import us.codecraft.webmagic.scheduler.component.HashSetDuplicateRemover;
 
@@ -64,7 +65,7 @@ public class SpiderRunner {
         Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 2) //胜负彩比赛
                         , CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 3) //胜负彩比赛
                         , CrawlingAddressConstant.URL18_01 + (issueNoVO.getStageNumber() + 4) //胜负彩比赛
-                ).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover()))
+                ).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000)))
 //                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
 //                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
                 .addPipeline(lotteryPipeline).runAsync();
@@ -87,11 +88,11 @@ public class SpiderRunner {
                         , CrawlingAddressConstant.URL3 //足彩对局分析
                         , CrawlingAddressConstant.URL5 //篮球对局分析
                         , CrawlingAddressConstant.URL15 //北单分析
-                ).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover()))
+                ).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000)))
 //                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
 //                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
                 .addPipeline(lotteryPipeline).runAsync();
-        sfcNext();
+       // sfcNext();
     }
 
     /*
@@ -113,7 +114,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
                 , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
                 , CrawlingAddressConstant.URL24 //数字彩 遗漏大乐透
-        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).runAsync();
+        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).addPipeline(lotteryPipeline).runAsync();
     }
 
     /*
@@ -128,7 +129,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL17 //七星彩开奖
                 , CrawlingAddressConstant.URL16 //排列5开奖
                 , CrawlingAddressConstant.URL2 //排列三出奖
-        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).addPipeline(lotteryPipeline).thread(5).runAsync();
+        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).addPipeline(lotteryPipeline).thread(5).runAsync();
     }
 
 
@@ -138,7 +139,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
                 , CrawlingAddressConstant.URL13 + "?d=" + preday //北单开奖
                 , CrawlingAddressConstant.URL14 + "&date=" + preday //篮球大小分查询
-        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
+        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
 
     }
 
@@ -151,7 +152,7 @@ public class SpiderRunner {
                 , CrawlingAddressConstant.URL19 //胜负彩开奖
                 , CrawlingAddressConstant.URL13 //北单开奖
                 , CrawlingAddressConstant.URL14 //篮球大小分查询
-        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new HashSetDuplicateRemover())).thread(5).addPipeline(lotteryPipeline).runAsync();
+        ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
 
         runpre();
 //        Spider.create(new LotteryProcessor()).addUrl(

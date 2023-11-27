@@ -61,7 +61,8 @@
 					state: "1",
 					describe: "没有华丽的宣言,只有最稳的红单",
 					commission: 5,
-					type: ''
+					type: '',
+					issueNo: ''
 				},
 				placeData: {
 
@@ -91,6 +92,7 @@
 		onLoad(option) {
 			let obj = JSON.parse(decodeURIComponent(option.obj));
 			this.placeData = obj
+			this.issueNo = option.issueNo
 			//console.log(' 数字 合买页，收到参数=>', obj, this.placeData)
 		},
 		methods: {
@@ -108,7 +110,7 @@
 				}
 				uni.showLoading();
 				//先创建订单
-				place(this.placeData.data, this.placeData.type).then(res => {
+				place(this.placeData.data, this.placeData.type,this.issueNo).then(res => {
 					if (res.success) {
 						//创建跟单数据
 						this.documentaryParam.lotteryOrderId = res.id;

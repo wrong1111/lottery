@@ -70,7 +70,7 @@ public class TransferServiceImpl implements ITransferService {
                 baseVO.setErrorMsg("时间不同步，请查看系统时间");
                 return baseVO;
             }
-            String signString = action + key + (StringUtils.isNotBlank(data) ? data : "") + shopTransferDO.getTransferSecurty();
+            String signString = action + key + (StringUtils.isNotBlank(data) ? data : "") + dto.getVersion() + dto.getTimestamp() + shopTransferDO.getTransferSecurty();
             MD5 md5 = null;
             try {
                 md5 = new MD5(shopTransferDO.getTransferSecurty().getBytes("utf-8"));

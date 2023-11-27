@@ -239,7 +239,7 @@
 				})
 				this.initNumber()
 				this.item = this.mode[0]
-				console.log(' init ',this.item)
+				//console.log(' init ',this.item)
 			},
 			initNumber() {
 				//初始化80个号码
@@ -309,7 +309,7 @@
 				}
 				console.log(' sure ',data)
 				uni.navigateTo({
-					url: "/pages/kl8/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data)),
+					url: "/pages/kl8/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data))+"&issueNo="+this.issueNo,
 					animationType: 'pop-in',
 					animationDuration: 200
 				})

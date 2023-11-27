@@ -2,6 +2,7 @@ package com.qihang.service.transfer;
 
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
+import com.qihang.constant.TransferEnum;
 import com.qihang.controller.transferIn.admin.dto.LotteryAutoStateDTO;
 import com.qihang.controller.transferIn.admin.dto.LotteryOutDTO;
 import com.qihang.controller.transferIn.admin.vo.ShopOutVO;
@@ -20,4 +21,6 @@ public interface IChangeService {
     public CommonListVO<ShopOutVO> listShop();
 
     public BaseVO editAutoState(LotteryAutoStateDTO autoStateDTO);
+
+    public BaseVO send(Integer id,boolean auto);
 }

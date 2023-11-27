@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author bright
  * @since 2022-10-10
- *
+ * <p>
  * 排列入库
  */
 @RestController
@@ -38,10 +38,10 @@ public class AppPermutationController {
     private ServletRequest request;
 
 
-    @PostMapping("/place/{type}")
+    @PostMapping("/place/{type}/{issueNo}")
     @ApiOperation("排列下单接口")
-    public BaseVO placeOrder(@RequestBody @Valid List<PlaceOrderDTO> placeList, @PathVariable String type) {
-        return permutationService.placeOrder(placeList, Integer.valueOf(request.getAttribute("User-ID").toString()), type);
+    public BaseVO placeOrder(@RequestBody @Valid List<PlaceOrderDTO> placeList, @PathVariable String type, @PathVariable String issueNo) {
+        return permutationService.placeOrder(placeList, Integer.valueOf(request.getAttribute("User-ID").toString()), type, issueNo);
     }
 
 

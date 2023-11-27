@@ -246,7 +246,7 @@
 					individual: this.shiarr,
 				}
 				uni.navigateTo({
-					url: "/pages/qlc/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data)),
+					url: "/pages/qlc/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data))+"&issueNo="+this.issueNo,
 					animationType: 'pop-in',
 					animationDuration: 200
 				})

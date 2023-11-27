@@ -60,7 +60,9 @@ public enum ErrorCodeEnum {
     E091("E091", "上午10点到下午17点为提现时间"),
 
     E093("E093", "提现金额最低10起提"),
-    E094("E094", "该订单奖金未确认");
+    E094("E094", "该订单奖金未确认"),
+
+    E095("E095", "该期已经截止");
     private String key;
     private String value;
 }

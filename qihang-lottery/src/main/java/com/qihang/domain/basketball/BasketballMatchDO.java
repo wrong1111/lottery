@@ -136,4 +136,6 @@ public class BasketballMatchDO implements Serializable {
      *
      */
     String issueNo;
+
+    String gameNo;
 }

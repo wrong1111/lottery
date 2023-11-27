@@ -134,4 +134,6 @@ public class BeiDanMatchDO implements Serializable {
      *
      */
     String issueNo;
+
+    String gameNo;
 }

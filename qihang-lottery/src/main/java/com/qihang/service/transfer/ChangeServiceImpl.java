@@ -2,6 +2,8 @@ package com.qihang.service.transfer;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.crypto.digest.MD5;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,20 +18,27 @@ import com.qihang.controller.transferIn.admin.dto.LotteryAutoStateDTO;
 import com.qihang.controller.transferIn.admin.dto.LotteryOutDTO;
 import com.qihang.controller.transferIn.admin.vo.AdminShopTransferInVO;
 import com.qihang.controller.transferIn.admin.vo.ShopOutVO;
+import com.qihang.controller.transferOut.app.dto.ChangeOrderDTO;
 import com.qihang.domain.ballgame.BallGameDO;
+import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.permutation.PermutationDO;
+import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.transfer.LotteryTransferDO;
 import com.qihang.domain.transfer.ShopTransferDO;
 import com.qihang.mapper.ballgame.BallGameMapper;
+import com.qihang.mapper.order.LotteryOrderMapper;
+import com.qihang.mapper.permutation.PermutationMapper;
+import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.transfer.LotteryTransferMapper;
 import com.qihang.mapper.transfer.ShopTransferMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -53,6 +62,16 @@ public class ChangeServiceImpl implements IChangeService {
 
     @Resource
     BallGameMapper ballGameMapper;
+
+    @Resource
+    LotteryOrderMapper lotteryOrderMapper;
+
+    @Resource
+    RacingBallMapper racingBallMapper;
+
+    @Resource
+    PermutationMapper permutationMapper;
+
 
     @TenantIgnore
     @Override
@@ -209,4 +228,83 @@ public class ChangeServiceImpl implements IChangeService {
             return new BaseVO();
         }
     }
+
+    @Override
+    public BaseVO send(Integer id, boolean auto) {
+        //查询对应的转单渠道
+        LotteryOrderDO orderDO = lotteryOrderMapper.selectById(id);
+        if (StringUtils.isNotBlank(orderDO.getTransferNo())) {
+            return BaseVO.builder().errorMsg("订单已转出,单号:" + orderDO.getTransferNo()).build();
+        }
+        String lotteryId = orderDO.getType();
+        LotteryTransferDO lotteryTransferDO = lotteryTransferMapper.selectOne(new QueryWrapper<LotteryTransferDO>().lambda()
+                .eq(LotteryTransferDO::getLotteryType, lotteryId).eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferOut.code).orderByDesc(LotteryTransferDO::getId).last(" limit 1 "));
+        if (null == lotteryTransferDO) {
+            return BaseVO.builder().errorMsg("未找到对应的转单渠道").build();
+        }
+        if (auto) {
+            //手动
+            if (lotteryTransferDO.getTransferOutAuto() == 1) {
+                return BaseVO.builder().errorMsg("当前转单渠道未开启自动转单").build();
+            }
+        }
+        Integer shopId = lotteryTransferDO.getShopId();
+        ShopTransferDO shopTransferDO = shopTransferMapper.selectById(shopId);
+        if (null == shopTransferDO) {
+            return BaseVO.builder().errorMsg("当前转单渠道未设置").build();
+        }
+
+        List<RacingBallDO> racingBallDOList = new ArrayList<>();
+        List<PermutationDO> permutationDOList = new ArrayList<>();
+        BaseDataVO baseVO = sendOrder(shopTransferDO, orderDO, racingBallDOList, permutationDOList);
+
+        if (baseVO.getSuccess() && !baseVO.getSuccess() && "1".equals(baseVO.getErrorCode())) {//重复下单 也是成功
+            //修改订单状态
+            Map<String, String> dataMap = (Map<String, String>) baseVO.getData();
+            orderDO.setTransferShopId(shopId);
+            orderDO.setTransferTime(new Date());
+            orderDO.setTransferNo(dataMap.get("orderNo"));
+            lotteryOrderMapper.updateById(orderDO);
+            if (lotteryOrderMapper.updateById(orderDO) > 0) {
+                return baseVO;
+            }
+        }
+        return baseVO;
+    }
+
+    public static BaseDataVO sendOrder(ShopTransferDO shopTransferDO, LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, List<PermutationDO> permutationDOS) {
+        ChangeOrderDTO dto = new ChangeOrderDTO();
+        dto.setOrderDO(lotteryOrderDO);
+        dto.setOrderMoney(lotteryOrderDO.getPrice());
+        dto.setLotteryId(Integer.valueOf(lotteryOrderDO.getType()));
+        if (ITransferOutServiceImpl.isSports(Integer.valueOf(lotteryOrderDO.getType()))) {
+            dto.setRacingBallDOList(racingBallDOList);
+        } else {
+            dto.setPermutationDOList(permutationDOS);
+        }
+        String url = shopTransferDO.getTransferInterface();
+        String key = shopTransferDO.getTransferKey();
+        String security = shopTransferDO.getTransferSecurty();
+        String data = JSON.toJSONString(dto);
+        int timestamp = (int) (System.currentTimeMillis() / 1000);
+        String signString = "createOrder" + key + data + "1.0" + timestamp + security;
+        try {
+            MD5 md5 = new MD5(shopTransferDO.getTransferSecurty().getBytes("utf-8"));
+            String sign = md5.digestHex(signString);
+            Map<String, Object> dataMap = new HashMap<>();
+            dataMap.put("sign", sign);
+            dataMap.put("key", key);
+            dataMap.put("timestamp", "" + timestamp);
+            dataMap.put("action", "createOrder");
+            dataMap.put("data", data);
+            dataMap.put("version", "1.0");
+            String result = HttpReq.postJSON(url, dataMap);
+            BaseDataVO baseDataVO = JSONUtil.toBean(result, BaseDataVO.class);
+            return baseDataVO;
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }

@@ -118,12 +118,15 @@
 			if (option.obj != undefined) {
 				let obj = JSON.parse(decodeURIComponent(option.obj));
 				this.type = obj.mode;
+				
 				this.calculation(obj);
 			}
+			this.issueNo = option.issueNo
+			console.log('issueNo ',this.issueNo)
 			//当前期号
-			getIssueNo("3").then(res => {
-				this.issueNo = res.stageNumber
-			})
+			// getIssueNo("3").then(res => {
+			// 	this.issueNo = res.stageNumber
+			// })
 		},
 		methods: {
 			//发起跟单
@@ -147,10 +150,11 @@
 					type: this.lotid,
 					storage: 'pailie'
 				}
-				documentaryDigit(placeData)
+				documentaryDigit(placeData,this.issueNo)
 			},
 			//投注
 			betting() {
+					console.log('issueNo ',this.issueNo)
 				uni.showLoading();
 				let data = uni.getStorageSync('pailie');
 				if (data.length <= 0) {
@@ -173,8 +177,8 @@
 					delete item['total']
 					delete item['uid']
 				})
-				place(data, "3").then(res => {
-					console.log('>>.排列返回数据项', res)
+				place(data, "3",this.issueNo).then(res => {
+					// console.log('>>.排列返回数据项', res)
 					if (res.success) {
 						uni.showToast({
 							title: '下单成功',

@@ -286,7 +286,7 @@
 					ten: this.shiarr,
 				}
 				uni.navigateTo({
-					url: "/pages/dlt/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data)),
+					url: "/pages/dlt/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data))+"&issueNo="+this.issueNo,
 					animationType: 'pop-in',
 					animationDuration: 200
 				})

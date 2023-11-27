@@ -104,6 +104,7 @@ public class WinBurdenMatchDO implements Serializable {
      */
     private Date updateTime;
 
+    String gameNo;
 
 
 }

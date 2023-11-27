@@ -92,7 +92,7 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
             BeanUtil.copyProperties(vo, shopTransferDO);
             shopTransferDO.setCreateTime(new Date());
             shopTransferDO.setUpdateTime(new Date());
-            shopTransferDO.setUid(Long.valueOf(((Map<String, String>) returnBo.getData()).get("uid")));
+            shopTransferDO.setUid(Long.valueOf(((Map<String, String>) returnBo.getData()).get("id")));
 
             if (StringUtils.isBlank(vo.getTransferKey())) {
                 shopTransferDO.setTransferKey(RandomStringUtils.randomAlphanumeric(5));

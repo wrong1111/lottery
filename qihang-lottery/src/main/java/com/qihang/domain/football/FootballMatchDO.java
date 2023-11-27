@@ -139,4 +139,9 @@ public class FootballMatchDO implements Serializable {
      *
      */
     String issueNo;
+
+    /**
+     * 赛事唯一标识
+     */
+    String gameNo;
 }

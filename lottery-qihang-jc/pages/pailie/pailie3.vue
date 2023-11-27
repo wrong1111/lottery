@@ -1024,7 +1024,8 @@
 						}),
 						hundred: this.baiarr.map(v => {
 							return v.num
-						})
+						}),
+						
 					}
 				} else if (this.zindex == 1 && this.current == 0) {
 					data = {
@@ -1077,7 +1078,7 @@
 					}
 				}
 				uni.navigateTo({
-					url: "/pages/pailie/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data)),
+					url: "/pages/pailie/buyShoppingCar?obj=" + encodeURIComponent(JSON.stringify(data))+"&issueNo="+this.issueNo,
 					animationType: 'pop-in',
 					animationDuration: 200
 				})

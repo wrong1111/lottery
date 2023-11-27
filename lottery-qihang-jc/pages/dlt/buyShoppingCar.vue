@@ -97,9 +97,10 @@
 				this.calculation(obj);
 			}
 			//当前期号
-			getIssueNo("8").then(res => {
-				this.issueNo = res.stageNumber
-			})
+			this.issueNo = option.issueNo
+			// getIssueNo("8").then(res => {
+			// 	this.issueNo = res.stageNumber
+			// })
 		},
 		methods: {
 			//发起跟单
@@ -123,7 +124,7 @@
 					type: this.lotid,
 					storage: 'dlt'
 				}
-				documentaryDigit(placeData)
+				documentaryDigit(placeData,this.issueNo)
 			},
 			//投注
 			betting() {
@@ -165,7 +166,7 @@
 						this.$set(item, 'schemeDetails', JSON.stringify(item.schemeDetails))
 					}
 				})
-				place(data, "8").then(res => {
+				place(data, "8",this.issueNo).then(res => {
 					if (res.success) {
 						uni.showToast({
 							title: '下单成功',

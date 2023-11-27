@@ -113,9 +113,7 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
             log.info("<<<<<<<<<<<<<<<<< downloading page {} >>>>>>>>>>", request.getUrl());
             driver.get(request.getUrl());
             try {
-                if (sleepTime > 0) {
-                    Thread.sleep(sleepTime * 1000);
-                }
+                Thread.sleep(sleepTime * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

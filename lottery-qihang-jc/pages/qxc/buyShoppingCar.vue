@@ -115,10 +115,11 @@
 				let obj = JSON.parse(decodeURIComponent(option.obj));
 				this.calculation(obj);
 			}
+			this.issueNo = option.issueNo
 			//当前期号
-			getIssueNo("5").then(res => {
-				this.issueNo = res.stageNumber
-			})
+			// getIssueNo("5").then(res => {
+			// 	this.issueNo = res.stageNumber
+			// })
 		},
 		methods: {
 			//发起跟单
@@ -142,7 +143,7 @@
 					type: this.lotid,
 					storage: 'qixing'
 				}
-				documentaryDigit(placeData)
+				documentaryDigit(placeData,this.issueNo)
 			},
 			//投注
 			betting() {
@@ -168,7 +169,7 @@
 					delete item['total']
 					delete item['uid']
 				})
-				place(data, "5").then(res => {
+				place(data, "5",this.issueNo).then(res => {
 					if (res.success) {
 						uni.showToast({
 							title: '下单成功',

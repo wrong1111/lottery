@@ -116,4 +116,8 @@ public class LotteryOrderDO implements Serializable {
      * '0 收单,1 转单'
      */
     Integer transferType;
+
+    String transferNo;
+
+    Date transferTime;
 }

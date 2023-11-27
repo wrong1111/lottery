@@ -88,13 +88,14 @@
 		onLoad(option) {
 			if (option.obj != undefined) {
 				let obj = JSON.parse(decodeURIComponent(option.obj));
-				console.log(' kl8 =>', obj)
+				//console.log(' kl8 =>', obj)
 				this.calculation(obj);
 			}
 			//当前期号
-			getIssueNo("23").then(res => {
-				this.issueNo = res.stageNumber
-			})
+			this.issueNo = option.issueNo
+			// getIssueNo("23").then(res => {
+			// 	this.issueNo = res.stageNumber
+			// })
 		},
 		methods: {
 			//发起跟单
@@ -118,7 +119,7 @@
 					type: this.lotid,
 					storage: 'kl8'
 				}
-				documentaryDigit(placeData)
+				documentaryDigit(placeData,this.issueNo)
 			},
 			//投注
 			betting() {
@@ -159,7 +160,7 @@
 						this.$set(item, 'schemeDetails', JSON.stringify(item.schemeDetails))
 					}
 				})
-				place(data, "23").then(res => {
+				place(data, "23",this.issueNo).then(res => {
 					if (res.success) {
 						uni.showToast({
 							title: '下单成功',

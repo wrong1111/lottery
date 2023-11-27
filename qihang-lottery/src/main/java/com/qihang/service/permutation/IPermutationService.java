@@ -26,7 +26,7 @@ public interface IPermutationService extends IService<PermutationDO> {
      * @param type
      * @return
      */
-    BaseVO placeOrder(List<PlaceOrderDTO> placeList, Integer userId, String type);
+    BaseVO placeOrder(List<PlaceOrderDTO> placeList, Integer userId, String type,String issueNo);
 
 
     /**
