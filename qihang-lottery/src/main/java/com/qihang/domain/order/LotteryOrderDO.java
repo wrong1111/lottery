@@ -117,7 +117,7 @@ public class LotteryOrderDO implements Serializable {
      */
     Integer transferType;
 
-    String transferNo;
+    String transferOrderNo;
 
     Date transferTime;
 }

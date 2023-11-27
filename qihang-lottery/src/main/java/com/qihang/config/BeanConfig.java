@@ -10,9 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import us.codecraft.webmagic.downloader.AbstractDownloader;
 import us.codecraft.webmagic.downloader.selenium.DownloadChrome;
 import us.codecraft.webmagic.downloader.selenium.FirefoxDownloader;
+
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 public class BeanConfig {
@@ -38,23 +41,17 @@ public class BeanConfig {
     String chromeExecPath;
 
 
-    //TODO
-    /*
-     1,需要 安装对应的浏览器
-     2,需要放置浏览器版本匹配的驱动程序。
-     目前好像firefox没有这个要求，chrome要求比较严格，版本不匹配执行有问题。
-     */
-//    @Bean
-//    public AbstractDownloader downloader() {
-//        switch (webdriverType) {
-//            case "chrome":
-//                return new DownloadChrome(chromeDriverPath, chromeExecPath);
-//            case "firefox":
-//                return new FirefoxDownloader(firefoxDriverPath);
-//            default:
-//                throw new RuntimeException("未设置 爬虫使用的浏览器驱动");
-//        }
-//    }
+    // 核心线程池大小
+    private int corePoolSize = 50;
+
+    // 最大可创建的线程数
+    private int maxPoolSize = 200;
+
+    // 队列最大长度
+    private int queueCapacity = 1000;
+
+    // 线程池维护线程所允许的空闲时间
+    private int keepAliveSeconds = 300;
 
 
     @Bean
@@ -67,5 +64,17 @@ public class BeanConfig {
         }
     }
 
+
+    @Bean(name = "threadPoolTaskExecutor")
+    public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setMaxPoolSize(maxPoolSize);
+        executor.setCorePoolSize(corePoolSize);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setKeepAliveSeconds(keepAliveSeconds);
+        // 线程池对拒绝任务(无线程可用)的处理策略
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        return executor;
+    }
 
 }

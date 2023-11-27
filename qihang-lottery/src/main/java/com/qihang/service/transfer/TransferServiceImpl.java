@@ -62,26 +62,24 @@ public class TransferServiceImpl implements ITransferService {
             baseVO.setErrorMsg("不支持版本号");
             return baseVO;
         }
-        if (!"dev".equalsIgnoreCase(runtime)) {
-            long now = System.currentTimeMillis();
-            if (now - timestamp > 60000) {
-                //超过60秒，不再接收
-                baseVO.setSuccess(false);
-                baseVO.setErrorMsg("时间不同步，请查看系统时间");
-                return baseVO;
-            }
-            String signString = action + key + (StringUtils.isNotBlank(data) ? data : "") + dto.getVersion() + dto.getTimestamp() + shopTransferDO.getTransferSecurty();
-            MD5 md5 = null;
-            try {
-                md5 = new MD5(shopTransferDO.getTransferSecurty().getBytes("utf-8"));
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
-            if (!sign.equals(md5.digestHex(signString))) {
-                baseVO.setSuccess(false);
-                baseVO.setErrorMsg("签名错误");
-                return baseVO;
-            }
+        int now = (int) (System.currentTimeMillis() / 1000);
+        if (now - timestamp > 60) {
+            //超过60秒，不再接收
+            baseVO.setSuccess(false);
+            baseVO.setErrorMsg("时间不同步，请查看系统时间");
+            return baseVO;
+        }
+        String signString = action + key + (StringUtils.isNotBlank(data) ? data : "") + dto.getVersion() + dto.getTimestamp() + shopTransferDO.getTransferSecurty();
+        MD5 md5 = null;
+        try {
+            md5 = new MD5(shopTransferDO.getTransferSecurty().getBytes("utf-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        if (!sign.equals(md5.digestHex(signString))) {
+            baseVO.setSuccess(false);
+            baseVO.setErrorMsg("签名错误");
+            return baseVO;
         }
         return baseVO;
     }

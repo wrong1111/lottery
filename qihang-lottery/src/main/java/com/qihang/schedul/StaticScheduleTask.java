@@ -18,6 +18,7 @@ import com.qihang.service.basketball.IBasketballMatchService;
 import com.qihang.service.beidan.IBeiDanMatchService;
 import com.qihang.service.football.IFootballMatchService;
 import com.qihang.service.order.ILotteryOrderService;
+import com.qihang.service.transfer.IChangeService;
 import com.qihang.service.winburden.IWinBurdenMatchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -73,12 +74,24 @@ public class StaticScheduleTask {
     @Resource
     SpiderRunner spiderRunner;
 
+    @Resource
+    IChangeService changeService;
+
     /**
      * 处理订单没出票采用邮件通知
      */
     @Scheduled(cron = "0 0/2 * * * ?")
     private void toEmail() {
         lotteryOrderService.NoTicketIssuedSedEmail();
+    }
+
+    @Scheduled(cron = "0 0/1 * * * ?")
+    private void autoChange() {
+        log.info("转单 定时任务 scheduleAutoChange  {}  触发时间【{}】", taskConfig.getChange(), DateUtil.now());
+        if (taskConfig.getChange()) {
+            changeService.scheduleAutoChange();
+        }
+        log.info("转单 定时任务 scheduleAutoChange  {}  结束时间【{}】", taskConfig.getChange(), DateUtil.now());
     }
 
     /*

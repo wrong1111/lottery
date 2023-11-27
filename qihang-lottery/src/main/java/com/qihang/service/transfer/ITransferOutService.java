@@ -1,5 +1,6 @@
 package com.qihang.service.transfer;
 
+import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.permutation.PermutationDO;
@@ -27,7 +28,7 @@ public interface ITransferOutService {
 
     public BaseVO createOrder(String data, String key);
 
-    public BaseVO createSportOrder(LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, String key);
+    public BaseDataVO createSportOrder(LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, String key);
 
-    public BaseVO createDigitOrder(LotteryOrderDO lotteryOrderDO, List<PermutationDO> permutationDOS, String key);
+    public BaseDataVO createDigitOrder(LotteryOrderDO lotteryOrderDO, List<PermutationDO> permutationDOS, String key);
 }

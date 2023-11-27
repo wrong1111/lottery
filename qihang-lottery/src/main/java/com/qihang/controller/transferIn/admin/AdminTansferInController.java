@@ -1,12 +1,11 @@
 package com.qihang.controller.transferIn.admin;
 
-import cn.hutool.crypto.digest.MD5;
 import com.qihang.annotation.Log;
 import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.constant.TransferEnum;
-import com.qihang.controller.transferIn.admin.dto.AdminPlatDTO;
 import com.qihang.controller.transferIn.admin.dto.AdminShopTransferInDTO;
+import com.qihang.service.transfer.IChangeService;
 import com.qihang.service.transfer.IShopTransferService;
 import io.swagger.annotations.Api;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -68,4 +67,6 @@ public class AdminTansferInController {
         }
         return shopTransferService.editShopTransfer(vo);
     }
+
+
 }

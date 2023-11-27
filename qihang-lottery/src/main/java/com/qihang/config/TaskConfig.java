@@ -16,4 +16,5 @@ public class TaskConfig {
     Boolean omit;
     Boolean minute;
     Boolean award;
+    Boolean change;
 }

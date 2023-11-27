@@ -143,6 +143,7 @@
           this.loading = false;
           if (response.success) {
             this.voList = response.voList
+            this.total = response.total
           }
 
         });

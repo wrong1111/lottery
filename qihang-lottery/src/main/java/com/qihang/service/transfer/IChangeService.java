@@ -16,11 +16,13 @@ public interface IChangeService {
 
     public BaseVO info(String url);
 
-    public BaseVO list(LotteryOutDTO dto);
+    public CommonListVO list(LotteryOutDTO dto);
 
     public CommonListVO<ShopOutVO> listShop();
 
     public BaseVO editAutoState(LotteryAutoStateDTO autoStateDTO);
 
-    public BaseVO send(Integer id,boolean auto);
+    public BaseVO send(Integer id, boolean auto);
+
+    public void scheduleAutoChange();
 }

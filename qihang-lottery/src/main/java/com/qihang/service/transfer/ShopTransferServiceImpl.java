@@ -105,7 +105,7 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
             }
             shopTransferDO.setTransferType(TransferEnum.TransferIn.code);
             shopTransferMapper.insert(shopTransferDO);
-            TransferServiceImpl.SHOP_TRANSFER_MAP.put(shopTransferDO.getTransferKey(), shopTransferDO);
+            TransferServiceImpl.SHOP_TRANSFER_MAP.put(ShopTransferServiceImpl.getShopTransferKey(shopTransferDO.getTransferKey()), shopTransferDO);
             return new BaseVO();
 
         } else {
@@ -134,7 +134,7 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
                 }
 
                 if (update) {
-                    TransferServiceImpl.SHOP_TRANSFER_MAP.put(transferDO.getTransferKey(), transferDO);
+                    TransferServiceImpl.SHOP_TRANSFER_MAP.put(ShopTransferServiceImpl.getShopTransferKey(transferDO.getTransferKey()), transferDO);
                     shopTransferMapper.updateById(transferDO);
                 }
             }
@@ -187,17 +187,26 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
         return null;
     }
 
+    /**
+     * 查询开通的收单账号
+     *
+     * @param key
+     * @return
+     */
     @TenantIgnore
     @Override
     public ShopTransferDO findShopTransfer(String key) {
-        ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(key);
+        ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(getShopTransferKey(key));
         if (null == shopTransferDO) {
             shopTransferDO = getOne(new QueryWrapper<ShopTransferDO>().lambda().eq(ShopTransferDO::getTransferKey, key).eq(ShopTransferDO::getTransferType, TransferEnum.TransferIn.code));
-            TransferServiceImpl.SHOP_TRANSFER_MAP.put(key, shopTransferDO);
+            TransferServiceImpl.SHOP_TRANSFER_MAP.put(getShopTransferKey(key), shopTransferDO);
             return shopTransferDO;
         }
         return shopTransferDO;
     }
 
+    public static String getShopTransferKey(String key) {
+        return TransferEnum.TransferIn.code + ":" + key;
+    }
 
 }

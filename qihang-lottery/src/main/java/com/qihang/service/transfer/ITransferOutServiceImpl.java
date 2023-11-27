@@ -1,7 +1,6 @@
 package com.qihang.service.transfer;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -134,7 +133,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
 
         resultMap.put("shop", shopVO);
         resultMap.put("url", shopTransferDO.getTransferInterface());
-        return BaseDataVO.builder().data(resultMap).build();
+        return BaseDataVO.builder().success(true).data(resultMap).build();
     }
 
 
@@ -151,42 +150,46 @@ public class ITransferOutServiceImpl implements ITransferOutService {
     }
 
 
+    @TenantIgnore
     @Override
-    public BaseVO createOrder(String data, String key) {
-        BaseVO baseVO = new BaseVO();
-        ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(key);
-        UserDO userDO = userMapper.selectOne(new QueryWrapper<UserDO>().lambda().eq(UserDO::getUid, shopTransferDO.getUid()));
+    public BaseDataVO createOrder(String data, String key) {
+        log.info("【接收】 key [{}], 数据{}", key, data);
+        BaseDataVO baseVO = BaseDataVO.builder().build();
+        ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(ShopTransferServiceImpl.getShopTransferKey(key));
+        UserDO userDO = userMapper.selectById(shopTransferDO.getUid());
         if (null == userDO) {
             baseVO.setSuccess(false);
             baseVO.setErrorMsg("账户异常，请联系管理员");
             return baseVO;
         }
-        ChangeOrderDTO changeOrderDTO = JSON.parseObject(data, ChangeOrderDTO.class);
+        ChangeOrderDTO changeOrderDTO = JSONUtil.toBean(data, ChangeOrderDTO.class);
         ITransferOutService transferOutService = SpringContextUtils.getBean(ITransferOutService.class);
         if (isSports(changeOrderDTO.getLotteryId())) {
-            return transferOutService.createSportOrder(changeOrderDTO.getOrderDO(), changeOrderDTO.getRacingBallDOList(), key);
+            baseVO = transferOutService.createSportOrder(changeOrderDTO.getOrderDO(), changeOrderDTO.getRacingBallDOList(), key);
         } else {
-            return transferOutService.createDigitOrder(changeOrderDTO.getOrderDO(), changeOrderDTO.getPermutationDOList(), key);
+            baseVO = transferOutService.createDigitOrder(changeOrderDTO.getOrderDO(), changeOrderDTO.getPermutationDOList(), key);
         }
+        log.info("【结果】 key[{}],结果:[{}],数据:{}", key, JSONUtil.toJsonStr(baseVO), data);
+        return baseVO;
     }
 
 
     @Transactional(rollbackFor = Exception.class)
     @TenantIgnore
     @Override
-    public BaseVO createSportOrder(LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, String key) {
+    public BaseDataVO createSportOrder(LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, String key) {
         Integer lotteryId = Integer.valueOf(lotteryOrderDO.getType());
         //判断此账户开通接单 与否
-        ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(key);
+        ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(ShopTransferServiceImpl.getShopTransferKey(key));
         if (null == shopTransferDO) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("未开通，请联系商家").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("未开通，请联系商家").build();
         }
         if (!"0".equals(shopTransferDO.getInterfaceState())) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("暂停收单，请联系商家").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("暂停收单，请联系商家").build();
         }
         UserDO userDO = userMapper.selectById(shopTransferDO.getUid());
         if (null == userDO) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("账号异常，请联系商家").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("账号异常，请联系商家").build();
         }
         //修改订单发起人为 账户对应的会员账户uid
         lotteryOrderDO.setUserId(userDO.getId());
@@ -203,24 +206,34 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         //判断此彩种是否收单
         LotteryTransferDO lotteryTransferDOS = lotteryTransferMapper.selectOne(new QueryWrapper<LotteryTransferDO>().lambda().eq(LotteryTransferDO::getLotteryType, lotteryId).eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferIn.code));
         if (null == lotteryTransferDOS || lotteryTransferDOS.getStates() != 0) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("彩种暂停收单，请联系商家").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("彩种暂停收单，请联系商家").build();
         }
         //判断此账户对应的余额是否足够支付
-        BigDecimal money = BigDecimal.ZERO;
         List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(lotteryOrderDO.getSchemeDetails(), SportSchemeDetailsListVO.class);
-        money = listVOList.stream().map(sportSchemeDetailsListVO -> BigDecimal.valueOf(Integer.valueOf(sportSchemeDetailsListVO.getNotes()))).reduce(BigDecimal::add).get().multiply(new BigDecimal(2));
+        BigDecimal money = listVOList.stream().map(sportSchemeDetailsListVO -> BigDecimal.valueOf(Integer.valueOf(sportSchemeDetailsListVO.getNotes()))).reduce(BigDecimal::add).get().multiply(new BigDecimal(2));
         if (money.compareTo(lotteryOrderDO.getPrice()) != 0) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("投注金额【" + lotteryOrderDO.getPrice().toPlainString() + "】与实际不符【" + money.toPlainString() + "】").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("投注金额【" + lotteryOrderDO.getPrice().toPlainString() + "】与实际不符【" + money.toPlainString() + "】").build();
+        }
+        if (money.compareTo(BigDecimal.ZERO) <= 0) {
+            return BaseDataVO.builder().success(false).errorCode(ErrorCodeEnum.E096.getKey()).errorMsg(ErrorCodeEnum.E096.getValue()).build();
+        }
+        //扣款，写记录
+        if (money.compareTo(userDO.getGold()) == 1) {
+            if (money.compareTo(userDO.getGold().add(userDO.getPrice())) == 1) {
+                return BaseDataVO.builder().success(false).errorCode(ErrorCodeEnum.E0763.getKey()).errorMsg(ErrorCodeEnum.E0763.getValue()).build();
+            }
         }
         //判断此单是否已经下过单
         String orderNo = key + lotteryOrderDO.getOrderId();
         lotteryOrderDO.setOrderId(orderNo);
         if (lotteryOrderMapper.selectCount(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getOrderId, orderNo)) > 0) {
-            return BaseVO.builder().success(false).errorCode("1").errorMsg("此单已经下过单，请勿重复下单").build();
+            return BaseDataVO.builder().success(false).errorCode("1").errorMsg("此单已经下过单，请勿重复下单").build();
         }
         Date now = new Date();
         //判断此单是否已经超过最后下单时间
         int beforeTimes = lotteryTransferDOS.getTransferBeforeTime();//提前
+        //添加钱包消费记录
+        PayOrderDO payOrder = new PayOrderDO();
         //调整订单 内容的对阵ID。
         //足球与篮球，根据gameno来判断哪场赛事，北单按期 号+场次
         if (LotteryOrderTypeEnum.FOOTBALL.getKey().equals(lotteryOrderDO.getType())) {
@@ -232,12 +245,13 @@ public class ITransferOutServiceImpl implements ITransferOutService {
                 if (null != footballMatchDO) {
                     racingBallDO.setTargetId(footballMatchDO.getId());
                 } else {
-                    return BaseVO.builder().success(false).errorCode("-1").errorMsg("未找到匹配赛事" + racingBallDO.getGameNo()).build();
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("未找到匹配赛事" + racingBallDO.getGameNo()).build();
                 }
                 if (DateUtils.addSeconds(now, beforeTimes).getTime() > footballMatchDO.getDeadline().getTime()) {
-                    return BaseVO.builder().success(false).errorCode("-1").errorMsg("赛事" + racingBallDO.getGameNo() + " 已到截止时间，不再收单").build();
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("赛事" + racingBallDO.getGameNo() + " 已到截止时间，不再收单").build();
                 }
             }
+            payOrder.setType(PayOrderTypeEnum.FOOTBALL.getKey());
         } else if (LotteryOrderTypeEnum.BASKETBALL.getKey().equals(lotteryOrderDO.getType())) {
             List<String> gameNoList = racingBallDOList.stream().map(racingBallDO -> racingBallDO.getGameNo()).collect(Collectors.toList());
             List<BasketballMatchDO> basketballMatchDOS = basketballMatchMapper.selectList(new QueryWrapper<BasketballMatchDO>().lambda().in(BasketballMatchDO::getGameNo, gameNoList));
@@ -247,12 +261,13 @@ public class ITransferOutServiceImpl implements ITransferOutService {
                 if (null != basketballMatchDO) {
                     racingBallDO.setTargetId(basketballMatchDO.getId());
                 } else {
-                    return BaseVO.builder().success(false).errorCode("-1").errorMsg("未找到匹配赛事" + racingBallDO.getGameNo()).build();
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("未找到匹配赛事" + racingBallDO.getGameNo()).build();
                 }
                 if (DateUtils.addSeconds(now, beforeTimes).getTime() > basketballMatchDO.getDeadline().getTime()) {
-                    return BaseVO.builder().success(false).errorCode("-1").errorMsg("赛事" + racingBallDO.getGameNo() + " 已到截止时间，不再收单").build();
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("赛事" + racingBallDO.getGameNo() + " 已到截止时间，不再收单").build();
                 }
             }
+            payOrder.setType(PayOrderTypeEnum.BASKETBALL.getKey());
         } else if (LotteryOrderTypeEnum.SINGLE.getKey().equals(lotteryOrderDO.getType())) {
             List<String> gameNoList = racingBallDOList.stream().map(racingBallDO -> racingBallDO.getGameNo()).collect(Collectors.toList());
             List<BeiDanMatchDO> beiDanMatchDOS = beiDanMatchMapper.selectList(new QueryWrapper<BeiDanMatchDO>().lambda().in(BeiDanMatchDO::getGameNo, gameNoList));
@@ -262,12 +277,13 @@ public class ITransferOutServiceImpl implements ITransferOutService {
                 if (null != beiDanMatchDO) {
                     racingBallDO.setTargetId(beiDanMatchDO.getId());
                 } else {
-                    return BaseVO.builder().success(false).errorCode("-1").errorMsg("未找到匹配赛事" + racingBallDO.getGameNo()).build();
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("未找到匹配赛事" + racingBallDO.getGameNo()).build();
                 }
                 if (DateUtils.addSeconds(now, beforeTimes).getTime() > beiDanMatchDO.getDeadline().getTime()) {
-                    return BaseVO.builder().success(false).errorCode("-1").errorMsg("赛事" + racingBallDO.getGameNo() + " 已到截止时间，不再收单").build();
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("赛事" + racingBallDO.getGameNo() + " 已到截止时间，不再收单").build();
                 }
             }
+            payOrder.setType(PayOrderTypeEnum.SINGLE.getKey());
         } else if (LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey().equals(lotteryOrderDO.getType()) || LotteryOrderTypeEnum.REN_JIU.getKey().equals(lotteryOrderDO.getType())) {
             List<String> gameNoList = racingBallDOList.stream().map(racingBallDO -> racingBallDO.getGameNo()).collect(Collectors.toList());
             List<WinBurdenMatchDO> winBurdenMatchDOS = winBurdenMatchMapper.selectList(new QueryWrapper<WinBurdenMatchDO>().lambda().in(WinBurdenMatchDO::getGameNo, gameNoList));
@@ -277,27 +293,26 @@ public class ITransferOutServiceImpl implements ITransferOutService {
                 if (null != winBurdenMatchDO) {
                     racingBallDO.setTargetId(winBurdenMatchDO.getId());
                 } else {
-                    return BaseVO.builder().success(false).errorCode("-1").errorMsg("未找到匹配赛事" + racingBallDO.getGameNo()).build();
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("未找到匹配赛事" + racingBallDO.getGameNo()).build();
                 }
                 if (DateUtils.addSeconds(now, beforeTimes).getTime() > winBurdenMatchDO.getDeadline().getTime()) {
-                    return BaseVO.builder().success(false).errorCode("-1").errorMsg("赛事" + winBurdenMatchDO.getIssueNo() + "-" + winBurdenMatchDO.getNumber() + " 已到截止时间，不再收单").build();
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("赛事" + winBurdenMatchDO.getIssueNo() + "-" + winBurdenMatchDO.getNumber() + " 已到截止时间，不再收单").build();
                 }
             }
+            if (LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey().equals(lotteryOrderDO.getType())) {
+                payOrder.setType(PayOrderTypeEnum.VICTORY_DEFEAT.getKey());
+            } else {
+                payOrder.setType(PayOrderTypeEnum.REN_JIU.getKey());
+            }
         }
-        lotteryOrderDO.setTargetIds(JSONUtil.toJsonStr(racingBallDOList.stream().map(racingBallDO -> racingBallDO.getTargetId()).collect(Collectors.toList())));
-        //入库，写记录
-        lotteryOrderMapper.insert(lotteryOrderDO);
         for (RacingBallDO racingBallDO : racingBallDOList) {
             racingBallDO.setId(null);
             racingBallMapper.insert(racingBallDO);
         }
+        lotteryOrderDO.setTargetIds(StringUtils.join(racingBallDOList.stream().map(racingBallDO -> racingBallDO.getId()).collect(Collectors.toList()), ","));
+        //入库，写记录
+        lotteryOrderMapper.insert(lotteryOrderDO);
 
-        //扣款，写记录
-        if (money.compareTo(userDO.getGold()) == 1) {
-            if (money.compareTo(userDO.getGold().add(userDO.getPrice())) == 1) {
-                return new BaseVO(false, ErrorCodeEnum.E0763.getKey(), ErrorCodeEnum.E0763.getValue());
-            }
-        }
         if (money.compareTo(userDO.getGold()) == 1) {
             //直接扣除彩金
             BigDecimal remainingPrice = money.subtract(userDO.getGold());
@@ -311,9 +326,8 @@ public class ITransferOutServiceImpl implements ITransferOutService {
             userDO.setGold(userDO.getGold().subtract(money));
             userMapper.updateById(userDO);
         }
-        //添加钱包消费记录
-        PayOrderDO payOrder = new PayOrderDO();
-        payOrder.setType("" + lotteryId);
+
+
         payOrder.setOrderId(OrderNumberGenerationUtil.getOrderId());
         payOrder.setState(PayOrderStateEnum.PAID.getKey());
         payOrder.setCreateTime(new Date());
@@ -326,27 +340,27 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         map.put("gold", userDO.getGold().toPlainString());
         map.put("price", userDO.getPrice().toPlainString());
         map.put("total", userDO.getGold().add(userDO.getPrice()).toPlainString());
-        return BaseDataVO.builder().data(map).build();
+        map.put("orderNo", orderNo);
+        return BaseDataVO.builder().success(true).errorCode("0").errorMsg("成功").data(map).build();
     }
 
     @Transactional(rollbackFor = Exception.class)
     @TenantIgnore
     @Override
-    public BaseVO createDigitOrder(LotteryOrderDO lotteryOrderDO, List<PermutationDO> permutationDOS, String key) {
+    public BaseDataVO createDigitOrder(LotteryOrderDO lotteryOrderDO, List<PermutationDO> permutationDOS, String key) {
         String issueNo = lotteryOrderDO.getStageNumber() + "";
-
         Integer lotteryId = Integer.valueOf(lotteryOrderDO.getType());
         //判断此账户开通接单 与否
-        ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(key);
+        ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(ShopTransferServiceImpl.getShopTransferKey(key));
         if (null == shopTransferDO) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("未开通，请联系商家").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("未开通，请联系商家").build();
         }
         if (!"0".equals(shopTransferDO.getInterfaceState())) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("暂停收单，请联系商家").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("暂停收单，请联系商家").build();
         }
         UserDO userDO = userMapper.selectById(shopTransferDO.getUid());
         if (null == userDO) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("账号异常，请联系商家").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("账号异常，请联系商家").build();
         }
         //修改订单发起人为 账户对应的会员账户uid
         lotteryOrderDO.setUserId(userDO.getId());
@@ -360,48 +374,58 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         lotteryOrderDO.setId(null);
         lotteryOrderDO.setTransferShopId(shopTransferDO.getId());
         lotteryOrderDO.setTransferType(TransferEnum.TransferIn.code);//收单
+        lotteryOrderDO.setTransferTime(new Date());
         //判断此彩种是否收单
         LotteryTransferDO lotteryTransferDOS = lotteryTransferMapper.selectOne(new QueryWrapper<LotteryTransferDO>().lambda().eq(LotteryTransferDO::getLotteryType, lotteryId).eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferIn.code));
         if (null == lotteryTransferDOS || lotteryTransferDOS.getStates() != 0) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("彩种暂停收单，请联系商家").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("彩种暂停收单，请联系商家").build();
         }
 
         //判断此单是否已经下过单
         String orderNo = key + lotteryOrderDO.getOrderId();
         lotteryOrderDO.setOrderId(orderNo);
         if (lotteryOrderMapper.selectCount(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getOrderId, orderNo)) > 0) {
-            return BaseVO.builder().success(false).errorCode("1").errorMsg("此单已经下过单，请勿重复下单").build();
+            Map<String, String> resmap = new HashMap<>();
+            resmap.put("orderNo", orderNo);
+            return BaseDataVO.builder().data(resmap).success(false).errorCode("1").errorMsg("此单已经下过单，请勿重复下单").build();
         }
 
+
+        BigDecimal money = permutationDOS.stream().map(permutationDO -> BigDecimal.valueOf(permutationDO.getNotes() * permutationDO.getTimes())).reduce(BigDecimal.ZERO, BigDecimal::add).multiply(BigDecimal.valueOf(2));
+        if (money.compareTo(BigDecimal.ZERO) <= 0 || lotteryOrderDO.getPrice().compareTo(money) != 0) {
+            return BaseDataVO.builder().success(false).errorCode(ErrorCodeEnum.E096.getKey()).errorMsg(ErrorCodeEnum.E096.getValue()).build();
+        }
         //判断此账户对应的余额是否足够支付
-        BigDecimal money = BigDecimal.ZERO;
+        //扣款，写记录
+        if (money.compareTo(userDO.getGold()) > 0) {
+            if (money.compareTo(userDO.getGold().add(userDO.getPrice())) > 0) {
+                return BaseDataVO.builder().success(false).errorCode(ErrorCodeEnum.E0763.getKey()).errorMsg(ErrorCodeEnum.E0763.getValue()).build();
+            }
+        }
 
         PermutationAwardDO permutationAwardDO = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda()
                 .eq(PermutationAwardDO::getType, lotteryOrderDO.getType()).eq(PermutationAwardDO::getStageNumber, issueNo));
         if (null == permutationAwardDO) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("彩种暂停，请联系商家").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("彩种暂停，请联系商家").build();
         }
         Date now = new Date();
         int beforeTimes = lotteryTransferDOS.getTransferBeforeTime();
         if (DateUtils.addSeconds(now, beforeTimes).getTime() > permutationAwardDO.getDeadTime().getTime()) {
-            return BaseVO.builder().success(false).errorCode("-1").errorMsg("彩种" + LotteryOrderTypeEnum.valueOFS(lotteryId + "").getValue() + " 已到截止时间，不再收单").build();
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("彩种" + LotteryOrderTypeEnum.valueOFS(lotteryId + "").getValue() + " 已到截止时间，不再收单").build();
         }
-        //入库，写记录
-        lotteryOrderMapper.insert(lotteryOrderDO);
+
         for (PermutationDO permutationDO : permutationDOS) {
             permutationDO.setUserId(userDO.getId());
             permutationDO.setId(null);
             permutationDO.setCreateTime(new Date());
             permutationDO.setReward(null);
             permutationMapper.insert(permutationDO);
-        }
 
-        //扣款，写记录
-        if (money.compareTo(userDO.getGold()) == 1) {
-            if (money.compareTo(userDO.getGold().add(userDO.getPrice())) == 1) {
-                return new BaseVO(false, ErrorCodeEnum.E0763.getKey(), ErrorCodeEnum.E0763.getValue());
-            }
         }
+        lotteryOrderDO.setTargetIds(StringUtils.join(permutationDOS.stream().map(permutationDO -> permutationDO.getId()).collect(Collectors.toList()), ","));
+        //入库，写记录
+        lotteryOrderMapper.insert(lotteryOrderDO);
+
         if (money.compareTo(userDO.getGold()) == 1) {
             //直接扣除彩金
             BigDecimal remainingPrice = money.subtract(userDO.getGold());
@@ -417,8 +441,24 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         }
         //添加钱包消费记录
         PayOrderDO payOrder = new PayOrderDO();
-        payOrder.setType("" + lotteryId);
-        payOrder.setOrderId(OrderNumberGenerationUtil.getOrderId());
+        payOrder.setType(PayOrderTypeEnum.ARRAY.getKey());
+        if (lotteryOrderDO.getType().equals(LotteryOrderTypeEnum.ARRANGE.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.ARRANGE.getKey());
+        } else if (lotteryOrderDO.getType().equals(LotteryOrderTypeEnum.SEVEN_STAR.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.SEVEN_STAR.getKey());
+        } else if (lotteryOrderDO.getType().equals(LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.GRAND_LOTTO.getKey());
+            //wyong edit 福彩3D
+        } else if (lotteryOrderDO.getType().equals(LotteryOrderTypeEnum.FC3D.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.FC3D.getKey());
+        } else if (lotteryOrderDO.getType().equals(LotteryOrderTypeEnum.FCSSQ.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.FCSSQ.getKey());
+        } else if (lotteryOrderDO.getType().equals(LotteryOrderTypeEnum.FCKL8.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.FCKL8.getKey());
+        } else if (lotteryOrderDO.getType().equals(LotteryOrderTypeEnum.FCQLC.getKey())) {
+            payOrder.setType(PayOrderTypeEnum.FCQLC.getKey());
+        }
+        payOrder.setOrderId(orderNo);
         payOrder.setState(PayOrderStateEnum.PAID.getKey());
         payOrder.setCreateTime(new Date());
         payOrder.setUpdateTime(new Date());
@@ -430,7 +470,8 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         map.put("gold", userDO.getGold().toPlainString());
         map.put("price", userDO.getPrice().toPlainString());
         map.put("total", userDO.getGold().add(userDO.getPrice()).toPlainString());
-        return BaseDataVO.builder().data(map).build();
+        map.put("orderNo", orderNo);
+        return BaseDataVO.builder().success(true).errorCode("0").errorMsg("成功").data(map).build();
     }
 
 

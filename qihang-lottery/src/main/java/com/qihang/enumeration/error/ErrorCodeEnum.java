@@ -62,7 +62,8 @@ public enum ErrorCodeEnum {
     E093("E093", "提现金额最低10起提"),
     E094("E094", "该订单奖金未确认"),
 
-    E095("E095", "该期已经截止");
+    E095("E095", "该期已经截止"),
+    E096("E096", "金额校验异常");
     private String key;
     private String value;
 }

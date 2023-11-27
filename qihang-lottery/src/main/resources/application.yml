@@ -7,3 +7,4 @@ task:
   minute: true
   omit: true
   award: true
+  change: true

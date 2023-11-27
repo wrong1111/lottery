@@ -6,11 +6,7 @@ import com.qihang.controller.transferIn.admin.dto.ChangeDTO;
 import com.qihang.controller.transferIn.admin.dto.LotteryAutoStateDTO;
 import com.qihang.controller.transferIn.admin.dto.LotteryOutDTO;
 import com.qihang.service.transfer.IChangeService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -36,7 +32,7 @@ public class AdminChangeController {
     }
 
     @PostMapping("/list")
-    public BaseVO list(@RequestBody LotteryOutDTO lotteryOutDTO) {
+    public CommonListVO list(@RequestBody LotteryOutDTO lotteryOutDTO) {
         return changeService.list(lotteryOutDTO);
     }
 
@@ -48,5 +44,10 @@ public class AdminChangeController {
     @PostMapping("/editAutoState")
     public BaseVO editAutoState(@Valid @RequestBody LotteryAutoStateDTO lotteryOutDTO) {
         return changeService.editAutoState(lotteryOutDTO);
+    }
+
+    @PostMapping("/send")
+    public BaseVO send(@RequestParam Integer id) {
+        return changeService.send(id, false);
     }
 }

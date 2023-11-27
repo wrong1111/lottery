@@ -542,6 +542,7 @@ public class LotteryProcessor implements PageProcessor {
                     winBurdenMatch.setIssueNo(issueNo);
                     winBurdenMatch.setCreateTime(new Date());
                     winBurdenMatch.setUpdateTime(new Date());
+                    winBurdenMatch.setGameNo(issueNo + RacingBallServiceImpl.fillZero(winBurdenMatch.getNumber(), 3));
                     winBurdenMatchList.add(winBurdenMatch);
                 }
             } catch (Exception e) {
@@ -581,6 +582,7 @@ public class LotteryProcessor implements PageProcessor {
                     winBurdenMatch.setIssueNo(issueNo);
                     winBurdenMatch.setCreateTime(new Date());
                     winBurdenMatch.setUpdateTime(new Date());
+                    winBurdenMatch.setGameNo(issueNo + RacingBallServiceImpl.fillZero(winBurdenMatch.getNumber(), 3));
                     winBurdenMatchList.add(winBurdenMatch);
                 }
             } catch (Exception e) {
