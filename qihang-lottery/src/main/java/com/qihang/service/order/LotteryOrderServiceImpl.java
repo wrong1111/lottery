@@ -695,7 +695,7 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             lotteryOrderMapper.updateById(lotteryOrderDO);
 
             if (0 == lotteryOrderDO.getTransferType()) {
-                String json = "已出|" + DateUtil.formatDate(lotteryOrderDO.getTicketingTime()) + "|" + (StringUtils.isBlank(lotteryOrderDO.getBill()) ? "" : lotteryOrderDO.getBill());
+                String json = "已出|" + DateUtil.formatDateTime(lotteryOrderDO.getTicketingTime()) + "|" + (StringUtils.isBlank(lotteryOrderDO.getBill()) ? "" : lotteryOrderDO.getBill());
                 redisService.set(lotteryOrderDO.getTransferOrderNo(), json, 864000L);
             }
         }
@@ -813,8 +813,8 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         order.setBill(actualVoteDTO.getBill());
         lotteryOrderMapper.updateById(order);
         if (order.getTransferType() == TransferEnum.TransferIn.code) {
-            String json = "已出|" + DateUtil.formatDate(order.getTicketingTime()) + "|" + (StringUtils.isBlank(order.getBill()) ? "" : order.getBill());
-            redisService.set(order.getTransferOrderNo(), json, 864000L);
+            String json = "已出|" + DateUtil.formatDateTime(order.getTicketingTime()) + "|" + (StringUtils.isBlank(order.getBill()) ? "" : order.getBill());
+            redisService.set(order.getOrderId(), json, 864000L);
         }
         return new BaseVO();
     }

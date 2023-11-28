@@ -39,7 +39,6 @@ import com.qihang.mapper.transfer.LotteryTransferMapper;
 import com.qihang.mapper.transfer.OrderTransferLogMapper;
 import com.qihang.mapper.transfer.ShopTransferMapper;
 import com.qihang.service.order.ILotteryOrderService;
-import com.qihang.service.upload.IUploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -47,12 +46,14 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.qihang.service.transfer.ITransferOutServiceImpl.isSports;
@@ -323,7 +324,7 @@ public class ChangeServiceImpl implements IChangeService {
 
         List<LotteryOrderDO> lotteryOrderDOS = new ArrayList<>();
         if (null == id) {
-            //批量
+            //批量 转单 查询
             lotteryOrderDOS = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().isNotNull("transfer_order_no").lambda()
                     .eq(LotteryOrderDO::getTransferType, 1)
                     .isNull(LotteryOrderDO::getBill).orderByDesc(LotteryOrderDO::getId));
@@ -336,7 +337,6 @@ public class ChangeServiceImpl implements IChangeService {
         if (CollectionUtil.isEmpty(lotteryOrderDOS)) {
             return BaseVO.builder().success(true).errorMsg("没有订单需要查询").build();
         }
-        List<String> stateList = new ArrayList<>(Arrays.asList(new String[]{"待出", "已出", "退票"}));
         Map<String, String> orderNoMap = new HashMap<>();
         Map<Integer, List<LotteryOrderDO>> lotteryOrderDOMap = lotteryOrderDOS.stream().collect(Collectors.groupingBy(LotteryOrderDO::getTransferShopId));
         for (Map.Entry<Integer, List<LotteryOrderDO>> entry : lotteryOrderDOMap.entrySet()) {
@@ -350,7 +350,7 @@ public class ChangeServiceImpl implements IChangeService {
             }
             for (int i = 0; i < index; i++) {
                 List<String> orderNoList = queryList.stream().skip(i * size).limit(size).map(item -> item.getTransferOrderNo()).collect(Collectors.toList());
-                String data = JSON.toJSONString(StringUtils.join(orderNoList, ","));
+                String data = StringUtils.join(orderNoList, ",");
                 String result = buildPostQuery("changeState", shopTransferDO, data);
                 log.info(" orderId:{},result: {}", data, result);
                 if (StringUtils.isBlank(result)) {
@@ -377,10 +377,20 @@ public class ChangeServiceImpl implements IChangeService {
                                         updateOrderDO.setTicketingTime(DateUtil.parse(ary[1], "yyyy-MM-dd HH:mm:ss"));
                                     }
                                     //图片需要下载到本地
+                                    String bill = "";
                                     if (StringUtils.isNotBlank(ary[2])) {
-                                        loadPicture(ary[2]);
+                                        bill = loadPicture(ary[2]);
+                                        updateOrderDO.setBill(bill);
                                     }
-                                    int updateCounts = lotteryOrderMapper.update(updateOrderDO, new LambdaQueryWrapper<LotteryOrderDO>().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()).eq(LotteryOrderDO::getTransferOrderNo, orderNo.getKey()));
+                                    if (StringUtils.isNotBlank(bill)) {
+                                        orderNoMap.put(orderNo.getKey(), ary[0] + "|" + ary[1] + "|" + bill);
+                                    }
+                                    int c = lotteryOrderMapper.update(updateOrderDO, new LambdaQueryWrapper<LotteryOrderDO>().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()).eq(LotteryOrderDO::getTransferOrderNo, orderNo.getKey()));
+                                    updateOrderDO.setState(null);
+                                    c = lotteryOrderMapper.update(updateOrderDO, new LambdaQueryWrapper<LotteryOrderDO>().eq(LotteryOrderDO::getTransferOrderNo, orderNo.getKey()));
+                                    if (c > 0) {
+
+                                    }
                                 }
                             } else if (orderNoVal.startsWith("退票")) {
                                 //退票业务处理
@@ -488,32 +498,55 @@ public class ChangeServiceImpl implements IChangeService {
     LocalUtil localUtil;
 
 
-    public void loadPicture(String targetPics) {
-        new Thread(() -> {
-            try {
-                if (StringUtils.isBlank(targetPics)) {
-                    return;
-                }
-                String[] pics = StringUtils.split(targetPics, ",");
-                for (String pic : pics) {
-                    if (StringUtils.isNotBlank(pic)) {
-                        int idx = localUtil.getFilePath().lastIndexOf("/");
-                        String filePath = "";
-                        if (idx > 0) {
-                            String splitPath = localUtil.getFilePath().substring(idx + 1);
-                            filePath = pic.substring(pic.indexOf(splitPath));
-                        } else {
-                            filePath = pic.substring(pic.indexOf("/"));
-                        }
-                        InputStream is = new URL(pic).openStream();
-                        localUtil.saveFile(is, filePath);
-                    }
-                }
-            } catch (Exception e) {
-                log.error("图片下载失败", e);
-            }
-        }).start();
-
+    public String loadPicture(String targetPics) {
+        if (StringUtils.isBlank(targetPics)) {
+            return "";
+        }
+        String[] pics = StringUtils.split(targetPics, ",");
+        List<String> list = new ArrayList<>(Arrays.asList(pics));
+        list = list.stream().filter(p -> StringUtils.isNotBlank(p)).collect(Collectors.toList());
+        return callFurturn(list);
     }
 
+    private String callFurturn(List<String> arys) {
+        // 创建异步任务数组
+        CompletableFuture<String>[] futures = new CompletableFuture[arys.size()];
+        int i = 0;
+        for (String s : arys) {
+            futures[i] = CompletableFuture.supplyAsync(() -> makeRequest(s));
+            i++;
+        }
+        // 等待所有任务完成
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures);
+        List<String> results = new ArrayList<>();
+        // 同步返回结果数组
+        try {
+            allFutures.get(); // 等待所有任务完成
+            for (int ii = 0; ii < futures.length; ii++) {
+                results.add(futures[ii].get()); // 获取每个任务的结果
+            }
+            // 处理结果数组
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return StringUtils.join(results, ",");
+    }
+
+    private String makeRequest(String pic) {
+        int idx = localUtil.getFilePath().lastIndexOf("/");
+        String filePath = "";
+        if (idx > 0) {
+            String splitPath = localUtil.getFilePath().substring(idx + 1);
+            filePath = pic.substring(pic.indexOf(splitPath));
+        } else {
+            filePath = pic.substring(pic.indexOf("/"));
+        }
+        InputStream is = null;
+        try {
+            is = new URL(pic).openStream();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return localUtil.saveFile(is, filePath);
+    }
 }

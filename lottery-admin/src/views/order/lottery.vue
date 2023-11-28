@@ -47,7 +47,7 @@
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="warning" icon="el-icon-takeaway-box" size="mini" plain @click="syncChangeState">
+        <el-button type="warning" icon="el-icon-takeaway-box" size="mini" plain @click="syncChangeStateAll">
           一键同步转单状态
         </el-button>
       </el-col>
@@ -540,6 +540,9 @@
       getContent(txt) {
         return txt
       },
+      syncChangeStateAll(){
+         this.syncChangeState('')
+      },
       //单个 同步转单 状态
       syncChangeState(id) {
         orderChangeState({
@@ -549,6 +552,7 @@
             type: res.success ? 'success' : 'warning',
             message: (res.success && res.data) ? res.data : res.errorMsg
           });
+          this.getList()
         })
       },
       //单个转单
@@ -560,6 +564,7 @@
               type: 'success',
               message: res.data
             });
+            this.getList()
           }
         })
       },

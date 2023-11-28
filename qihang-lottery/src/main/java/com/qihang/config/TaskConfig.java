@@ -17,4 +17,5 @@ public class TaskConfig {
     Boolean minute;
     Boolean award;
     Boolean change;
+    Boolean checkBill;
 }

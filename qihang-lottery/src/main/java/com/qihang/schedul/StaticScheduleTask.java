@@ -94,6 +94,15 @@ public class StaticScheduleTask {
         log.info("转单 定时任务 scheduleAutoChange  {}  结束时间【{}】", taskConfig.getChange(), DateUtil.now());
     }
 
+    @Scheduled(cron = "20 0/5 * * * ?")
+    private void autoCheckBill() {
+        log.info("转单出票查询 定时任务 autoCheckBill  {}  触发时间【{}】", taskConfig.getCheckBill(), DateUtil.now());
+        if (taskConfig.getCheckBill()) {
+            changeService.chageStateAsync(null);
+        }
+        log.info("转单出票查询 定时任务 autoCheckBill  {}  结束时间【{}】", taskConfig.getCheckBill(), DateUtil.now());
+    }
+
     /*
        爬虫 遗漏
 

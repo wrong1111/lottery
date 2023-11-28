@@ -4,6 +4,7 @@ package com.qihang.common.util.upload;
 import cn.hutool.core.date.DateUtil;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import java.io.*;
 import java.time.LocalDateTime;
 
 
+@Slf4j
 @Data
 @Component
 @ConfigurationProperties(prefix = "local")
@@ -26,6 +28,7 @@ public class LocalUtil {
         String root = this.filePath;
         String path = file.getAbsolutePath();
         String urlPath = path.substring(root.length());
+        log.info(" path{} 上传文件 {}", path, url + urlPath);
         if (file.exists()) {
             return url + urlPath;
         }
@@ -50,25 +53,45 @@ public class LocalUtil {
     }
 
     public String saveFile(InputStream is, String path) {
+        BufferedOutputStream bufferedOutputStream = null;
         try {
             byte[] by = new byte[1024];
             int len = -1;
             String root = this.filePath;
             String filePath = File.separator + path + File.separator + builderName(".png");
+            if (path.indexOf(".") > -1) {
+                filePath = File.separator + path;
+            }
             File saveFile = new File(root + filePath);
             saveFile.getParentFile().mkdirs();
             if (!saveFile.exists()) {
                 saveFile.createNewFile();
             }
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(saveFile));
+            bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(saveFile));
             while ((len = is.read(by)) != -1) {
                 bufferedOutputStream.write(by, 0, len);
             }
             //文件访问路径
+            log.info(" path: {} 上传文件 在 {}", path, url + filePath);
             String address = url + filePath;
             return address;
         } catch (Exception e) {
-
+            log.error(" saveFile {} 出现错误 {}", path, e);
+        } finally {
+            if (bufferedOutputStream != null) {
+                try {
+                    bufferedOutputStream.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
         return "";
     }

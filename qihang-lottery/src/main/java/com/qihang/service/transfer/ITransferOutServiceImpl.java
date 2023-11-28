@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.RedisService;
@@ -509,22 +510,23 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         }
 
         if (!CollectionUtils.isEmpty(orderNoList)) {
-            List<LotteryOrderDO> lotteryOrderDOS = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda()
-                    .in(LotteryOrderDO::getOrderId, orderNoList));
+            List<LotteryOrderDO> lotteryOrderDOS = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>()
+                    .in("order_id", orderNoList));
+            //(LotteryOrderDO::getOrderId, orderNoList));
             if (!CollectionUtils.isEmpty(lotteryOrderDOS)) {
                 for (LotteryOrderDO lotteryOrderDO : lotteryOrderDOS) {
                     //只要 不是待出票或者退票都是已出票
                     if (!lotteryOrderDO.getState().equals(LotteryOrderStateEnum.TO_BE_ISSUED.getKey())
                             && !lotteryOrderDO.getState().equals(LotteryOrderStateEnum.REFUND.getKey())) {
-                        String json = "已出|" + DateUtil.formatDate(lotteryOrderDO.getTicketingTime()) + "|" + (StringUtils.isBlank(lotteryOrderDO.getBill()) ? "" : lotteryOrderDO.getBill());
-                        redisService.set(lotteryOrderDO.getTransferOrderNo(), json, 864000L);
-                        resultMap.put(lotteryOrderDO.getTransferOrderNo(), StringUtils.isBlank(lotteryOrderDO.getBill()) ? "已出" : lotteryOrderDO.getBill());
+                        String json = "已出|" + DateUtil.formatDateTime(lotteryOrderDO.getTicketingTime()) + "|" + (StringUtils.isBlank(lotteryOrderDO.getBill()) ? "" : lotteryOrderDO.getBill());
+                        redisService.set(lotteryOrderDO.getOrderId(), json, 864000L);
+                        resultMap.put(lotteryOrderDO.getOrderId(),json);
                     } else if (lotteryOrderDO.getState().equals(LotteryOrderStateEnum.TO_BE_ISSUED.getKey())) {
-                        redisService.set(lotteryOrderDO.getTransferOrderNo(), "待出", 300L);
-                        resultMap.put(lotteryOrderDO.getTransferOrderNo(), "待出");
+                        redisService.set(lotteryOrderDO.getOrderId(), "待出", 300L);
+                        resultMap.put(lotteryOrderDO.getOrderId(), "待出");
                     } else if (lotteryOrderDO.getState().equals(LotteryOrderStateEnum.REFUND.getKey())) {
-                        redisService.set(lotteryOrderDO.getTransferOrderNo(), "退票", 864000L);
-                        resultMap.put(lotteryOrderDO.getTransferOrderNo(), "退票");
+                        redisService.set(lotteryOrderDO.getOrderId(), "退票", 864000L);
+                        resultMap.put(lotteryOrderDO.getOrderId(), "退票");
                     }
                 }
             }
