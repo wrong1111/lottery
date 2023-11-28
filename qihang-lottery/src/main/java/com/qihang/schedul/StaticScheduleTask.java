@@ -80,27 +80,27 @@ public class StaticScheduleTask {
     /**
      * 处理订单没出票采用邮件通知
      */
-    @Scheduled(cron = "0 0/2 * * * ?")
+    @Scheduled(cron = "20 0/2 * * * ?")
     private void toEmail() {
         lotteryOrderService.NoTicketIssuedSedEmail();
     }
 
-    @Scheduled(cron = "0 0/1 * * * ?")
+    @Scheduled(cron = "10 0/1 * * * ?")
     private void autoChange() {
-        log.info("转单 定时任务 scheduleAutoChange  {}  触发时间【{}】", taskConfig.getChange(), DateUtil.now());
+        log.info("转单 5分钟内订单 定时任务 scheduleAutoChange  {}  触发时间【{}】", taskConfig.getChange(), DateUtil.now());
         if (taskConfig.getChange()) {
             changeService.scheduleAutoChange();
         }
-        log.info("转单 定时任务 scheduleAutoChange  {}  结束时间【{}】", taskConfig.getChange(), DateUtil.now());
+        log.info("转单 5分钟内订单定时任务 scheduleAutoChange  {}  结束时间【{}】", taskConfig.getChange(), DateUtil.now());
     }
 
     @Scheduled(cron = "20 0/5 * * * ?")
     private void autoCheckBill() {
-        log.info("转单出票查询 定时任务 autoCheckBill  {}  触发时间【{}】", taskConfig.getCheckBill(), DateUtil.now());
+        log.info("转单出票查询2天内未获得票据的记录 定时任务 autoCheckBill  {}  触发时间【{}】", taskConfig.getCheckBill(), DateUtil.now());
         if (taskConfig.getCheckBill()) {
             changeService.chageStateAsync(null);
         }
-        log.info("转单出票查询 定时任务 autoCheckBill  {}  结束时间【{}】", taskConfig.getCheckBill(), DateUtil.now());
+        log.info("转单出票查询2天内未获得票据的记录 定时任务 autoCheckBill  {}  结束时间【{}】", taskConfig.getCheckBill(), DateUtil.now());
     }
 
     /*
@@ -120,7 +120,7 @@ public class StaticScheduleTask {
      爬虫
      体彩，福彩每日开奖类
      */
-    @Scheduled(cron = "0 0/10 21,22 * * ?")
+    @Scheduled(cron = "31 0/10 21,22 * * ?")
     //@Scheduled(cron = "0 0/10 * * * ?")
     private void configureProcessorTasks() {
         //执行爬虫
@@ -133,7 +133,7 @@ public class StaticScheduleTask {
     /*
       爬虫 赛事 每小时
       */
-    @Scheduled(cron = "0 30 */1 * * ?")
+    @Scheduled(cron = "21 30 */1 * * ?")
     private void configureProcessorMatchTasks() {
         //执行爬虫
         log.info("赛事 爬虫定时任务 configureProcessorMatchTasks  {}  触发时间【{}】", taskConfig.getHour(), DateUtil.now());
@@ -158,7 +158,7 @@ public class StaticScheduleTask {
     /**
      * 执行每60秒执行派奖计算
      */
-    @Scheduled(cron = "0 0/1 * * * ?")
+    @Scheduled(cron = "50 0/1 * * * ?")
     private void configureTasks() {
         log.info("爬虫定时任务触发时间【{}】 {} ", taskConfig.getMinute(), DateUtil.now());
         if (taskConfig.getAward()) {

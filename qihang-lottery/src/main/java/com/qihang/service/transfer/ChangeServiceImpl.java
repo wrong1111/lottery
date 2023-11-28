@@ -327,7 +327,7 @@ public class ChangeServiceImpl implements IChangeService {
             //批量 转单 查询
             lotteryOrderDOS = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().isNotNull("transfer_order_no").lambda()
                     .eq(LotteryOrderDO::getTransferType, 1)
-                    .isNull(LotteryOrderDO::getBill).orderByDesc(LotteryOrderDO::getId));
+                    .isNull(LotteryOrderDO::getBill).gt(LotteryOrderDO::getCreateTime, DateUtils.addDays(new Date(), -2)).orderByDesc(LotteryOrderDO::getId));
         } else {
             LotteryOrderDO lotteryOrderDO = lotteryOrderMapper.selectById(id);
             if (lotteryOrderDO.getTransferType() == 1 && null == lotteryOrderDO.getBill()) {

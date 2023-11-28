@@ -8,3 +8,4 @@ task:
   omit: true
   award: true
   change: true
+  checkBill: true
