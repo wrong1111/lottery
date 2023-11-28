@@ -20,8 +20,14 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="voList" border >
+    <el-table v-loading="loading" :data="voList" border>
       <el-table-column label="店名" align="center" prop="shopName" />
+      <el-table-column label="状态" align="center" prop="states">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.states==1" type="danger">禁用</el-tag>
+          <el-tag v-else type="success">正常</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="ID" align="center" prop="lotteryType" />
       <el-table-column label="彩种名称" align="center" prop="lotteryName" />
       <el-table-column label="LOGO" align="center">
@@ -31,7 +37,8 @@
       </el-table-column>
       <el-table-column label="转单形式" align="center">
         <template slot-scope="scope">
-          <span :style="{ color: scope.row.transferOutAuto=='0' ? 'red' : '' }">{{ scope.row.transferOutAuto == "0" ? "自动" : "手动" }}</span>
+          <span
+            :style="{ color: scope.row.transferOutAuto=='0' ? 'red' : '' }">{{ scope.row.transferOutAuto == "0" ? "自动" : "手动" }}</span>
         </template>
       </el-table-column>
 
@@ -44,10 +51,15 @@
       </el-table-column>
       <el-table-column label="操作" align="center">
         <template slot-scope="scope">
-          <el-button size="mini" type="danger" plain @click="editStateRow(scope.row,0)"
+          <el-button size="mini" type="primary" plain @click="editStateRow(scope.row,0)"
             v-if="scope.row.transferOutAuto==1">自动</el-button>
-          <el-button size="mini" type="primary" plain @click="editStateRow(scope.row,1)"
+          <el-button size="mini" type="success" plain @click="editStateRow(scope.row,1)"
             v-if="scope.row.transferOutAuto==0">手动</el-button>
+
+          <el-button size="mini" type="danger" plain @click="editDisables(scope.row,1)"
+            v-if="scope.row.states==0">禁用</el-button>
+          <el-button size="mini" type="danger" plain @click="editDisables(scope.row,0)"
+            v-if="scope.row.states==1">开启</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -66,7 +78,8 @@
     getRemoteLotteryInfo,
     getShopall,
     getChangeList,
-    editAutoState
+    editAutoState,
+    editDisable
   } from "@/api/transfer/out";
   import {
     deepClone
@@ -124,6 +137,14 @@
       this.getList()
     },
     methods: {
+      //
+      editDisables(row, state) {
+        editDisable({'id':row.id, 'states':state}).then((res) => {
+          if (res.success) {
+            this.getList()
+          }
+        })
+      },
       //修改
       editTransfer(row) {
 
@@ -171,14 +192,14 @@
           getRemoteLotteryInfo({
             url: value
           }).then((res) => {
-            if(res.success){
+            if (res.success) {
               this.$message({
                 type: 'success',
                 message: '一键获取成功'
               });
-               this.getList()
+              this.getList()
             }
-           
+
           })
 
         }).catch(() => {

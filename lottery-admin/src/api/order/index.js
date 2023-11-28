@@ -53,3 +53,22 @@ export function orderActual(data) {
     data: data
   })
 }
+
+//转单
+
+export function orderChange(id) {
+  return request({
+    url: '/admin/lottery/order/change/' + id,
+    method: 'post'
+  })
+}
+
+//同步转单状态
+export function orderChangeState(data) {
+  return request({
+    url: '/admin/lottery/order/changeState',
+    method: 'post',
+    data: data,
+    timeout:50000
+  })
+}

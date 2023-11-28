@@ -1,10 +1,12 @@
 package com.qihang.service.transfer;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.qihang.annotation.TenantIgnore;
+import com.qihang.common.util.RedisService;
 import com.qihang.common.util.SpringContextUtils;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.vo.BaseDataVO;
@@ -28,6 +30,7 @@ import com.qihang.domain.transfer.ShopTransferDO;
 import com.qihang.domain.user.UserDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
 import com.qihang.enumeration.error.ErrorCodeEnum;
+import com.qihang.enumeration.order.lottery.LotteryOrderStateEnum;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import com.qihang.enumeration.order.pay.PayOrderStateEnum;
 import com.qihang.enumeration.order.pay.PayOrderTypeEnum;
@@ -65,6 +68,9 @@ import java.util.stream.Collectors;
 @Service
 public class ITransferOutServiceImpl implements ITransferOutService {
 
+
+    @Resource
+    RedisService redisService;
 
     @Resource
     LotteryTransferMapper lotteryTransferMapper;
@@ -191,6 +197,15 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         if (null == userDO) {
             return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("账号异常，请联系商家").build();
         }
+
+        //判断此单是否已经下过单
+        String orderNo = key + lotteryOrderDO.getOrderId();
+        lotteryOrderDO.setOrderId(orderNo);
+        if (lotteryOrderMapper.selectCount(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getOrderId, orderNo)) > 0) {
+            Map<String, String> dataMap = new HashMap<>();
+            dataMap.put("orderNo", orderNo);
+            return BaseDataVO.builder().data(dataMap).success(false).errorCode("1").errorMsg("此单已经下过单，请勿重复下单").build();
+        }
         //修改订单发起人为 账户对应的会员账户uid
         lotteryOrderDO.setUserId(userDO.getId());
         lotteryOrderDO.setTenantId(1);
@@ -223,12 +238,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
                 return BaseDataVO.builder().success(false).errorCode(ErrorCodeEnum.E0763.getKey()).errorMsg(ErrorCodeEnum.E0763.getValue()).build();
             }
         }
-        //判断此单是否已经下过单
-        String orderNo = key + lotteryOrderDO.getOrderId();
-        lotteryOrderDO.setOrderId(orderNo);
-        if (lotteryOrderMapper.selectCount(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getOrderId, orderNo)) > 0) {
-            return BaseDataVO.builder().success(false).errorCode("1").errorMsg("此单已经下过单，请勿重复下单").build();
-        }
+
         Date now = new Date();
         //判断此单是否已经超过最后下单时间
         int beforeTimes = lotteryTransferDOS.getTransferBeforeTime();//提前
@@ -362,6 +372,15 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         if (null == userDO) {
             return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("账号异常，请联系商家").build();
         }
+        //判断此单是否已经下过单
+        String orderNo = key + lotteryOrderDO.getOrderId();
+        lotteryOrderDO.setOrderId(orderNo);
+        if (lotteryOrderMapper.selectCount(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getOrderId, orderNo)) > 0) {
+            Map<String, String> resmap = new HashMap<>();
+            resmap.put("orderNo", orderNo);
+            return BaseDataVO.builder().data(resmap).success(false).errorCode("1").errorMsg("此单已经下过单，请勿重复下单").build();
+        }
+
         //修改订单发起人为 账户对应的会员账户uid
         lotteryOrderDO.setUserId(userDO.getId());
         lotteryOrderDO.setTenantId(1);
@@ -379,15 +398,6 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         LotteryTransferDO lotteryTransferDOS = lotteryTransferMapper.selectOne(new QueryWrapper<LotteryTransferDO>().lambda().eq(LotteryTransferDO::getLotteryType, lotteryId).eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferIn.code));
         if (null == lotteryTransferDOS || lotteryTransferDOS.getStates() != 0) {
             return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("彩种暂停收单，请联系商家").build();
-        }
-
-        //判断此单是否已经下过单
-        String orderNo = key + lotteryOrderDO.getOrderId();
-        lotteryOrderDO.setOrderId(orderNo);
-        if (lotteryOrderMapper.selectCount(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getOrderId, orderNo)) > 0) {
-            Map<String, String> resmap = new HashMap<>();
-            resmap.put("orderNo", orderNo);
-            return BaseDataVO.builder().data(resmap).success(false).errorCode("1").errorMsg("此单已经下过单，请勿重复下单").build();
         }
 
 
@@ -472,6 +482,54 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         map.put("total", userDO.getGold().add(userDO.getPrice()).toPlainString());
         map.put("orderNo", orderNo);
         return BaseDataVO.builder().success(true).errorCode("0").errorMsg("成功").data(map).build();
+    }
+
+    @TenantIgnore
+    @Override
+    public BaseDataVO getChangeState(String data, String key) {
+        if (StringUtils.isBlank(data)) {
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("参数错误-订单号为空").build();
+        }
+        String[] orderNos = StringUtils.split(data, ",");
+        if (orderNos.length > 500) {
+            return BaseDataVO.builder().success(false).errorMsg("超过最大批量查询-500").build();
+        }
+        //待查询的订单 号集合
+        List<String> orderNoList = new ArrayList<>(orderNos.length);
+
+        Map<String, String> resultMap = new HashMap<>();
+        for (String orderNo : orderNos) {
+            Object bill = redisService.get(orderNo);
+            if (bill == null) {
+                orderNoList.add(orderNo);
+                // redisService.set(orderNo, "", 300L);
+            } else {
+                resultMap.put(orderNo, bill.toString());
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(orderNoList)) {
+            List<LotteryOrderDO> lotteryOrderDOS = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda()
+                    .in(LotteryOrderDO::getOrderId, orderNoList));
+            if (!CollectionUtils.isEmpty(lotteryOrderDOS)) {
+                for (LotteryOrderDO lotteryOrderDO : lotteryOrderDOS) {
+                    //只要 不是待出票或者退票都是已出票
+                    if (!lotteryOrderDO.getState().equals(LotteryOrderStateEnum.TO_BE_ISSUED.getKey())
+                            && !lotteryOrderDO.getState().equals(LotteryOrderStateEnum.REFUND.getKey())) {
+                        String json = "已出|" + DateUtil.formatDate(lotteryOrderDO.getTicketingTime()) + "|" + (StringUtils.isBlank(lotteryOrderDO.getBill()) ? "" : lotteryOrderDO.getBill());
+                        redisService.set(lotteryOrderDO.getTransferOrderNo(), json, 864000L);
+                        resultMap.put(lotteryOrderDO.getTransferOrderNo(), StringUtils.isBlank(lotteryOrderDO.getBill()) ? "已出" : lotteryOrderDO.getBill());
+                    } else if (lotteryOrderDO.getState().equals(LotteryOrderStateEnum.TO_BE_ISSUED.getKey())) {
+                        redisService.set(lotteryOrderDO.getTransferOrderNo(), "待出", 300L);
+                        resultMap.put(lotteryOrderDO.getTransferOrderNo(), "待出");
+                    } else if (lotteryOrderDO.getState().equals(LotteryOrderStateEnum.REFUND.getKey())) {
+                        redisService.set(lotteryOrderDO.getTransferOrderNo(), "退票", 864000L);
+                        resultMap.put(lotteryOrderDO.getTransferOrderNo(), "退票");
+                    }
+                }
+            }
+        }
+        return BaseDataVO.builder().success(true).data(resultMap).errorCode("0").errorMsg("成功").data(resultMap).build();
     }
 
 

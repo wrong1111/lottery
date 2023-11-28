@@ -6,6 +6,7 @@ import com.qihang.controller.upload.vo.FileVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.InputStream;
 
 
@@ -29,6 +30,11 @@ public class LocalUploadServiceImpl implements IUploadService {
 
     @Override
     public String upload(InputStream in) {
+        return localUtil.upload(in);
+    }
+
+    @Override
+    public String upload(InputStream in, File file) {
         return localUtil.upload(in);
     }
 }

@@ -32,3 +32,12 @@ export function editAutoState(data) {
     data:data
   });
 }
+
+
+export function editDisable(data) {
+  return request({
+    url: "/admin/transfer/change/editDisable",
+    method: "post",
+    data:data
+  });
+}

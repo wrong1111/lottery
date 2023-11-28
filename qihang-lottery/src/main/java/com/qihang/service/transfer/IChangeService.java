@@ -24,5 +24,13 @@ public interface IChangeService {
 
     public BaseVO send(Integer id, boolean auto);
 
+    public BaseVO sendSync(Integer id, boolean auto);
+
+    public BaseVO chageState(Integer id);
+
+    public BaseVO chageStateAsync(Integer id);
+
     public void scheduleAutoChange();
+
+    public BaseVO editLotteryTransferDisable(Integer id, Integer state);
 }

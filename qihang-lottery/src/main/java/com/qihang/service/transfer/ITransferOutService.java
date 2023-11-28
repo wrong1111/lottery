@@ -31,4 +31,6 @@ public interface ITransferOutService {
     public BaseDataVO createSportOrder(LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, String key);
 
     public BaseDataVO createDigitOrder(LotteryOrderDO lotteryOrderDO, List<PermutationDO> permutationDOS, String key);
+
+    public BaseDataVO getChangeState(String data, String key);
 }

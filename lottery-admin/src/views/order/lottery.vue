@@ -23,6 +23,11 @@
           <el-option v-for="item in bills" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
+      <el-form-item label="订单类型" prop="transferType">
+        <el-select v-model="queryParams.transferType" placeholder="是否有票据" clearable>
+          <el-option v-for="item in orderTypes" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -41,7 +46,11 @@
           一键出票
         </el-button>
       </el-col>
-
+      <el-col :span="1.5">
+        <el-button type="warning" icon="el-icon-takeaway-box" size="mini" plain @click="syncChangeState">
+          一键同步转单状态
+        </el-button>
+      </el-col>
       <el-col :span="1.5">
         <el-button type="info" icon="el-icon-sort" size="mini" plain @click="toggleExpandAll">
           展开/折叠
@@ -119,6 +128,18 @@
                     <span>{{ parseTime(scope.row.ticketingTime) }}</span>
                   </el-form-item>
                 </el-col>
+                <el-col :span="8">
+                  <el-form-item label="订单标识：">
+                    <span
+                      :class="0 == scope.row.transferType?'red1':(1==scope.row.transferType?'blue1':'')">{{ getTransferType(scope.row) }}</span>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="转单时间：">
+                    <span
+                      :class="0 == scope.row.transferType?'red1':(1==scope.row.transferType?'blue1':'')">{{ 0 == scope.row.transferType?parseTime(scope.row.createTime):parseTime(scope.row.transferTime)}}</span>
+                  </el-form-item>
+                </el-col>
                 <el-col :span="24">
                   <template v-if="isSportRace(scope.row)">
                     <el-table :data="scope.row.racingBallList" border stripe>
@@ -177,11 +198,17 @@
                   <el-form-item>
                     <template v-if="scope.row.state === '0'">
                       <el-button size="mini" type="success" @click="ticketSigle(scope.row)">出票</el-button>
-                      <el-button size="mini" type="warning" @click="refuseSigle(scope.row)">拒绝</el-button>
+                      <!-- <el-button size="mini" type="warning" @click="refuseSigle(scope.row)">拒绝</el-button> -->
                     </template>
                     <el-button size="mini" type="danger" @click="retreatSigle(scope.row)">退票</el-button>
                     <el-button size="mini" type="primary" @click="showInfo(scope.row)">详情</el-button>
                     <el-button size="mini" type="success" @click="upload(scope.row)">上传票据</el-button>
+                    <template v-if="scope.row.transferType==null">
+                      <el-button size="mini" type="primary" @click="changeSigle(scope.row.id)">转单</el-button>
+                    </template>
+                    <template v-if="scope.row.transferType==1">
+                      <el-button size="mini" type="success" @click="syncChangeState(scope.row.id)">同步转单状态</el-button>
+                    </template>
                   </el-form-item>
                 </el-col>
                 <el-col :span="24">
@@ -225,6 +252,14 @@
           <span>{{ parseTime(scope.row.ticketingTime) }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="订单类型" align="center" show-overflow-tooltip>
+        <template slot-scope="scope">
+          <span
+            :class="0 == scope.row.transferType?'red1':(1==scope.row.transferType?'blue1':'')">{{ getTransferType(scope.row) }}</span>
+        </template>
+      </el-table-column>
+     <!-- <el-table-column label="转单时间" align="center" prop="transferTime" show-overflow-tooltip>
+      </el-table-column> -->
     </el-table>
     <el-drawer :title="title" :visible.sync="drawer" :with-header="true" :show-close="true"
       :style="{ height: '1400px' }" style="overflow-y: auto;">
@@ -293,6 +328,8 @@
     orderTicketing,
     orderRetreat,
     orderActual,
+    orderChange,
+    orderChangeState,
   } from "@/api/order";
   import {
     removeUser
@@ -314,6 +351,19 @@
           value: "0",
         }, {
           label: "有票据",
+          value: "1",
+        }],
+        orderTypes: [{
+          label: "所有",
+          value: "",
+        },{
+          label: "普通",
+          value: "2",
+        }, {
+          label: "收单",
+          value: "0",
+        }, {
+          label: "转单",
           value: "1",
         }],
         fileList: [],
@@ -342,7 +392,8 @@
           phone: undefined,
           pageNo: 1,
           pageSize: 10,
-          bill: undefined
+          bill: undefined,
+          transferType: undefined
         },
         // 是否显示搜索
         showSearch: true,
@@ -444,6 +495,16 @@
       this.getList()
     },
     methods: {
+      getTransferType(row) {
+      //  console.log(row.transferType, row.transferType == 0)
+        if (typeof(row.transferType) == 'undefined' || null == row.transferType) {
+          return "普通"
+        }
+        if (row.transferType === 0) {
+          return "收单[" + row.transferShopName + "]-" + row.transferShopId
+        }
+        return "转单[" + row.transferShopName + "]-" + row.transferOrderNo
+      },
       getWindowHeight() {
         this.drawerHeight = window.innerHeight - 80
       },
@@ -479,9 +540,32 @@
       getContent(txt) {
         return txt
       },
+      //单个 同步转单 状态
+      syncChangeState(id) {
+        orderChangeState({
+          'id': id
+        }).then((res) => {
+          this.$message({
+            type: res.success ? 'success' : 'warning',
+            message: (res.success && res.data) ? res.data : res.errorMsg
+          });
+        })
+      },
+      //单个转单
+      changeSigle(id) {
+        orderChange(id).then((res) => {
+          if (res.success) {
+            //console.log(res)
+            this.$message({
+              type: 'success',
+              message: res.data
+            });
+          }
+        })
+      },
       //展示详细注数号码
       showInfo(row) {
-        console.log(' info ', row)
+        // console.log(' info ', row)
         let that = this
         that.itemInfo = []
         that.sportItemInfo = []
@@ -507,7 +591,7 @@
             }
             that.sportItemInfo.push(o)
           }
-          console.log('sportItemInfo', that.sportItemInfo)
+        //  console.log('sportItemInfo', that.sportItemInfo)
           return
         } else if (!that.isSportRace(row)) {
           //数字展示
@@ -621,7 +705,7 @@
       // 下注内容
       getRaceContent(type, row) {
         let result = "";
-        console.log(' show content', type, row)
+        // console.log(' show content', type, row)
         if (type == 1) {
           let content = row.content
           //胜分
@@ -645,7 +729,7 @@
             let oddsList = [];
             for (let index = 0; index < content.cedePointsOddsList.length; index++) {
               const element = content.cedePointsOddsList[index];
-              const result = '让分'+element.describe + "[" + content.cedePoints + "]" + "(" + element.odds + ")";
+              const result = '让分' + element.describe + "[" + content.cedePoints + "]" + "(" + element.odds + ")";
               oddsList.push(result);
             }
             result = result + oddsList.join(",");
@@ -993,6 +1077,15 @@
     background-color: red;
   }
 
+  .red1 {
+    color: red;
+    font-size: 18px;
+  }
+
+  .blue1 {
+    color: blue;
+    font-size: 18px;
+  }
 
   .red {
     color: red;

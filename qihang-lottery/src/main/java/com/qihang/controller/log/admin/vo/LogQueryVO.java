@@ -43,4 +43,7 @@ public class LogQueryVO implements Serializable {
     @ApiModelProperty(value = "操作时间")
     private Date createTime;
 
+    @ApiModelProperty(value = "0 用户操作 1 后端操作")
+    Integer types;
+
 }

@@ -5,6 +5,7 @@ import com.maxmind.geoip2.model.CityResponse;
 import com.maxmind.geoip2.record.City;
 import com.maxmind.geoip2.record.Country;
 import com.maxmind.geoip2.record.Subdivision;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -19,6 +20,7 @@ import java.net.InetAddress;
  * @description: 地区
  * @time: 2023-04-12 11:36
  */
+@Slf4j
 @Component
 public class AreaUtil {
     public String getIp() {
@@ -102,7 +104,7 @@ public class AreaUtil {
             City city = response.getCity();
             return country.getNames().get("zh-CN") + " " + subdivision.getNames().get("zh-CN") + " " + city.getNames().get("zh-CN");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(" ip: [{}] 未找到匹配", ip);
         }
         return "";
     }

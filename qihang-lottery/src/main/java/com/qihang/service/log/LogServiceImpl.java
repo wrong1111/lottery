@@ -1,6 +1,7 @@
 package com.qihang.service.log;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -46,6 +47,8 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, LogDO> implements Log
         LambdaQueryWrapper<LogDO> qw = new QueryWrapper<LogDO>().lambda();
         qw.like(StrUtil.isNotBlank(logQuery.getNickname()), LogDO::getNickname, logQuery.getNickname());
         qw.like(StrUtil.isNotBlank(logQuery.getPhone()), LogDO::getPhone, logQuery.getPhone());
+        qw.eq(ObjectUtil.isNotNull(logQuery.getTypes()), LogDO::getTypes, logQuery.getTypes());
+        qw.like(StrUtil.isNotBlank(logQuery.getDescs()), LogDO::getDescriptor, logQuery.getDescs());
         qw.orderByDesc(LogDO::getCreateTime);
         Page<LogDO> logoPage = logMapper.selectPage(page, qw);
         commonList.setVoList(BeanUtil.copyToList(logoPage.getRecords(), LogQueryVO.class));
@@ -59,11 +62,11 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, LogDO> implements Log
         Page<LogDO> page = new Page<>(agentLog.getPageNo(), agentLog.getPageSize());
         CommonListVO<AgentLogVO> commonList = new CommonListVO<>();
         List<Integer> ids = userMapper.selectList(new QueryWrapper<UserDO>().lambda().eq(UserDO::getPid, userId)).stream().map(UserDO::getId).collect(Collectors.toList());
-        if(ids.size()<=0){
+        if (ids.size() <= 0) {
             return commonList;
         }
         Page<LogDO> logPage = logMapper.selectPage(page, new QueryWrapper<LogDO>().lambda()
-                .in(StrUtil.isBlank(agentLog.getPhone()),LogDO::getUserId, ids)
+                .in(StrUtil.isBlank(agentLog.getPhone()), LogDO::getUserId, ids)
                 .eq(StrUtil.isNotBlank(agentLog.getPhone()), LogDO::getPhone, agentLog.getPhone())
                 .orderByDesc(LogDO::getCreateTime));
         List<AgentLogVO> logVOList = new ArrayList<>();

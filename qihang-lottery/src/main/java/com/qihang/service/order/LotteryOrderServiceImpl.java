@@ -13,10 +13,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.annotation.TenantIgnore;
+import com.qihang.common.util.RedisService;
 import com.qihang.common.util.email.EmailUtils;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
+import com.qihang.constant.TransferEnum;
 import com.qihang.controller.basketball.dto.BasketballMatchDTO;
 import com.qihang.controller.beidan.dto.BeiDanMatchDTO;
 import com.qihang.controller.football.dto.FootballMatchDTO;
@@ -42,6 +44,7 @@ import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.permutation.PermutationDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.shop.ShopDO;
+import com.qihang.domain.transfer.ShopTransferDO;
 import com.qihang.domain.user.SysUserDO;
 import com.qihang.domain.user.UserDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
@@ -64,6 +67,7 @@ import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.permutation.PermutationAwardMapper;
 import com.qihang.mapper.permutation.PermutationMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
+import com.qihang.mapper.transfer.ShopTransferMapper;
 import com.qihang.mapper.user.SysUserMapper;
 import com.qihang.mapper.user.UserMapper;
 import com.qihang.mapper.winburden.WinBurdenMatchMapper;
@@ -144,6 +148,12 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
 
     @Resource
     PermutationAwardMapper permutationAwardMapper;
+
+    @Resource
+    ShopTransferMapper shopTransferMapper;
+
+    @Resource
+    RedisService redisService;
 
     @Override
     public CommonListVO<LotteryOrderVO> getLotteryOrderPage(LotteryOrderDTO lotteryOrder, Integer userId) {
@@ -353,6 +363,11 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getOrderId()), LotteryOrderDO::getOrderId, lotteryOrderQuery.getOrderId());
         qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getState()), LotteryOrderDO::getState, lotteryOrderQuery.getState());
         qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getType()), LotteryOrderDO::getType, lotteryOrderQuery.getType());
+        if ("2".equals(lotteryOrderQuery.getTransferType())) {
+            qw.isNull(LotteryOrderDO::getTransferType);
+        } else {
+            qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getTransferType()), LotteryOrderDO::getTransferType, lotteryOrderQuery.getTransferType());
+        }
         if (StringUtils.isNotBlank(lotteryOrderQuery.getBill())) {
             if ("0".equals(lotteryOrderQuery.getBill())) {
                 qw.isNull(LotteryOrderDO::getBill);
@@ -365,12 +380,20 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         commonList.setTotal(lotteryOrderPage.getTotal());
         List<LotteryOrderQueryVO> lotteryOrderQueryList = new ArrayList<>();
         Map<String, Object> matchMap = new HashMap<>(100);
-
+        Map<String, ShopTransferDO> shopTransferDOMap = new HashMap<>();
+        List<ShopTransferDO> shopTransferDOList = shopTransferMapper.selectList(new QueryWrapper<ShopTransferDO>().lambda());
+        if (ObjectUtil.isNotNull(shopTransferDOList)) {
+            shopTransferDOMap = shopTransferDOList.stream().collect(Collectors.toMap(item -> item.getTransferType() + "-" + item.getId(), a -> a, (b, c) -> b));
+        }
         for (LotteryOrderDO lotteryOrder : lotteryOrderPage.getRecords()) {
             LotteryOrderQueryVO lotteryOrderQueryVO = new LotteryOrderQueryVO();
             BeanUtils.copyProperties(lotteryOrder, lotteryOrderQueryVO);
             UserDO userDO = userMapper.selectById(lotteryOrder.getUserId());
             lotteryOrderQueryVO.setNickname(userDO.getNickname());
+            ShopTransferDO shopTransferDO = shopTransferDOMap.get(lotteryOrder.getTransferType() + "-" + lotteryOrder.getTransferShopId());
+            if (null != shopTransferDO) {
+                lotteryOrderQueryVO.setTransferShopName(shopTransferDO.getShopName());
+            }
             //上级
             UserDO parentUser = userMapper.selectById(userDO.getPid());
             if (ObjectUtil.isNotNull(parentUser)) {
@@ -634,6 +657,10 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                 lotteryOrderDO.setTicketingTime(new Date());
                 //根据未出票的条件一键改为出票
                 lotteryOrderMapper.updateById(lotteryOrderDO);
+
+                if (0 == lotteryOrderDO.getTransferType()) {
+                    redisService.set(lotteryOrderDO.getTransferOrderNo(), StringUtils.isBlank(lotteryOrderDO.getBill()) ? "已出" : lotteryOrderDO.getBill(), 864000L);
+                }
             }
         } else {
             //根据订单id查询租户id
@@ -666,6 +693,11 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             lotteryOrderDO.setState(ticketing.getState());
             lotteryOrderDO.setTicketingTime(new Date());
             lotteryOrderMapper.updateById(lotteryOrderDO);
+
+            if (0 == lotteryOrderDO.getTransferType()) {
+                String json = "已出|" + DateUtil.formatDate(lotteryOrderDO.getTicketingTime()) + "|" + (StringUtils.isBlank(lotteryOrderDO.getBill()) ? "" : lotteryOrderDO.getBill());
+                redisService.set(lotteryOrderDO.getTransferOrderNo(), json, 864000L);
+            }
         }
         return new BaseVO();
     }
@@ -757,14 +789,33 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         lotteryOrderMapper.updateById(lotteryOrder);
         //添加钱包记录
         addPayRecord(lotteryOrder);
+
+        //如果是收单，需要给缓存加上结果，让对方查询
+        if (0 == lotteryOrder.getTransferType()) {
+            redisService.set(lotteryOrder.getTransferOrderNo(), "退票|" + DateUtil.formatDate(new Date()), 864000L);
+        }
         return new BaseVO();
     }
 
     @Override
     public BaseVO actualVote(ActualVoteDTO actualVoteDTO) {
-        LotteryOrderDO lotteryOrder = new LotteryOrderDO();
-        BeanUtils.copyProperties(actualVoteDTO, lotteryOrder);
-        lotteryOrderMapper.updateById(lotteryOrder);
+//        LotteryOrderDO lotteryOrder = new LotteryOrderDO();
+//        BeanUtils.copyProperties(actualVoteDTO, lotteryOrder);
+//        //修改订单状态为已票
+//        lotteryOrderMapper.updateById(lotteryOrder);
+
+        LotteryOrderDO order = lotteryOrderMapper.selectById(actualVoteDTO.getId());
+        if (order.getState().equals(LotteryOrderStateEnum.TO_BE_ISSUED.getKey())) {
+            order.setState(LotteryOrderStateEnum.TO_BE_AWARDED.getKey());
+            order.setTicketingTime(new Date());
+            order.setUpdateTime(new Date());
+        }
+        order.setBill(actualVoteDTO.getBill());
+        lotteryOrderMapper.updateById(order);
+        if (order.getTransferType() == TransferEnum.TransferIn.code) {
+            String json = "已出|" + DateUtil.formatDate(order.getTicketingTime()) + "|" + (StringUtils.isBlank(order.getBill()) ? "" : order.getBill());
+            redisService.set(order.getTransferOrderNo(), json, 864000L);
+        }
         return new BaseVO();
     }
 
@@ -814,36 +865,36 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
     @TenantIgnore
     @Transactional(rollbackFor = Exception.class)
     public BaseVO clearFlow(OrderFlowWaterDTO orderFlowWater, String user) {
-        SysUserDO sysUserDO = sysUserMapper.selectOne(new QueryWrapper<SysUserDO>().lambda().eq(SysUserDO::getUsername, user));
-        List<LotteryOrderDO> orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda()
-                .eq(LotteryOrderDO::getTenantId, sysUserDO.getTenantId())
-                .ge(LotteryOrderDO::getCreateTime, orderFlowWater.getStartTime())
-                .le(LotteryOrderDO::getCreateTime, orderFlowWater.getEndTime()));
-        for (LotteryOrderDO lotteryOrder : orderList) {
-            documentaryMapper.delete(new QueryWrapper<DocumentaryDO>().lambda().eq(DocumentaryDO::getLotteryOrderId, lotteryOrder.getId()));
-            documentaryUserMapper.delete(new QueryWrapper<DocumentaryUserDO>().lambda().eq(DocumentaryUserDO::getLotteryOrderId, lotteryOrder.getId()));
-            lotteryOrderMapper.deleteById(lotteryOrder.getId());
-            if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.ARRAY.getKey())
-                    || lotteryOrder.getType().equals(LotteryOrderTypeEnum.ARRANGE.getKey()) ||
-                    lotteryOrder.getType().equals(LotteryOrderTypeEnum.SEVEN_STAR.getKey()) ||
-                    lotteryOrder.getType().equals(LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
-                permutationMapper.deleteBatchIds(Convert.toList(Integer.class, lotteryOrder.getTargetIds()));
-            } else {
-                racingBallMapper.deleteBatchIds(Convert.toList(Integer.class, lotteryOrder.getTargetIds()));
-            }
-        }
-        logMapper.delete(new QueryWrapper<LogDO>().lambda()
-                .eq(LogDO::getTenantId, sysUserDO.getTenantId())
-                .ge(LogDO::getCreateTime, orderFlowWater.getStartTime())
-                .le(LogDO::getCreateTime, orderFlowWater.getEndTime()));
-        payOrderMapper.delete(new QueryWrapper<PayOrderDO>().lambda()
-                .eq(PayOrderDO::getTenantId, sysUserDO.getTenantId())
-                .ge(PayOrderDO::getCreateTime, orderFlowWater.getStartTime())
-                .le(PayOrderDO::getCreateTime, orderFlowWater.getEndTime()));
-        withdrawalMapper.delete(new QueryWrapper<WithdrawalDO>().lambda()
-                .eq(WithdrawalDO::getTenantId, sysUserDO.getTenantId())
-                .ge(WithdrawalDO::getCreateTime, orderFlowWater.getStartTime())
-                .le(WithdrawalDO::getCreateTime, orderFlowWater.getEndTime()));
+//        SysUserDO sysUserDO = sysUserMapper.selectOne(new QueryWrapper<SysUserDO>().lambda().eq(SysUserDO::getUsername, user));
+//        List<LotteryOrderDO> orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda()
+//                .eq(LotteryOrderDO::getTenantId, sysUserDO.getTenantId())
+//                .ge(LotteryOrderDO::getCreateTime, orderFlowWater.getStartTime())
+//                .le(LotteryOrderDO::getCreateTime, orderFlowWater.getEndTime()));
+//        for (LotteryOrderDO lotteryOrder : orderList) {
+//            documentaryMapper.delete(new QueryWrapper<DocumentaryDO>().lambda().eq(DocumentaryDO::getLotteryOrderId, lotteryOrder.getId()));
+//            documentaryUserMapper.delete(new QueryWrapper<DocumentaryUserDO>().lambda().eq(DocumentaryUserDO::getLotteryOrderId, lotteryOrder.getId()));
+//            lotteryOrderMapper.deleteById(lotteryOrder.getId());
+//            if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.ARRAY.getKey())
+//                    || lotteryOrder.getType().equals(LotteryOrderTypeEnum.ARRANGE.getKey()) ||
+//                    lotteryOrder.getType().equals(LotteryOrderTypeEnum.SEVEN_STAR.getKey()) ||
+//                    lotteryOrder.getType().equals(LotteryOrderTypeEnum.GRAND_LOTTO.getKey())) {
+//                permutationMapper.deleteBatchIds(Convert.toList(Integer.class, lotteryOrder.getTargetIds()));
+//            } else {
+//                racingBallMapper.deleteBatchIds(Convert.toList(Integer.class, lotteryOrder.getTargetIds()));
+//            }
+//        }
+//        logMapper.delete(new QueryWrapper<LogDO>().lambda()
+//                .eq(LogDO::getTenantId, sysUserDO.getTenantId())
+//                .ge(LogDO::getCreateTime, orderFlowWater.getStartTime())
+//                .le(LogDO::getCreateTime, orderFlowWater.getEndTime()));
+//        payOrderMapper.delete(new QueryWrapper<PayOrderDO>().lambda()
+//                .eq(PayOrderDO::getTenantId, sysUserDO.getTenantId())
+//                .ge(PayOrderDO::getCreateTime, orderFlowWater.getStartTime())
+//                .le(PayOrderDO::getCreateTime, orderFlowWater.getEndTime()));
+//        withdrawalMapper.delete(new QueryWrapper<WithdrawalDO>().lambda()
+//                .eq(WithdrawalDO::getTenantId, sysUserDO.getTenantId())
+//                .ge(WithdrawalDO::getCreateTime, orderFlowWater.getStartTime())
+//                .le(WithdrawalDO::getCreateTime, orderFlowWater.getEndTime()));
         return new BaseVO();
     }
 

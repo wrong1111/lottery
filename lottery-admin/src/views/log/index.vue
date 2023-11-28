@@ -25,6 +25,20 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="类型" prop="types">
+        <el-select v-model="queryParams.types">
+          <el-option v-for="(item,index) in types" :label="item.label" :value="item.value" :key="index"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="描述" prop="descs">
+        <el-input
+          v-model="queryParams.descs"
+          placeholder="请输入描述"
+          clearable
+          style="width: 240px"
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
           >搜索</el-button
@@ -38,18 +52,18 @@
     </el-row>
 
     <el-table v-loading="loading" :data="voList" border stripe>
-      <el-table-column label="用户ID" align="center" prop="userId" />
+      <el-table-column label="用户ID" align="center" prop="userId" width="100" />
       <el-table-column
         label="手机号"
         align="center"
         prop="phone"
-        :show-overflow-tooltip="true"
+        :show-overflow-tooltip="true"  width="150"
       />
       <el-table-column
         label="昵称"
         align="center"
         prop="nickname"
-        :show-overflow-tooltip="true"
+        :show-overflow-tooltip="true"  width="250"
       />
       <el-table-column
         label="操作方式"
@@ -89,12 +103,13 @@ export default {
       total: 0,
       // 列表数据
       voList: [],
+      types:[{'label':'全部','value':''},{'label':'前端','value':'0'},{'label':'后台','value':'1'}],
       // 查询参数
       queryParams: {
         nickname: undefined,
         phone: undefined,
         pageNo: 1,
-        pageSize: 10,
+        pageSize: 50,
       },
       // 是否显示搜索
       showSearch: true,

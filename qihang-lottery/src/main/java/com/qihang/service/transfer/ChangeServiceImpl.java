@@ -1,15 +1,18 @@
 package com.qihang.service.transfer;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.digest.MD5;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.SpringContextUtils;
 import com.qihang.common.util.http.HttpReq;
+import com.qihang.common.util.upload.LocalUtil;
 import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
@@ -25,15 +28,18 @@ import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.permutation.PermutationDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.transfer.LotteryTransferDO;
-import com.qihang.domain.transfer.LotteryTransferLogDO;
+import com.qihang.domain.transfer.OrderTransferLogDO;
 import com.qihang.domain.transfer.ShopTransferDO;
+import com.qihang.enumeration.order.lottery.LotteryOrderStateEnum;
 import com.qihang.mapper.ballgame.BallGameMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.permutation.PermutationMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
-import com.qihang.mapper.transfer.LotteryTransferLogMapper;
 import com.qihang.mapper.transfer.LotteryTransferMapper;
+import com.qihang.mapper.transfer.OrderTransferLogMapper;
 import com.qihang.mapper.transfer.ShopTransferMapper;
+import com.qihang.service.order.ILotteryOrderService;
+import com.qihang.service.upload.IUploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -41,9 +47,12 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import static com.qihang.service.transfer.ITransferOutServiceImpl.isSports;
@@ -58,6 +67,8 @@ import static com.qihang.service.transfer.ITransferOutServiceImpl.isSports;
 public class ChangeServiceImpl implements IChangeService {
 
 
+    @Resource
+    ILotteryOrderService lotteryOrderService;
     @Resource
     ShopTransferMapper shopTransferMapper;
 
@@ -80,7 +91,7 @@ public class ChangeServiceImpl implements IChangeService {
     PermutationMapper permutationMapper;
 
     @Resource
-    LotteryTransferLogMapper lotteryTransferLogMapper;
+    OrderTransferLogMapper orderTransferLogMapper;
 
 
     @TenantIgnore
@@ -240,7 +251,7 @@ public class ChangeServiceImpl implements IChangeService {
         }
     }
 
-    @Async(value = "threadPoolTaskExecutor")
+
     @Override
     public BaseVO send(Integer id, boolean auto) {
         //查询对应的转单渠道
@@ -250,7 +261,7 @@ public class ChangeServiceImpl implements IChangeService {
         }
         String lotteryId = orderDO.getType();
         LotteryTransferDO lotteryTransferDO = lotteryTransferMapper.selectOne(new QueryWrapper<LotteryTransferDO>().lambda()
-                .eq(LotteryTransferDO::getLotteryType, lotteryId).eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferOut.code).orderByDesc(LotteryTransferDO::getId).last(" limit 1 "));
+                .eq(LotteryTransferDO::getStates, 0).eq(LotteryTransferDO::getLotteryType, lotteryId).eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferOut.code).orderByDesc(LotteryTransferDO::getId).last(" limit 1 "));
         if (null == lotteryTransferDO) {
             return BaseVO.builder().errorMsg("未找到对应的转单渠道").build();
         }
@@ -278,9 +289,9 @@ public class ChangeServiceImpl implements IChangeService {
         dataMap.put("order", orderDO);
         dataMap.put("racing", racingBallDOList);
         dataMap.put("permuta", permutationDOList);
-        LotteryTransferLogDO logDO = LotteryTransferLogDO.builder().shopId(shopId).orderId(orderDO.getOrderId())
+        OrderTransferLogDO logDO = OrderTransferLogDO.builder().shopId(shopId).orderId(orderDO.getOrderId())
                 .type("" + TransferEnum.TransferOut.code).content(JSON.toJSONString(dataMap)).createTime(new Date()).receveMsg(JSON.toJSONString(baseVO)).build();
-        lotteryTransferLogMapper.insert(logDO);
+        orderTransferLogMapper.insert(logDO);
         if (baseVO.getSuccess() || (!baseVO.getSuccess() && "1".equals(baseVO.getErrorCode()))) {//重复下单 也是成功
             //修改订单状态
             Map<String, String> dataMap2 = (Map<String, String>) baseVO.getData();
@@ -293,11 +304,110 @@ public class ChangeServiceImpl implements IChangeService {
         return baseVO;
     }
 
+    @Async(value = "threadPoolTaskExecutor")
+    @Override
+    public BaseVO sendSync(Integer id, boolean auto) {
+        return send(id, auto);
+    }
+
+    @TenantIgnore
+    @Override
+    public BaseVO chageState(Integer id) {
+        //查询每个转单的上游信息
+        List<ShopTransferDO> shopTransferDOS = shopTransferMapper.selectList(new QueryWrapper<ShopTransferDO>()
+                .lambda().eq(ShopTransferDO::getTransferType, TransferEnum.TransferOut.code));
+        if (CollectionUtil.isEmpty(shopTransferDOS)) {
+            return BaseVO.builder().success(false).errorMsg("未找到转单渠道").build();
+        }
+        Map<Integer, ShopTransferDO> shopTransferDOMap = shopTransferDOS.stream().collect(Collectors.toMap(ShopTransferDO::getId, shopTransferDO -> shopTransferDO));
+
+        List<LotteryOrderDO> lotteryOrderDOS = new ArrayList<>();
+        if (null == id) {
+            //批量
+            lotteryOrderDOS = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().isNotNull("transfer_order_no").lambda()
+                    .eq(LotteryOrderDO::getTransferType, 1)
+                    .isNull(LotteryOrderDO::getBill).orderByDesc(LotteryOrderDO::getId));
+        } else {
+            LotteryOrderDO lotteryOrderDO = lotteryOrderMapper.selectById(id);
+            if (lotteryOrderDO.getTransferType() == 1 && null == lotteryOrderDO.getBill()) {
+                lotteryOrderDOS.add(lotteryOrderDO);
+            }
+        }
+        if (CollectionUtil.isEmpty(lotteryOrderDOS)) {
+            return BaseVO.builder().success(true).errorMsg("没有订单需要查询").build();
+        }
+        List<String> stateList = new ArrayList<>(Arrays.asList(new String[]{"待出", "已出", "退票"}));
+        Map<String, String> orderNoMap = new HashMap<>();
+        Map<Integer, List<LotteryOrderDO>> lotteryOrderDOMap = lotteryOrderDOS.stream().collect(Collectors.groupingBy(LotteryOrderDO::getTransferShopId));
+        for (Map.Entry<Integer, List<LotteryOrderDO>> entry : lotteryOrderDOMap.entrySet()) {
+            List<LotteryOrderDO> queryList = entry.getValue();
+            int size = 400;
+            int index = queryList.size() % size == 0 ? queryList.size() / size : ((int) (queryList.size() / size)) + 1;
+            ShopTransferDO shopTransferDO = shopTransferDOMap.get(entry.getKey());
+            if (shopTransferDO == null) {
+                log.error(" 转单渠道[{}]未找到", entry.getKey());
+                continue;
+            }
+            for (int i = 0; i < index; i++) {
+                List<String> orderNoList = queryList.stream().skip(i * size).limit(size).map(item -> item.getTransferOrderNo()).collect(Collectors.toList());
+                String data = JSON.toJSONString(StringUtils.join(orderNoList, ","));
+                String result = buildPostQuery("changeState", shopTransferDO, data);
+                log.info(" orderId:{},result: {}", data, result);
+                if (StringUtils.isBlank(result)) {
+                    log.error("<<<< data {},取票样接口异常 {}", data, result);
+                } else {
+                    //处理返回的数据
+                    BaseDataVO baseDataVO = JSON.parseObject(result, BaseDataVO.class);
+                    if (baseDataVO.getSuccess()) {
+                        Map<String, String> dataMap = (Map<String, String>) baseDataVO.getData();
+                        orderNoMap.putAll(dataMap);
+                        for (Map.Entry<String, String> orderNo : orderNoMap.entrySet()) {
+                            String orderNoVal = orderNo.getValue();
+                            if (orderNoVal.startsWith("已出")) {
+                                String[] ary = StringUtils.split(orderNoVal, "|");
+                                if (ary.length == 3) {
+                                    //上游没有传图片也要更新
+                                    LotteryOrderDO updateOrderDO = new LotteryOrderDO();
+                                    updateOrderDO.setTransferOrderNo(orderNo.getKey());
+                                    updateOrderDO.setState(LotteryOrderStateEnum.TO_BE_AWARDED.getKey());
+                                    updateOrderDO.setUpdateTime(new Date());
+                                    if (StringUtils.isBlank(ary[1])) {
+                                        updateOrderDO.setTicketingTime(new Date());
+                                    } else {
+                                        updateOrderDO.setTicketingTime(DateUtil.parse(ary[1], "yyyy-MM-dd HH:mm:ss"));
+                                    }
+                                    //图片需要下载到本地
+                                    if (StringUtils.isNotBlank(ary[2])) {
+                                        loadPicture(ary[2]);
+                                    }
+                                    int updateCounts = lotteryOrderMapper.update(updateOrderDO, new LambdaQueryWrapper<LotteryOrderDO>().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()).eq(LotteryOrderDO::getTransferOrderNo, orderNo.getKey()));
+                                }
+                            } else if (orderNoVal.startsWith("退票")) {
+                                //退票业务处理
+                                LotteryOrderDO lotteryOrderDO = lotteryOrderMapper.selectOne(new LambdaQueryWrapper<LotteryOrderDO>().eq(LotteryOrderDO::getTransferOrderNo, orderNo.getKey()));
+                                lotteryOrderService.retreat(lotteryOrderDO.getId());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return BaseDataVO.builder().success(true).data(orderNoMap).build();
+    }
+
+
+    @Async(value = "threadPoolTaskExecutor")
+    @TenantIgnore
+    @Override
+    public BaseVO chageStateAsync(Integer id) {
+        return chageState(id);
+    }
+
     @TenantIgnore
     @Override
     public void scheduleAutoChange() {
         //查询当前需要自动派送的彩种
-        List<LotteryTransferDO> lotteryTransferDOS = lotteryTransferMapper.selectList(new QueryWrapper<LotteryTransferDO>().lambda().eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferOut.code).eq(LotteryTransferDO::getTransferOutAuto, 0));
+        List<LotteryTransferDO> lotteryTransferDOS = lotteryTransferMapper.selectList(new QueryWrapper<LotteryTransferDO>().lambda().eq(LotteryTransferDO::getStates, 0).eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferOut.code).eq(LotteryTransferDO::getTransferOutAuto, 0));
         if (ObjectUtil.isNull(lotteryTransferDOS)) {
             return;
         }
@@ -305,17 +415,26 @@ public class ChangeServiceImpl implements IChangeService {
         Date now = DateUtils.addMinutes(new Date(), -5);
         List<String> lotteryListIds = lotteryTransferDOS.stream().map(item -> "" + item.getLotteryType()).collect(Collectors.toList());
         List<LotteryOrderDO> lotteryOrderDOS = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().in(LotteryOrderDO::getType, lotteryListIds)
-                .gt(LotteryOrderDO::getCreateTime, now).isNull(LotteryOrderDO::getTransferType).isNull(LotteryOrderDO::getTransferOrderNo).orderByAsc(LotteryOrderDO::getId));
+                .gt(LotteryOrderDO::getCreateTime, now).isNull(LotteryOrderDO::getTransferType).isNull(LotteryOrderDO::getTransferOrderNo).orderByDesc(LotteryOrderDO::getId));
         if (ObjectUtil.isNotNull(lotteryOrderDOS)) {
             IChangeService changeService = SpringContextUtils.getBean(ChangeServiceImpl.class);
             for (LotteryOrderDO lotteryOrderDO : lotteryOrderDOS) {
                 try {
-                    changeService.send(lotteryOrderDO.getId(), true);
+                    changeService.sendSync(lotteryOrderDO.getId(), true);
                 } catch (Exception e) {
                     log.error("自动派送失败", e);
                 }
             }
         }
+    }
+
+    @Override
+    public BaseVO editLotteryTransferDisable(Integer id, Integer state) {
+        LotteryTransferDO lotteryTransferDO = new LotteryTransferDO();
+        lotteryTransferDO.setId(id);
+        lotteryTransferDO.setStates(state);
+        lotteryTransferMapper.updateById(lotteryTransferDO);
+        return BaseVO.builder().success(true).errorMsg("成功").build();
     }
 
     public BaseDataVO sendOrder(ShopTransferDO shopTransferDO, LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, List<PermutationDO> permutationDOS) {
@@ -328,12 +447,24 @@ public class ChangeServiceImpl implements IChangeService {
         } else {
             dto.setPermutationDOList(permutationDOS);
         }
+        String data = JSON.toJSONString(dto);
+        String result = buildPostQuery("createOrder", shopTransferDO, data);
+        log.info(" orderId:{},result: {}", lotteryOrderDO.getOrderId(), result);
+        if (StringUtils.isBlank(result)) {
+            return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("转单接口异常，请联系管理员").build();
+        }
+        BaseDataVO baseDataVO = JSON.parseObject(result, BaseDataVO.class);
+        return baseDataVO;
+
+    }
+
+    public String buildPostQuery(String command, ShopTransferDO shopTransferDO, String data) {
         String url = shopTransferDO.getTransferInterface();
         String key = shopTransferDO.getTransferKey();
         String security = shopTransferDO.getTransferSecurty();
-        String data = JSON.toJSONString(dto);
+
         int timestamp = (int) (System.currentTimeMillis() / 1000);
-        String signString = "createOrder" + key + data + "1.0" + timestamp + security;
+        String signString = command + key + data + "1.0" + timestamp + security;
         try {
             MD5 md5 = new MD5(shopTransferDO.getTransferSecurty().getBytes("utf-8"));
             String sign = md5.digestHex(signString);
@@ -341,20 +472,48 @@ public class ChangeServiceImpl implements IChangeService {
             dataMap.put("sign", sign);
             dataMap.put("key", key);
             dataMap.put("timestamp", "" + timestamp);
-            dataMap.put("action", "createOrder");
+            dataMap.put("action", command);
             dataMap.put("data", data);
             dataMap.put("version", "1.0");
             String result = HttpReq.postJSON(url, dataMap);
-            log.info(" orderId:{},result: {}", lotteryOrderDO.getOrderId(), result);
-            if (StringUtils.isBlank(result)) {
-                return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("转单接口异常，请联系管理员").build();
-            }
-            BaseDataVO baseDataVO = JSON.parseObject(result, BaseDataVO.class);
-            return baseDataVO;
+            log.info(" request:{},result: {}", data, result);
+            return result;
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+
     }
 
+    @Resource
+    LocalUtil localUtil;
+
+
+    public void loadPicture(String targetPics) {
+        new Thread(() -> {
+            try {
+                if (StringUtils.isBlank(targetPics)) {
+                    return;
+                }
+                String[] pics = StringUtils.split(targetPics, ",");
+                for (String pic : pics) {
+                    if (StringUtils.isNotBlank(pic)) {
+                        int idx = localUtil.getFilePath().lastIndexOf("/");
+                        String filePath = "";
+                        if (idx > 0) {
+                            String splitPath = localUtil.getFilePath().substring(idx + 1);
+                            filePath = pic.substring(pic.indexOf(splitPath));
+                        } else {
+                            filePath = pic.substring(pic.indexOf("/"));
+                        }
+                        InputStream is = new URL(pic).openStream();
+                        localUtil.saveFile(is, filePath);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("图片下载失败", e);
+            }
+        }).start();
+
+    }
 
 }

@@ -1,11 +1,13 @@
 package com.qihang.controller.order.admin.lottery;
 
 
+import com.qihang.annotation.Log;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.order.admin.lottery.dto.*;
 import com.qihang.controller.order.admin.lottery.vo.LotteryOrderQueryVO;
 import com.qihang.service.order.ILotteryOrderService;
+import com.qihang.service.transfer.IChangeService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +31,9 @@ public class AdminLotteryOrderController {
     @Resource
     private HttpServletRequest request;
 
+    @Resource
+    IChangeService changeService;
+
 
     @PostMapping("/list")
     @ApiOperation("购彩订单记录接口")
@@ -36,18 +41,23 @@ public class AdminLotteryOrderController {
         return lotteryOrderService.getAdminLotteryOrderPage(lotteryOrderQuery);
     }
 
+    @Log(title = "出票审核")
     @PutMapping("/ticketing")
     @ApiOperation("出票审核接口")
     public BaseVO ticketing(@RequestBody @Valid TicketingDTO ticketing) {
         return lotteryOrderService.ticketing(ticketing);
     }
 
+
+    @Log(title = "派奖")
     @PutMapping("/award")
     @ApiOperation("派奖接口")
     public BaseVO award(@RequestBody @Valid AwardDTO award) {
         return lotteryOrderService.award(award);
     }
 
+
+    @Log(title = "退票")
     @PutMapping("/retreat/{id}")
     @ApiOperation("退票接口")
     public BaseVO retreat(@PathVariable("id") Integer id) {
@@ -55,15 +65,33 @@ public class AdminLotteryOrderController {
     }
 
 
+    @Log(title = "修改票据")
     @PutMapping("/actual")
     @ApiOperation("修改票据接口")
     public BaseVO actualVote(@RequestBody @Valid ActualVoteDTO actualVoteDTO) {
         return lotteryOrderService.actualVote(actualVoteDTO);
     }
 
+    @Log(title = "清理流水")
     @PostMapping("/clear")
     @ApiOperation("清理流水接口")
     public BaseVO clearFlow(@RequestBody @Valid OrderFlowWaterDTO orderFlowWater) {
         return lotteryOrderService.clearFlow(orderFlowWater, request.getHeader("x-user"));
+    }
+
+
+    @Log(title = "转单")
+    @PostMapping("/change/{id}")
+    @ApiOperation("转单 接口")
+    public BaseVO change(@PathVariable("id") Integer id) {
+        // return lotteryOrderService.clearFlow(orderFlowWater, request.getHeader("x-user"));
+        return changeService.send(id, false);
+    }
+
+    @Log(title = "同步转单出票状态")
+    @PostMapping("/changeState")
+    @ApiOperation("同步转单出票状态 接口")
+    public BaseVO changeState(@RequestBody LotteryOrderQueryVO orderQueryVO) {
+        return changeService.chageState(orderQueryVO.getId());
     }
 }

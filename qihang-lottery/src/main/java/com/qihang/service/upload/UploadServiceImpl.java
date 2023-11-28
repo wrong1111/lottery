@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.io.InputStream;
 
 /**
@@ -35,5 +36,10 @@ public class UploadServiceImpl implements IUploadService {
     @Override
     public String upload(InputStream in) {
         return s3Util.upload(in);
+    }
+
+    @Override
+    public String upload(InputStream in, File file) {
+        throw new RuntimeException("未实现upload方法");
     }
 }

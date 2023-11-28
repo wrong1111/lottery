@@ -2,6 +2,7 @@ package com.qihang.common.util.upload;
 
 
 import cn.hutool.core.date.DateUtil;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.Data;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -20,6 +21,33 @@ public class LocalUtil {
     String filePath;
     String url;
     String type;
+
+    public String saveFile(InputStream is, File file) {
+        String root = this.filePath;
+        String path = file.getAbsolutePath();
+        String urlPath = path.substring(root.length());
+        if (file.exists()) {
+            return url + urlPath;
+        }
+        file.getParentFile().mkdirs();
+
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            byte[] by = new byte[1024];
+            int len = -1;
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file));
+            while ((len = is.read(by)) != -1) {
+                bufferedOutputStream.write(by, 0, len);
+            }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return url + urlPath;
+    }
 
     public String saveFile(InputStream is, String path) {
         try {

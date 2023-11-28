@@ -15,9 +15,9 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("t_lottery_transfer_log")
+@TableName("t_order_transfer_log")
 @Builder
-public class LotteryTransferLogDO implements Serializable {
+public class OrderTransferLogDO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

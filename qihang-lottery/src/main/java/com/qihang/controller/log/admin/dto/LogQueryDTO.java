@@ -22,4 +22,11 @@ public class LogQueryDTO extends PageDTO {
     @ApiModelProperty(value = "手机号")
     private String phone;
 
+
+    @ApiModelProperty(value = "0 前端 1 后端")
+    Integer types;
+
+    @ApiModelProperty(value = "描述")
+    String descs;
+
 }

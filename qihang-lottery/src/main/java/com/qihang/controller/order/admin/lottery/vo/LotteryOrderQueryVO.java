@@ -1,5 +1,6 @@
 package com.qihang.controller.order.admin.lottery.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.qihang.common.dto.PageDTO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -66,5 +67,21 @@ public class LotteryOrderQueryVO extends PageDTO {
 
     @ApiModelProperty(value = "详情")
     String schemeDetails;
+
+    @ApiModelProperty(value = "订单类型")
+    Integer transferType;
+
+    @ApiModelProperty(value = "店ID")
+    Integer transferShopId;
+
+    @ApiModelProperty(value = "店名")
+    String transferShopName;
+
+    @ApiModelProperty(value = "转单编号")
+    String transferOrderNo;
+
+    @ApiModelProperty(value = "转单日期")
+    Date transferTime;
+
 
 }

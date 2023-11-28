@@ -1,5 +1,6 @@
 package com.qihang.controller.transferIn.admin;
 
+import com.qihang.annotation.Log;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.transferIn.admin.dto.ChangeDTO;
@@ -41,11 +42,20 @@ public class AdminChangeController {
         return changeService.listShop();
     }
 
+
+    @Log(title = "转单自动手动状态调整")
     @PostMapping("/editAutoState")
     public BaseVO editAutoState(@Valid @RequestBody LotteryAutoStateDTO lotteryOutDTO) {
         return changeService.editAutoState(lotteryOutDTO);
     }
 
+    @Log(title = "转单禁用/开通状态修改")
+    @PostMapping("/editDisable")
+    public BaseVO editDisable(@Valid @RequestBody LotteryAutoStateDTO lotteryOutDTO) {
+        return changeService.editLotteryTransferDisable(lotteryOutDTO.getId(), lotteryOutDTO.getStates());
+    }
+
+    @Log(title = "转单")
     @PostMapping("/send")
     public BaseVO send(@RequestParam Integer id) {
         return changeService.send(id, false);
