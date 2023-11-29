@@ -320,7 +320,8 @@ public class LotteryProcessor implements PageProcessor {
                         beiDanMatch.setDeadline(date);
                         beiDanMatch.setLetOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
                         beiDanMatch.setIssueNo(issueNo);
-                        beiDanMatch.setGameNo(issueNo + RacingBallServiceImpl.fillZero(beiDanMatch.getNumber(), 3));
+                        //北单 保留四位数
+                        beiDanMatch.setGameNo(issueNo + RacingBallServiceImpl.fillZero(beiDanMatch.getNumber(), 4));
                         beiDanMatchList.add(beiDanMatch);
                     }
                 }

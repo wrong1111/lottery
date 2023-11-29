@@ -424,11 +424,11 @@ public class ChangeServiceImpl implements IChangeService {
             return;
         }
         //查询当前需要自动派送的订单 5分钟以内的
-        Date now = DateUtils.addMinutes(new Date(), -5);
+        Date now = DateUtils.addMinutes(new Date(), -15);
         List<String> lotteryListIds = lotteryTransferDOS.stream().map(item -> "" + item.getLotteryType()).collect(Collectors.toList());
         List<LotteryOrderDO> lotteryOrderDOS = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().in(LotteryOrderDO::getType, lotteryListIds)
                 .gt(LotteryOrderDO::getCreateTime, now).isNull(LotteryOrderDO::getTransferType).isNull(LotteryOrderDO::getTransferOrderNo).orderByDesc(LotteryOrderDO::getId));
-        if (ObjectUtil.isNotNull(lotteryOrderDOS)) {
+        if (CollectionUtil.isNotEmpty(lotteryOrderDOS)) {
             IChangeService changeService = SpringContextUtils.getBean(ChangeServiceImpl.class);
             for (LotteryOrderDO lotteryOrderDO : lotteryOrderDOS) {
                 try {
