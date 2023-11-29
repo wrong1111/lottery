@@ -11,6 +11,11 @@
     <el-table v-loading="loading" :data="voList" border>
       <el-table-column label="ID" align="center" prop="id" />
       <el-table-column label="下游 店名" align="center" prop="shopName" />
+      <el-table-column label="店余额" align="right" prop="shopName">
+        <template slot-scope="scope">
+          <span @click="optmoney(scope.row)">{{ (scope.row.golds+scope.row.money).toFixed(2) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="开通收单" align="center">
         <template slot-scope="scope">
           <span>{{ scope.row.interfaceState == "0" ? "开通" : "停止" }}</span>
@@ -43,17 +48,24 @@
           <el-button size="mini" type="primary" plain @click="editStateRow(scope.row,1)"
             v-if="scope.row.interfaceState==0">停止</el-button>
           <el-button size="mini" type="success" plain @click="editTransfer(scope.row)">修改</el-button>
+          <el-button size="mini" type="primary" plain @click="optmoney(scope.row)">充值</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <AddPlatTransfer title="开通收单账号" :visible.sync="dialogAddVisible" @confirm="addShopReq" :lots="lots" :form="form">
     </AddPlatTransfer>
-
+    <verify-pwd-dialog :visible.sync="dialogVerifyPwdVisible" title="交易密码确认" @confirm="verifyPwd"></verify-pwd-dialog>
+    <RechargeDialog :visible.sync="dialogRechargeVisible" title="充值设置" :nickname="nickname" @confirm="rechargeReq">
+    </RechargeDialog>
   </div>
 </template>
 
 <script>
+  import {
+    verifyUserPwd,
+    rechargeUser,
+  } from "@/api/client";
   import {
     platlist,
     platSecurityReset,
@@ -68,15 +80,22 @@
     MessageBox
   } from "element-ui";
   import AddPlatTransfer from "./components/AddPlatTransfer.vue";
-
+  import VerifyPwdDialog from "../client/components/VerifyPwdDialog.vue";
+  import RechargeDialog from "../client/components/RechargeDialog.vue";
   export default {
     name: "transfein",
     components: {
       AddPlatTransfer,
+      VerifyPwdDialog,
+      RechargeDialog
     },
     props: {},
     data() {
       return {
+        nickname: '',
+        uid: '',
+        dialogRechargeVisible: false,
+        dialogVerifyPwdVisible: false,
         showSearch: false,
         form: {
           id: '',
@@ -110,6 +129,37 @@
       this.getList()
     },
     methods: {
+      // 充值
+      optmoney(row) {
+        this.nickname = row.shopName
+        this.uid = row.uid
+        this.dialogVerifyPwdVisible = true
+      },
+
+      // 交易密码确认
+      verifyPwd(form) {
+        let {
+          payPwd
+        } = form;
+        let queryParams = {
+          username: this.nickname,
+          payPwd: payPwd,
+        };
+        verifyUserPwd(queryParams).then((response) => {
+          if (!response.errorCode) {
+            this.dialogRechargeVisible = true;
+          }
+        });
+      },
+
+      // 充值请求
+      rechargeReq(form) {
+        rechargeUser(this.uid, form).then((response) => {
+          if (!response.errorCode) {
+            this.getList();
+          }
+        });
+      },
       //修改
       editTransfer(row) {
         this.form = {

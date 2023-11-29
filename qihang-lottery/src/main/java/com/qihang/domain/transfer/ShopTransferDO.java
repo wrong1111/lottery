@@ -33,6 +33,6 @@ public class ShopTransferDO implements Serializable {
     String interfaceState;
     Date createTime;
     Date updateTime;
-    Long uid;
+    Integer uid;
 
 }

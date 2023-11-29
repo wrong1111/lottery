@@ -170,7 +170,8 @@ task:
   minute: false
   omit: false
   award: false
-  change: true
+  change: false
+  checkBill: false
 #============== 腾讯云相关配置 ===================
 
 tencent:

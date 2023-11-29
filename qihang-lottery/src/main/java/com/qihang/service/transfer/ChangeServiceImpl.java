@@ -144,7 +144,7 @@ public class ChangeServiceImpl implements IChangeService {
                     shopTransferDO.setShopName(shopVO.getName());
                     shopTransferDO.setShopConcatName("");
                     shopTransferDO.setShopConcatName("");
-                    shopTransferDO.setUid(0L);
+                    shopTransferDO.setUid(0);
                     shopTransferDO.setTransferKey(key);
                     shopTransferDO.setTransferSecurty(security);
                     shopTransferDO.setTransferType(TransferEnum.TransferOut.code);
@@ -253,6 +253,7 @@ public class ChangeServiceImpl implements IChangeService {
     }
 
 
+    @TenantIgnore
     @Override
     public BaseVO send(Integer id, boolean auto) {
         //查询对应的转单渠道
@@ -305,6 +306,7 @@ public class ChangeServiceImpl implements IChangeService {
         return baseVO;
     }
 
+    @TenantIgnore
     @Async(value = "threadPoolTaskExecutor")
     @Override
     public BaseVO sendSync(Integer id, boolean auto) {

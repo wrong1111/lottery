@@ -46,9 +46,9 @@ service.interceptors.response.use(
    */
   (response) => {
     let res = response.data;
-    console.log("#################################################");
-    console.log("请求日志", res);
-    console.log("#################################################");
+   // console.log("#################################################");
+  //  console.log("请求日志", res);
+   // console.log("#################################################");
     // if the custom code is not 20000, it is judged as an error.
     if (res.errorCode) {
       Message({

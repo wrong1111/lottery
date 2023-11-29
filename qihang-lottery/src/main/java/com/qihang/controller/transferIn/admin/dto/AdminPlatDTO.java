@@ -49,4 +49,7 @@ public class AdminPlatDTO extends PageDTO {
 
     @ApiModelProperty(value = "一键获取地址")
     String gateinfo;
+
+    @ApiModelProperty(value = "店家对应账户ID")
+    Integer uid;
 }

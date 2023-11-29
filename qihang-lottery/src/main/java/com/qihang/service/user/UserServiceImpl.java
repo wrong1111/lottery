@@ -676,7 +676,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         Map<String, String> userMap = new HashMap<>();
         userMap.put("id", "" + userDO.getId());
         userMap.put("uid", "" + userDO.getUid());
-        return BaseDataVO.builder().data(userMap).build();
+        return BaseDataVO.builder().success(true).data(userMap).build();
 
     }
 

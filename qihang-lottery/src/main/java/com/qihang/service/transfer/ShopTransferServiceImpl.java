@@ -92,7 +92,7 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
             BeanUtil.copyProperties(vo, shopTransferDO);
             shopTransferDO.setCreateTime(new Date());
             shopTransferDO.setUpdateTime(new Date());
-            shopTransferDO.setUid(Long.valueOf(((Map<String, String>) returnBo.getData()).get("id")));
+            shopTransferDO.setUid(Integer.valueOf(((Map<String, String>) returnBo.getData()).get("id")));
 
             if (StringUtils.isBlank(vo.getTransferKey())) {
                 shopTransferDO.setTransferKey(RandomStringUtils.randomAlphanumeric(5));
@@ -150,8 +150,15 @@ public class ShopTransferServiceImpl extends ServiceImpl<ShopTransferMapper, Sho
             return BaseDataVO.builder().data(Collections.EMPTY_LIST).build();
         } else {
             List<AdminPlatDTO> list = BeanUtil.copyToList(shopTransferDOList, AdminPlatDTO.class);
+            List<UserDO> userList = userMapper.selectList(new QueryWrapper<UserDO>().lambda().in(UserDO::getId, list.stream().map(AdminPlatDTO::getUid).collect(Collectors.toList())));
+            Map<Integer, UserDO> userDOMap = userList.stream().collect(Collectors.toMap(UserDO::getId, item -> item, (b, c) -> b));
             for (AdminPlatDTO adminPlatDTO : list) {
                 adminPlatDTO.setGateinfo(configDomain + "/app/transfer/info/" + adminPlatDTO.getTransferKey() + "/" + adminPlatDTO.getTransferSecurty());
+                UserDO userDO = userDOMap.get(adminPlatDTO.getUid());
+                if (null != userDO) {
+                    adminPlatDTO.setGolds(userDO.getGold());
+                    adminPlatDTO.setMoney(userDO.getPrice());
+                }
             }
             return BaseDataVO.builder().data(list).build();
         }

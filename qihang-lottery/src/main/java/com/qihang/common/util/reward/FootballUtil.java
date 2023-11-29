@@ -762,7 +762,7 @@ public class FootballUtil {
 
                     //投注 胜（2.0）
                     String[] betContents = getBetContentAndOddFromContent(content);
-                    for (int i = 0; i < allfootconse.length; i++) {
+                   // for (int i = 0; i < allfootconse.length; i++) {
                         //官方返回的是少了让字。
                         if (allfootconse[1].length() == 1) {
                             allfootconse[1] = "让" + allfootconse[1];
@@ -776,7 +776,7 @@ public class FootballUtil {
                             else if (Integer.valueOf(bif[0]) < Integer.valueOf(bif[1]))
                                 allfootconse[4] = "负其他";
                         }
-                    }
+                   // }
                     String odd = getOddByResult(betContents, allfootconse);
                     if (StringUtils.isNotBlank(odd)) {
                         resultOddsList.add(odd);
