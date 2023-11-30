@@ -153,7 +153,7 @@ public class PermutationUtil {
                     permutation.setMode(mode);
                     permutation.setContent(numStr);
                     permutation.setStageNumber(stageNumber);
-                    permutation.setForecastBonus(String.valueOf(price1 * times));
+                    permutation.setForecastBonus(String.valueOf(price3 * times));
                     list.add(permutation);
                 }
             } else if (mode.equals("3")) {
