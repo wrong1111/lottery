@@ -35,6 +35,7 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
     static void initWebDriver(String exec) {
         if (driver == null) {
             ChromeOptions options = new ChromeOptions();
+            options.addArguments("--start-fullscreen");
             options.setBinary(exec);
             //远程 执行
             options.addArguments("--remote-allow-origins=*");

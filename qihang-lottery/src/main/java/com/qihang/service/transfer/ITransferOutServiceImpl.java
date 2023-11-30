@@ -212,7 +212,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         lotteryOrderDO.setTenantId(1);
         lotteryOrderDO.setCreateTime(new Date());
         lotteryOrderDO.setState("0");
-        lotteryOrderDO.setWinPrice(BigDecimal.ZERO);
+        lotteryOrderDO.setWinPrice(null);
         lotteryOrderDO.setWinCounts(0);
         lotteryOrderDO.setTicketingTime(null);
         lotteryOrderDO.setBill(null);
@@ -387,7 +387,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         lotteryOrderDO.setTenantId(1);
         lotteryOrderDO.setCreateTime(new Date());
         lotteryOrderDO.setState("0");
-        lotteryOrderDO.setWinPrice(BigDecimal.ZERO);
+        lotteryOrderDO.setWinPrice(null);
         lotteryOrderDO.setWinCounts(0);
         lotteryOrderDO.setTicketingTime(null);
         lotteryOrderDO.setBill(null);

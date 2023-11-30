@@ -237,7 +237,14 @@ export const constantRoutes = [{
       meta: {
         title: "接口管理"
       },
-    },],
+    }, {
+      path: "orderin",
+      name: "orderin",
+      component: () => import("@/views/transfer/inOrder.vue"),
+      meta: {
+        title: "收单列表"
+      },
+    }],
   },
   {
     path: "/transferout",
@@ -250,14 +257,21 @@ export const constantRoutes = [{
       affix: true
     },
     children: [{
-        path: "list",
+        path: "transfeout",
         name: "transfeout",
         component: () => import("@/views/transfer/out.vue"),
         meta: {
           title: "转单设置"
         },
       },
-
+    {
+        path: "transfeoutorder",
+        name: "transfeoutorder",
+        component: () => import("@/views/transfer/outOrder.vue"),
+        meta: {
+          title: "转单记录"
+        },
+      },
     ],
   },
   // 404 page must be placed at the end !!!
