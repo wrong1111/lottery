@@ -69,54 +69,40 @@ public class PermutationUtil {
                     }
                 }
             } else if (mode.equals("1")) {
+                //1组三复式 两号不同号，*2
                 //是否选了胆
                 Boolean flag = false;
                 //选中的胆的数字
                 String dan = "";
                 List<Object> objectList = Arrays.asList(args[0]);
+                List<String> danList = new ArrayList<>();
+                List<String> tuoList = new ArrayList<>();
                 for (Object obj : objectList) {
                     JSONObject js = JSONUtil.parseObj(obj);
                     //判断是否选中了胆
+                    dan = String.valueOf(js.get("num"));
                     if ((Boolean) js.get("isGallbladder")) {
                         flag = true;
-                        dan = String.valueOf(js.get("num"));
+                        danList.add(dan);
+                    } else {
+                        tuoList.add(dan);
                     }
                 }
                 List<String> contentList = new ArrayList<>();
                 if (flag) {
-                    //胆处理
-                    for (int i = 0; i < args[0].length; i++) {
-                        for (int j = i + 1; j < args[0].length; j++) {
-                            JSONObject js = JSONUtil.parseObj(args[0][i]);
-                            JSONObject js1 = JSONUtil.parseObj(args[0][j]);
-                            String a = js.get("num").toString();
-                            String b = js1.get("num").toString();
-                            //过滤掉不是胆的组合
-                            if (!a.equals(dan) && !b.equals(dan)) {
-                                continue;
-                            }
-                            contentList.add(a + "," + a + "," + b);
-                            contentList.add(a + "," + b + "," + a);
-                            contentList.add(a + "," + b + "," + b);
-                            contentList.add(b + "," + a + "," + b);
-                            contentList.add(b + "," + b + "," + a);
-                            contentList.add(b + "," + a + "," + a);
+                    //有拖
+                    for (String danStr : danList) {
+                        for (String tuoStr : tuoList) {
+                            contentList.add(danStr + "," + danStr + "," + tuoStr);
+                            contentList.add(danStr + "," + tuoStr + "," + tuoStr);
                         }
                     }
                 } else {
-                    for (int i = 0; i < args[0].length; i++) {
-                        for (int j = i + 1; j < args[0].length; j++) {
-                            JSONObject js = JSONUtil.parseObj(args[0][i]);
-                            JSONObject js1 = JSONUtil.parseObj(args[0][j]);
-                            String a = js.get("num").toString();
-                            String b = js1.get("num").toString();
-                            contentList.add(a + "," + a + "," + b);
-                            contentList.add(a + "," + b + "," + a);
-                            contentList.add(a + "," + b + "," + b);
-                            contentList.add(b + "," + a + "," + b);
-                            contentList.add(b + "," + b + "," + a);
-                            contentList.add(b + "," + a + "," + a);
-                        }
+                    //没有拖
+                    List<List<String>> combineList = CombinationUtil.getCombinations(tuoList.toArray(new String[0]), 2);
+                    for (List<String> arys : combineList) {
+                        contentList.add(arys.get(0) + "," + arys.get(0) + "," + arys.get(1));
+                        contentList.add(arys.get(0) + "," + arys.get(1) + "," + arys.get(1));
                     }
                 }
                 for (String str : contentList) {
@@ -128,73 +114,50 @@ public class PermutationUtil {
                     list.add(permutation);
                 }
             } else if (mode.equals("2")) {
+                // 2 组六
                 //是否选了胆
                 Boolean flag = false;
                 //选中的胆的数字
                 List<String> dan = new ArrayList<>();
+                List<String> tuo = new ArrayList<>();
                 List<Object> objectList = Arrays.asList(args[0]);
                 for (Object obj : objectList) {
                     JSONObject js = JSONUtil.parseObj(obj);
                     //判断是否选中了胆
+                    String num = String.valueOf(js.get("num"));
                     if ((Boolean) js.get("isGallbladder")) {
+                        dan.add(num);
                         flag = true;
-                        dan.add(String.valueOf(js.get("num")));
+                    } else {
+                        tuo.add(num);
                     }
                 }
+                List<String> contentList = new ArrayList<>();
                 if (flag) {
-                    List<String> resList = new ArrayList<>();
-                    for (int i = 0; i < args[0].length; i++) {
-                        //通过第二层循环控制十位的数字    array[j]表示十位的值
-                        for (int j = 0; j < args[0].length; j++) {
-                            //通过第三层循环控制个位的数字   array[k]表示个位的值
-                            for (int k = 0; k < args[0].length; k++) {
-                                if (!JSONUtil.parseObj(args[0][i]).getStr("num")
-                                        .equals(JSONUtil.parseObj(args[0][j]).getStr("num"))
-                                        && !JSONUtil.parseObj(args[0][j]).getStr("num")
-                                        .equals(JSONUtil.parseObj(args[0][k]).getStr("num")) && !JSONUtil.parseObj(args[0][i]).getStr("num")
-                                        .equals(JSONUtil.parseObj(args[0][k]).getStr("num"))) {
-                                    resList.add(JSONUtil.parseObj(args[0][i]).getStr("num") + "," + JSONUtil.parseObj(args[0][j]).getStr("num") + "," + JSONUtil.parseObj(args[0][k]).getStr("num"));
-                                }
-                            }
-                        }
-                    }
-                    //过滤胆
-                    if (dan.size() == 1) {
-                        resList = resList.stream().filter(res -> res.contains(dan.get(0))).collect(Collectors.toList());
-                    } else {
-                        resList = resList.stream().filter(res -> res.contains(dan.get(0)) && res.contains(dan.get(1))).collect(Collectors.toList());
-                    }
-                    for (String str : resList) {
-                        PermutationVO permutation = new PermutationVO();
-                        permutation.setMode(mode);
-                        permutation.setContent(str);
-                        permutation.setStageNumber(stageNumber);
-                        permutation.setForecastBonus(String.valueOf(price3 * times));
-                        list.add(permutation);
+                    //有胆
+                    int danSize = dan.size();
+                    List<List<String>> tuoList = CombinationUtil.getCombinations(tuo.toArray(new String[0]), 3 - danSize);
+                    for (List<String> tuoStr : tuoList) {
+                        String danString = StringUtils.join(dan, ",");
+                        contentList.add(danString + "," + StringUtils.join(tuoStr, ","));
                     }
                 } else {
-                    for (int i = 0; i < args[0].length; i++) {
-                        //通过第二层循环控制十位的数字    array[j]表示十位的值
-                        for (int j = 0; j < args[0].length; j++) {
-                            //通过第三层循环控制个位的数字   array[k]表示个位的值
-                            for (int k = 0; k < args[0].length; k++) {
-                                if (!JSONUtil.parseObj(args[0][i]).getStr("num")
-                                        .equals(JSONUtil.parseObj(args[0][j]).getStr("num"))
-                                        && !JSONUtil.parseObj(args[0][j]).getStr("num")
-                                        .equals(JSONUtil.parseObj(args[0][k]).getStr("num")) && !JSONUtil.parseObj(args[0][i]).getStr("num")
-                                        .equals(JSONUtil.parseObj(args[0][k]).getStr("num"))) {
-                                    PermutationVO permutation = new PermutationVO();
-                                    permutation.setMode(mode);
-                                    permutation.setContent(JSONUtil.parseObj(args[0][i]).getStr("num") + "," + JSONUtil.parseObj(args[0][j]).getStr("num") + "," + JSONUtil.parseObj(args[0][k]).getStr("num"));
-                                    permutation.setStageNumber(stageNumber);
-                                    permutation.setForecastBonus(String.valueOf(price3 * times));
-                                    list.add(permutation);
-                                }
-                            }
-                        }
+                    //没胆
+                    List<List<String>> tuoList = CombinationUtil.getCombinations(tuo.toArray(new String[0]), 3);
+                    for (List<String> tuoStr : tuoList) {
+                        contentList.add(StringUtils.join(tuoStr, ","));
                     }
                 }
+                for (String numStr : contentList) {
+                    PermutationVO permutation = new PermutationVO();
+                    permutation.setMode(mode);
+                    permutation.setContent(numStr);
+                    permutation.setStageNumber(stageNumber);
+                    permutation.setForecastBonus(String.valueOf(price1 * times));
+                    list.add(permutation);
+                }
             } else if (mode.equals("3")) {
+                //3 直选和值
                 for (int i = 0; i < args[0].length; i++) {
                     PermutationVO permutation = new PermutationVO();
                     permutation.setMode(mode);
@@ -204,6 +167,7 @@ public class PermutationUtil {
                     list.add(permutation);
                 }
             } else if (mode.equals("4")) {
+                //4 组选和值
                 for (int i = 0; i < args[0].length; i++) {
                     PermutationVO permutation = new PermutationVO();
                     permutation.setMode(mode);

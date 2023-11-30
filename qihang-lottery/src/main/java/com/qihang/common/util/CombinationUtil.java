@@ -3,6 +3,7 @@ package com.qihang.common.util;
 import com.alibaba.fastjson.JSON;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CombinationUtil {
@@ -87,6 +88,7 @@ public class CombinationUtil {
 
     public static void main(String[] args) {
         //combine();
-        System.out.println(getCombination(6, 0));
+        List<String> list = new ArrayList<>(Arrays.asList(new String[]{"2","1","3"}));
+        System.out.println(getCombinations(list.toArray(new String[0]), 2));
     }
 }
