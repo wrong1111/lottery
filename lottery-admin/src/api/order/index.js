@@ -72,3 +72,10 @@ export function orderChangeState(data) {
     timeout:50000
   })
 }
+export function orderSumData(data) {
+  return request({
+    url: '/admin/lottery/order/sum',
+    method: 'post',
+    data: data
+  })
+}

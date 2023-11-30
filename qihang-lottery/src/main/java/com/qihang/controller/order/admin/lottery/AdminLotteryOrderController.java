@@ -41,6 +41,12 @@ public class AdminLotteryOrderController {
         return lotteryOrderService.getAdminLotteryOrderPage(lotteryOrderQuery);
     }
 
+    @PostMapping("/sum")
+    @ApiOperation("统计购彩订单记录接口")
+    public BaseVO sumLotteryOrder(@RequestBody @Valid LotteryOrderQueryDTO lotteryOrderQuery) {
+        return lotteryOrderService.sumAdminLotteryOrder(lotteryOrderQuery);
+    }
+
     @Log(title = "出票审核")
     @PutMapping("/ticketing")
     @ApiOperation("出票审核接口")

@@ -26,6 +26,7 @@ public interface ILotteryOrderService extends IService<LotteryOrderDO> {
      */
     CommonListVO<LotteryOrderVO> getLotteryOrderPage(LotteryOrderDTO lotteryOrder, Integer userId);
 
+
     /**
      * 根据id查询订单信息
      *
@@ -43,6 +44,7 @@ public interface ILotteryOrderService extends IService<LotteryOrderDO> {
      */
     CommonListVO<LotteryOrderQueryVO> getAdminLotteryOrderPage(LotteryOrderQueryDTO lotteryOrderQuery);
 
+    BaseVO sumAdminLotteryOrder(LotteryOrderQueryDTO lotteryOrderQuery);
 
     /**
      * 出票

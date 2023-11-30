@@ -1,6 +1,8 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" size="mini">
+      <el-date-picker v-model="queryParams.day" type="date" placeholder="选择日期" value-format="yyyy-MM-dd">
+      </el-date-picker>
       <el-form-item label="订单号" prop="orderId">
         <el-input v-model="queryParams.orderId" placeholder="请输入订单号" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
@@ -23,7 +25,7 @@
           <el-option v-for="item in bills" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
-     <!-- <el-form-item label="订单类型" prop="transferType">
+      <!-- <el-form-item label="订单类型" prop="transferType">
         <el-select v-model="queryParams.transferType" placeholder="是否有票据" clearable>
           <el-option v-for="item in orderTypes" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
@@ -33,7 +35,24 @@
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
-
+    <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <span>订单数量： {{sumData.counts}}</span><span> 订单金额： ￥{{sumData.price}}</span>
+      </el-col>
+      <el-col :span="1.5">
+        <span>待出票： {{sumData.waitPrintCounts}}</span><span> 待出票金额： ￥{{sumData.waitPrintPrice}}</span>
+      </el-col>
+      <el-col :span="1.5">
+        <span>待开奖： {{sumData.waitAwardCounts}}</span><span> 待开奖金额： ￥{{sumData.waitAwardPrice}}</span>
+      </el-col>
+      <el-col :span="1.5">
+        <span>待派奖： {{sumData.waitBounsCounts}}</span><span> 待派奖金额： ￥{{sumData.waitBounsPrice}}</span>
+      </el-col>
+      <el-col :span="1.5">
+        <span>中奖数量： {{sumData.awardCounts}}</span><span> 中奖金额：￥ {{sumData.awardPrice}}</span><span> 中奖订单投入：
+          ￥{{sumData.awardBetPrice}}</span>
+      </el-col>
+    </el-row>
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="danger" icon="el-icon-receiving" size="mini" plain @click="awardAll">
@@ -220,7 +239,7 @@
         </template>
       </el-table-column>
       <el-table-column label="昵称" align="center" prop="nickname" width="150" :show-overflow-tooltip="true" />
-       <el-table-column label="订单编号" align="center" prop="orderId" width="250" :show-overflow-tooltip="true" />
+      <el-table-column label="订单编号" align="center" prop="orderId" width="250" :show-overflow-tooltip="true" />
       <el-table-column label="中奖金额" align="center" width="80">
         <template slot-scope="scope">
           <span :class="getAward(scope.row)">{{ scope.row.winPrice }}</span>
@@ -259,7 +278,7 @@
             :class="0 == scope.row.transferType?'red1':(1==scope.row.transferType?'blue1':'')">{{ getTransferType(scope.row) }}</span>
         </template>
       </el-table-column>
-     <!-- <el-table-column label="转单时间" align="center" prop="transferTime" show-overflow-tooltip>
+      <!-- <el-table-column label="转单时间" align="center" prop="transferTime" show-overflow-tooltip>
       </el-table-column> -->
     </el-table>
     <el-drawer :title="title" :visible.sync="drawer" :with-header="true" :show-close="true"
@@ -336,6 +355,10 @@
     removeUser
   } from "@/utils/auth";
 
+  import {
+    dateFormat
+  } from "@/api/utils";
+
   import ImageUpload from '@/components/ImageUpload/index.vue';
   export default {
     name: "OrderLottery",
@@ -345,6 +368,23 @@
     props: {},
     data() {
       return {
+        sumData: {
+          "waitPrintCounts": 0,
+          "back_money": 0,
+          "counts": 0,
+          "waitAwardCounts": 0,
+          "backCounts": 0,
+          "waitAwardPrice": 0,
+          "awardPrice": 0,
+          "waitPrintPrice": 0,
+          "waitBounsCounts": 0,
+          "notAwardCounts": 0,
+          "price": 0,
+          "awardCounts": 0,
+          "awardBetPrice": 0,
+          "waitBounsPrice": 0,
+          "notAwardPrice": 0
+        },
         sportId: Math.random(),
         digitId: Math.random(),
         bills: [{
@@ -385,7 +425,8 @@
           pageNo: 1,
           pageSize: 10,
           bill: undefined,
-          transferType: 1
+          transferType: 1,
+          day: dateFormat(new Date()),
         },
         // 是否显示搜索
         showSearch: true,
@@ -487,8 +528,18 @@
       this.getList()
     },
     methods: {
+      //获取订单统计数据
+      getOrderSum() {
+        orderSumData(this.queryParams).then((res) => {
+          //  console.log("======", res.data)
+          if (res.data != null) {
+            this.sumData = res.data
+          }
+
+        })
+      },
       getTransferType(row) {
-      //  console.log(row.transferType, row.transferType == 0)
+        //  console.log(row.transferType, row.transferType == 0)
         if (typeof(row.transferType) == 'undefined' || null == row.transferType) {
           return "普通"
         }
@@ -532,8 +583,8 @@
       getContent(txt) {
         return txt
       },
-      syncChangeStateAll(){
-         this.syncChangeState('')
+      syncChangeStateAll() {
+        this.syncChangeState('')
       },
       //单个 同步转单 状态
       syncChangeState(id) {
@@ -588,7 +639,7 @@
             }
             that.sportItemInfo.push(o)
           }
-        //  console.log('sportItemInfo', that.sportItemInfo)
+          //  console.log('sportItemInfo', that.sportItemInfo)
           return
         } else if (!that.isSportRace(row)) {
           //数字展示
@@ -643,6 +694,7 @@
             this.voList = volist;
           }
         });
+        this.getOrderSum()
       },
       // 查询数据
       handleQuery() {

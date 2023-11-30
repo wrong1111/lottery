@@ -30,4 +30,7 @@ public class LotteryOrderQueryDTO extends PageDTO {
 
     @ApiModelProperty(value = "订单类型空 默认 0 收单 1 转单  ")
     String transferType;
+
+    @ApiModelProperty(value = "日期 yyyy-MM-dd")
+    String day;
 }

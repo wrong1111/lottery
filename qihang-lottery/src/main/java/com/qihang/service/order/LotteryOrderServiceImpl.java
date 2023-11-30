@@ -8,6 +8,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,6 +17,7 @@ import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.RedisService;
 import com.qihang.common.util.email.EmailUtils;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
+import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.constant.TransferEnum;
@@ -24,6 +26,7 @@ import com.qihang.controller.beidan.dto.BeiDanMatchDTO;
 import com.qihang.controller.football.dto.FootballMatchDTO;
 import com.qihang.controller.order.admin.lottery.dto.*;
 import com.qihang.controller.order.admin.lottery.vo.LotteryOrderQueryVO;
+import com.qihang.controller.order.admin.lottery.vo.LotteryOrderSumVO;
 import com.qihang.controller.order.admin.lottery.vo.RacingBallVO;
 import com.qihang.controller.order.app.lottery.dto.LotteryOrderDTO;
 import com.qihang.controller.order.app.lottery.vo.BallInfoVO;
@@ -76,6 +79,7 @@ import com.qihang.service.shop.IShopService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -186,6 +190,59 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         commonList.setVoList(orderList);
         commonList.setTotal(lotteryOrderPage.getTotal());
         return commonList;
+    }
+
+    @Override
+    public BaseVO sumAdminLotteryOrder(LotteryOrderQueryDTO lotteryOrderQuery) {
+        Integer userId = null;
+        UserDO user = userMapper.selectOne(new QueryWrapper<UserDO>().lambda().eq(UserDO::getPhone, lotteryOrderQuery.getPhone()));
+        if (ObjectUtil.isNotNull(user)) {
+            userId = user.getId();
+        } else {
+            if (StrUtil.isNotBlank(lotteryOrderQuery.getPhone())) {
+                return BaseDataVO.builder().success(true).data(null).build();
+            }
+        }
+        String[] sqlColum = new String[]{"sum(1) counts", "sum(price) price",
+                "sum(case when state=2 then 1 else 0 end) notAwardCounts",
+                "sum(case when state=2 then price else 0 end) notAwardPrice",
+                "sum(case when state=4 then 1 else 0 end) awardCounts",
+                "sum(case when state=4 then win_price else 0 end) awardPrice",
+                "sum(case when state=4 then price else 0 end) awardBetPrice",
+                "sum(case when state=0 then 1 else 0 end) waitPrintCounts",
+                "sum(case when state=0 then price else 0 end) waitPrintPrice",
+                "sum(case when state=1 then 1 else 0 end) waitAwardCounts",
+                "sum(case when state=1 then price else 0 end) waitAwardPrice",
+                "sum(case when state=3 then 1 else 0 end ) waitBounsCounts",
+                "sum(case when state=3 then price else 0 end ) waitBounsPrice",
+                "sum(case when state=6 then 1 else 0 end)  backCounts",
+                "sum(case when state=6 then price else 0 end)  back_money"};
+        //分页
+        LambdaQueryWrapper<LotteryOrderDO> qw = new QueryWrapper<LotteryOrderDO>()
+                .select(sqlColum).lambda();
+        //动态拼接查询条件
+        qw.eq(ObjectUtil.isNotNull(userId), LotteryOrderDO::getUserId, userId);
+        qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getOrderId()), LotteryOrderDO::getOrderId, lotteryOrderQuery.getOrderId());
+        qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getState()), LotteryOrderDO::getState, lotteryOrderQuery.getState());
+        qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getType()), LotteryOrderDO::getType, lotteryOrderQuery.getType());
+        if ("2".equals(lotteryOrderQuery.getTransferType())) {
+            qw.isNull(LotteryOrderDO::getTransferType);
+        } else {
+            qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getTransferType()), LotteryOrderDO::getTransferType, lotteryOrderQuery.getTransferType());
+        }
+        if (StringUtils.isNotBlank(lotteryOrderQuery.getDay())) {
+            qw.between(StringUtils.isNotBlank(lotteryOrderQuery.getDay()), LotteryOrderDO::getCreateTime, DateUtil.parse(lotteryOrderQuery.getDay(), DateUtil.newSimpleFormat("yyyy-MM-dd")), DateUtils.addDays(DateUtil.parse(lotteryOrderQuery.getDay(), DateUtil.newSimpleFormat("yyyy-MM-dd")), 1));
+        }
+        if (StringUtils.isNotBlank(lotteryOrderQuery.getBill())) {
+            if ("0".equals(lotteryOrderQuery.getBill())) {
+                qw.isNull(LotteryOrderDO::getBill);
+            } else if ("1".equals(lotteryOrderQuery.getBill())) {
+                qw.isNotNull(LotteryOrderDO::getBill);
+            }
+        }
+        qw.orderByDesc(LotteryOrderDO::getCreateTime);
+        List<Map<String, Object>> resultList = lotteryOrderMapper.selectMaps(qw);
+        return BaseDataVO.builder().data(resultList.get(0)).success(true).build();
     }
 
     /*
@@ -367,6 +424,9 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             qw.isNull(LotteryOrderDO::getTransferType);
         } else {
             qw.eq(StrUtil.isNotBlank(lotteryOrderQuery.getTransferType()), LotteryOrderDO::getTransferType, lotteryOrderQuery.getTransferType());
+        }
+        if (StringUtils.isNotBlank(lotteryOrderQuery.getDay())) {
+            qw.between(StringUtils.isNotBlank(lotteryOrderQuery.getDay()), LotteryOrderDO::getCreateTime, DateUtil.parse(lotteryOrderQuery.getDay(), DateUtil.newSimpleFormat("yyyy-MM-dd")), DateUtils.addDays(DateUtil.parse(lotteryOrderQuery.getDay(), DateUtil.newSimpleFormat("yyyy-MM-dd")), 1));
         }
         if (StringUtils.isNotBlank(lotteryOrderQuery.getBill())) {
             if ("0".equals(lotteryOrderQuery.getBill())) {
