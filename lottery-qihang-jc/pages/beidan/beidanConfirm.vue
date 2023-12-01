@@ -146,7 +146,7 @@
 				//总金额
 				price: 0,
 				//默认50倍
-				times: 50,
+				times: 1,
 				//标记是否单关
 				flag: true,
 				strandArr: [],

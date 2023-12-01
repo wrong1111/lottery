@@ -105,8 +105,8 @@
 				notes: 0,
 				//总金额
 				price: 0,
-				//默认50倍
-				times: 50,
+				//默认1倍
+				times: 1,
 				issueNo:'',
 				calculationParam: {
 					winBurdenMatchList: [],
