@@ -9,6 +9,7 @@ import com.qihang.common.util.reward.LotteryAlgorithmUtil;
 import com.qihang.constant.CrawlingAddressConstant;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
+import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.omit.OmitDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
@@ -17,6 +18,7 @@ import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import com.qihang.service.racingball.RacingBallServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
@@ -24,6 +26,7 @@ import us.codecraft.webmagic.processor.PageProcessor;
 import us.codecraft.webmagic.selector.Html;
 import us.codecraft.webmagic.selector.Selectable;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -653,6 +656,92 @@ public class LotteryProcessor implements PageProcessor {
             }
             log.info(" 排列号码遗漏 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(omitList));
             page.putField("omitList", omitList);
+        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_BD_SFGG)) {
+            List<BeiDanSFGGMatchDO> beiDanSfggMatchList = new ArrayList<>();
+            //北单胜负过关。
+            //期号
+
+            //*[@id="bet_content"]
+            // List<Selectable> divNodes = html.css("//*[@id='bet_content']/div").nodes();
+            List<Selectable> tableNodes = html.css(".bet_table").nodes();
+            int idx = 0;
+            for (Selectable node : tableNodes) {
+
+                //获取当天的赛事列表
+                List<Selectable> trNodes = node.xpath("tr").nodes();
+
+                for (Selectable trNode : trNodes) {
+
+                    List<Selectable> tdNodes = trNode.xpath("td").nodes();
+                    BeiDanSFGGMatchDO match = new BeiDanSFGGMatchDO();
+                    //让球
+                    String issueNo = trNode.xpath("//tr/@pdate").get();
+                    String mid = trNode.xpath("//tr/@mid").get();
+                    String gdate = trNode.xpath("//tr/@gdate").get();
+                    try {
+                        String letBall = trNode.xpath("//tr/@rq").get();
+                        String matchType = trNode.xpath("//tr/@matchtype").get();
+                        String unionMatch = trNode.xpath("//tr/@lg").get().replaceAll(matchType + "-", "");//足球-亚冠联赛
+                        String endTime = trNode.xpath("//tr/@pendtime").get();//开赛时间加10分钟 2023-11-28 17:50
+
+                        String bg = tdNodes.get(2).xpath("//span/@style").get().replaceAll("background:", "").trim();
+                        //主队
+                        List<Selectable> teamNodes = tdNodes.get(4).xpath("//span[@class='odds_item']").nodes();
+                        String homeWinOdds = teamNodes.get(0).xpath("//span/@data-sp-ori").get();
+                        String homeTeam = teamNodes.get(0).xpath("//span[@class='gray']/text()").get() + teamNodes.get(0).xpath("//span[@class='item_left']/text()").get();
+
+                        String homeOdds = teamNodes.get(0).xpath("//span[@class='js-sp']/text()").get();
+
+                        String visitWinOdds = teamNodes.get(1).xpath("//span/@data-sp-ori").get();
+                        String visitTeam = teamNodes.get(1).xpath("//span/text()").get() + teamNodes.get(1).xpath("//span[@class='gray']/text()").get();
+                        //visitTeam 需要处理下 1.57  佩特罗鲁 [6]
+                        String visitOdds = teamNodes.get(1).xpath("//span[@class='js-sp']/text()").get();
+
+                        String score = tdNodes.get(5).xpath("//a/text()").get();
+                        match.setState("0");
+                        boolean isScore = (StringUtils.isNotBlank(score) && score.matches("^\\d+:\\d+$")) ? true : false;
+                        if (StringUtils.isNotBlank(score) && (isScore) && (StringUtils.isNotBlank(homeWinOdds) || StringUtils.isNotBlank(visitWinOdds))) {
+                            String boundsOdds = homeWinOdds + "," + visitOdds;
+                            match.setBonusOdds(boundsOdds);
+                            //已经开奖
+                            match.setState("1");
+                            if (StringUtils.isNotBlank(homeWinOdds)) {
+                                match.setAward("胜");
+                            } else if (StringUtils.isNotBlank(visitWinOdds)) {
+                                match.setAward("负");
+                            }
+                        }
+                        if (isScore) {
+                            match.setHalfFullCourt(score);
+                        }
+                        match.setHostWinOdds(homeOdds);
+                        match.setVisitWinOdds(visitOdds);
+                        match.setStartTime(gdate);
+                        try {
+                            match.setDeadline(DateUtils.addMinutes(DateUtils.parseDate(endTime, "yyyy-MM-dd HH:mm"), 10));
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        match.setLetBall(letBall);
+                        match.setColor(bg);
+                        match.setUnionMatch(unionMatch);
+                        match.setCreateTime(new Date());
+                        match.setIssueNo(issueNo);
+                        match.setGameNo(issueNo + RacingBallServiceImpl.fillZero(mid, 4));
+                        match.setMatch(matchType);
+                        match.setHomeTeam(homeTeam.trim());
+                        match.setNumber(mid);
+                        match.setVisitingTeam(visitTeam.trim());
+                        beiDanSfggMatchList.add(match);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        log.error(" 北单胜负过关对阵>>>>>{} {}", issueNo, mid);
+                    }
+                }
+            }
+            log.info(" 北单胜负过关对阵 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(beiDanSfggMatchList));
+            page.putField("sfggList", beiDanSfggMatchList);
         }
     }
 

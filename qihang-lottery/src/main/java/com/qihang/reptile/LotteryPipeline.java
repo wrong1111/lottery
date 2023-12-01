@@ -9,6 +9,7 @@ import com.qihang.common.util.PermutationUtils;
 import com.qihang.constant.CrawlingAddressConstant;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
+import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.omit.OmitDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
@@ -17,6 +18,7 @@ import com.qihang.enumeration.ball.BettingStateEnum;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import com.qihang.service.basketball.IBasketballMatchService;
 import com.qihang.service.beidan.IBeiDanMatchService;
+import com.qihang.service.beidan.IBeidanSfggMatchService;
 import com.qihang.service.football.IFootballMatchService;
 import com.qihang.service.omit.IOmitService;
 import com.qihang.service.permutation.IPermutationAwardService;
@@ -70,6 +72,10 @@ public class LotteryPipeline implements Pipeline {
 
     @Resource
     private IOmitService omitService;
+
+    @Resource
+    IBeidanSfggMatchService beidanSfggMatchService;
+
 
     @Override
     public void process(ResultItems resultItems, Task task) {
@@ -396,6 +402,30 @@ public class LotteryPipeline implements Pipeline {
                     omit.setUpdateTime(new Date());
                     omitService.updateById(omit);
                 }
+            }
+        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL_BD_SFGG)) {
+            List<BeiDanSFGGMatchDO> sfggList = resultItems.get("sfggList");
+            if (CollectionUtils.isEmpty(sfggList)) {
+                return;
+            }
+            boolean update = false;//是否有更新中奖赔率，需要兑奖
+            for (BeiDanSFGGMatchDO sffgg : sfggList) {
+                BeiDanSFGGMatchDO sfggMatchDO = beidanSfggMatchService.getOne(new QueryWrapper<BeiDanSFGGMatchDO>().lambda().eq(BeiDanSFGGMatchDO::getGameNo, sffgg.getGameNo()));
+                if (null == sfggMatchDO) {
+                    update = true;
+                    beidanSfggMatchService.save(sffgg);
+                } else {
+                    if (StringUtils.isNotBlank(sffgg.getHalfFullCourt()) && StringUtils.isBlank(sfggMatchDO.getHalfFullCourt())) {
+                        update = true;
+                        sfggMatchDO.setHalfFullCourt(sffgg.getHalfFullCourt());
+                        sfggMatchDO.setAward(sffgg.getAward());
+                        sfggMatchDO.setBonusOdds(sffgg.getBonusOdds());
+                        beidanSfggMatchService.updateById(sffgg);
+                    }
+                }
+            }
+            if (update) {
+                //调用兑奖
             }
         }
     }

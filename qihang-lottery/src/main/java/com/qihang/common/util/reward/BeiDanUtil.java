@@ -263,7 +263,71 @@ public class BeiDanUtil {
      * @param pssTypeList     类型，可以单个，可以多个，例如 二串一 三串一 可以单也可以组合
      * @return
      */
+    public static BallCalculationVO calculationSfgg(List<BeiDanMatchDTO> beiDanMatchList, Integer multiple, List<Integer> pssTypeList) {
+        BallCalculationVO beiDanCalculation = new BallCalculationVO();
+        beiDanMatchDTOall[] beiDanMatchDTOall = new beiDanMatchDTOall[beiDanMatchList.size()];
+        for (int i = 0; i < beiDanMatchList.size(); i++) {
+            beiDanMatchDTOall[i] = new beiDanMatchDTOall(beiDanMatchList.get(i));
+        }
+        double[] range = new double[2];
+        int[][] Indexgroup = getIndexgroup(beiDanMatchList.size(), pssTypeList.get(0));
+        int betsnum = getallbetsnum(beiDanMatchDTOall, Indexgroup);
+        range = getallrange(beiDanMatchDTOall, Indexgroup);
+//        double allmax = range[0];
+//        double allmin = range[1];
 
+        List<List<BallCombinationVO>> basketballOptimizationz = getallfootballOptimization(beiDanMatchList, Indexgroup);
+
+        for (int i = 1; i < pssTypeList.size(); i++) {
+            int[][] Indexgroup1 = getIndexgroup(beiDanMatchList.size(), pssTypeList.get(i));
+            betsnum = betsnum + getallbetsnum(beiDanMatchDTOall, Indexgroup1);
+            range = getallrange(beiDanMatchDTOall, Indexgroup1);
+//            allmax = range[0] + allmax;
+//            if (allmin > range[1]) {
+//                allmin = range[1];
+//            }
+            basketballOptimizationz.addAll(getallfootballOptimization(beiDanMatchList, Indexgroup1));
+        }
+        List<BallOptimizationVO> nomralOptimizationList = new ArrayList<>();
+
+        BigDecimal allmax = BigDecimal.ZERO;
+        BigDecimal allmin = BigDecimal.ZERO;
+        int idx = 0;
+        for (List<BallCombinationVO> p : basketballOptimizationz) {
+            BallOptimizationVO vo = new BallOptimizationVO();
+            vo.setBallCombinationList(p);
+            vo.setType(p.size() + "串1");
+            vo.setNotes(multiple);
+            BigDecimal forest = FootballUtil.foreast(vo.getBallCombinationList()).multiply(BigDecimal.valueOf(multiple)).multiply(BigDecimal.valueOf(0.65d));
+            vo.setForecastBonus(forest.setScale(2, RoundingMode.HALF_UP));
+            if (idx == 0) {
+                allmin = vo.getForecastBonus();
+            }
+            if (vo.getForecastBonus().compareTo(allmax) > 0) {
+                allmax = vo.getForecastBonus();
+            }
+            if (vo.getForecastBonus().compareTo(allmin) < 0) {
+                allmin = vo.getForecastBonus();
+            }
+            nomralOptimizationList.add(vo);
+            idx++;
+        }
+
+        beiDanCalculation.setNotes(betsnum);
+        beiDanCalculation.setMaxPrice(allmax);
+        beiDanCalculation.setMinPrice(allmin);
+//        List<BallOptimizationVO>[] FootballOptimizationVOlist = BasketballUtil.getFootballOptimizationVOlist(basketballOptimizationz, multiple);
+//        FootballOptimizationVOlist[0] = FootballOptimizationVOlist[0].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
+//        FootballOptimizationVOlist[1] = FootballOptimizationVOlist[1].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
+//        FootballOptimizationVOlist[2] = FootballOptimizationVOlist[2].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
+//
+//        beiDanCalculation.setAverageOptimizationList(FootballOptimizationVOlist[0]);
+//        beiDanCalculation.setColdOptimizationList(FootballOptimizationVOlist[1]);
+//        beiDanCalculation.setHeatOptimizationList(FootballOptimizationVOlist[2]);
+        beiDanCalculation.setNormalOptimizatinList(nomralOptimizationList);
+
+        return beiDanCalculation;
+    }
 
     public static BallCalculationVO calculation(List<BeiDanMatchDTO> beiDanMatchList, Integer multiple, List<Integer> pssTypeList) {
         BallCalculationVO beiDanCalculation = new BallCalculationVO();

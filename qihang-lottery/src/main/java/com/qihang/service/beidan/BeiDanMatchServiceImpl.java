@@ -32,6 +32,7 @@ import com.qihang.enumeration.order.pay.PayOrderStateEnum;
 import com.qihang.enumeration.order.pay.PayOrderTypeEnum;
 import com.qihang.enumeration.order.pay.PayTypeEnum;
 import com.qihang.mapper.beidan.BeiDanMatchMapper;
+import com.qihang.mapper.beidan.BeiDanSfggMatchMapper;
 import com.qihang.mapper.documentary.DocumentaryMapper;
 import com.qihang.mapper.documentary.DocumentaryUserMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;

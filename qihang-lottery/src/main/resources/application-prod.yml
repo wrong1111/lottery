@@ -224,6 +224,7 @@ mro:
       - t_order_transfer_log
       - t_shop_transfer
       - t_lottery_transfer
+      - t_beidan_sfgg_match
 server:
   port: 48081
 
