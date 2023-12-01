@@ -214,7 +214,7 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                 "sum(case when state=1 then 1 else 0 end) waitAwardCounts",
                 "sum(case when state=1 then price else 0 end) waitAwardPrice",
                 "sum(case when state=3 then 1 else 0 end ) waitBounsCounts",
-                "sum(case when state=3 then price else 0 end ) waitBounsPrice",
+                "sum(case when state=3 then win_price else 0 end ) waitBounsPrice",
                 "sum(case when state=6 then 1 else 0 end)  backCounts",
                 "sum(case when state=6 then price else 0 end)  back_money"};
         //分页

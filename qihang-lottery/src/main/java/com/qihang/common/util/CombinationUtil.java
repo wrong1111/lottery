@@ -1,5 +1,6 @@
 package com.qihang.common.util;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSON;
 
 import java.util.ArrayList;
@@ -88,7 +89,15 @@ public class CombinationUtil {
 
     public static void main(String[] args) {
         //combine();
-        List<String> list = new ArrayList<>(Arrays.asList(new String[]{"2","1","3"}));
-        System.out.println(getCombinations(list.toArray(new String[0]), 2));
+//        List<String> list = new ArrayList<>(Arrays.asList(new String[]{"2", "1", "3"}));
+//        System.out.println(getCombinations(list.toArray(new String[0]), 2));
+
+//        List<String> alist = new ArrayList<>(Arrays.asList(new String[]{"1", "2", "3"}));
+//        List<String> blist = new ArrayList<>(Arrays.asList(new String[]{"3", "4", "5"}));
+//        System.out.println(CollectionUtil.reverseNew(blist));
+//        System.out.println(blist);
+//        System.out.println(" union 并集 " + CollectionUtil.union(blist, alist));
+//        System.out.println(" union 交集 " + CollectionUtil.intersection(blist, alist));
+
     }
 }
