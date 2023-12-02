@@ -58,6 +58,6 @@ public class BeidanSfggMatchVO implements Serializable {
     String issueNo;
 
     @ApiModelProperty(value = "让球赔率")
-    private List<Map<String, Object>> letOddsList;
+    private List<Map<String, Object>> sfggList;
 }
 

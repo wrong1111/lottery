@@ -232,6 +232,7 @@ public class BeiDanUtil {
         footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getScoreOddsList()));
         footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getHalfWholeOddsList()));
         footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getOddEvenOdds()));
+        footballCombinationVOList.addAll(getOptions(footballMatchDTO, footballMatchDTO.getSfggOdds()));
         return footballCombinationVOList;
     }
 
@@ -316,14 +317,17 @@ public class BeiDanUtil {
         beiDanCalculation.setNotes(betsnum);
         beiDanCalculation.setMaxPrice(allmax);
         beiDanCalculation.setMinPrice(allmin);
-//        List<BallOptimizationVO>[] FootballOptimizationVOlist = BasketballUtil.getFootballOptimizationVOlist(basketballOptimizationz, multiple);
-//        FootballOptimizationVOlist[0] = FootballOptimizationVOlist[0].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
-//        FootballOptimizationVOlist[1] = FootballOptimizationVOlist[1].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
-//        FootballOptimizationVOlist[2] = FootballOptimizationVOlist[2].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
-//
-//        beiDanCalculation.setAverageOptimizationList(FootballOptimizationVOlist[0]);
-//        beiDanCalculation.setColdOptimizationList(FootballOptimizationVOlist[1]);
-//        beiDanCalculation.setHeatOptimizationList(FootballOptimizationVOlist[2]);
+        List<BallOptimizationVO>[] FootballOptimizationVOlist = BasketballUtil.getFootballOptimizationVOlist(basketballOptimizationz, multiple);
+        FootballOptimizationVOlist[0] = FootballOptimizationVOlist[0].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
+        FootballOptimizationVOlist[1] = FootballOptimizationVOlist[1].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
+        FootballOptimizationVOlist[2] = FootballOptimizationVOlist[2].stream().sorted(Comparator.comparing(BallOptimizationVO::getType).thenComparing(BallOptimizationVO::getNotes)).collect(Collectors.toList());
+
+        FootballOptimizationVOlist[0].forEach(item -> item.setForecastBonus(item.getForecastBonus().multiply(BigDecimal.valueOf(0.65d))));
+        FootballOptimizationVOlist[1].forEach(item -> item.setForecastBonus(item.getForecastBonus().multiply(BigDecimal.valueOf(0.65d))));
+        FootballOptimizationVOlist[2].forEach(item -> item.setForecastBonus(item.getForecastBonus().multiply(BigDecimal.valueOf(0.65d))));
+        beiDanCalculation.setAverageOptimizationList(FootballOptimizationVOlist[0]);
+        beiDanCalculation.setColdOptimizationList(FootballOptimizationVOlist[1]);
+        beiDanCalculation.setHeatOptimizationList(FootballOptimizationVOlist[2]);
         beiDanCalculation.setNormalOptimizatinList(nomralOptimizationList);
 
         return beiDanCalculation;
@@ -428,13 +432,14 @@ public class BeiDanUtil {
             this.minodds = odds;
         }
 
-        public List<Double> getoddsinallodds(List<Map<String, Object>> GoalOddsList, List<Map<String, Object>> LetOddsList, List<Map<String, Object>> HalfWholeOddsList, List<Map<String, Object>> OddEvenOdds, List<Map<String, Object>> ScoreOddsList) {
-            List<Map<String, Object>>[] list = new ArrayList[5];
+        public List<Double> getoddsinallodds(List<Map<String, Object>> GoalOddsList, List<Map<String, Object>> LetOddsList, List<Map<String, Object>> HalfWholeOddsList, List<Map<String, Object>> OddEvenOdds, List<Map<String, Object>> ScoreOddsList, List<Map<String, Object>> sfggOddsList) {
+            List<Map<String, Object>>[] list = new ArrayList[6];
             list[0] = GoalOddsList;
             list[1] = LetOddsList;
             list[2] = HalfWholeOddsList;
             list[3] = OddEvenOdds;
             list[4] = ScoreOddsList;
+            list[5] = sfggOddsList;
             List<Map<String, Object>> notNullodds = getNotNullodds(list);
             return getoddsintype(notNullodds);
         }
@@ -464,10 +469,10 @@ public class BeiDanUtil {
             this.match = beiDanMatchDTO.getMatch();
             this.homeTeam = beiDanMatchDTO.getHomeTeam();
             this.visitingTeam = beiDanMatchDTO.getVisitingTeam();
-            this.length = beiDanMatchDTO.getGoalOddsList().size() + beiDanMatchDTO.getLetOddsList().size() + beiDanMatchDTO.getHalfWholeOddsList().size() + beiDanMatchDTO.getOddEvenOdds().size() + beiDanMatchDTO.getScoreOddsList().size();
+            this.length = beiDanMatchDTO.getGoalOddsList().size() + beiDanMatchDTO.getLetOddsList().size() + beiDanMatchDTO.getHalfWholeOddsList().size() + beiDanMatchDTO.getOddEvenOdds().size() + beiDanMatchDTO.getScoreOddsList().size() + beiDanMatchDTO.getSfggOdds().size();
             this.letBall = beiDanMatchDTO.getLetBall();
             List<Double> OddsList = new ArrayList<>();
-            OddsList = getoddsinallodds(beiDanMatchDTO.getGoalOddsList(), beiDanMatchDTO.getLetOddsList(), beiDanMatchDTO.getHalfWholeOddsList(), beiDanMatchDTO.getOddEvenOdds(), beiDanMatchDTO.getScoreOddsList());
+            OddsList = getoddsinallodds(beiDanMatchDTO.getGoalOddsList(), beiDanMatchDTO.getLetOddsList(), beiDanMatchDTO.getHalfWholeOddsList(), beiDanMatchDTO.getOddEvenOdds(), beiDanMatchDTO.getScoreOddsList(), beiDanMatchDTO.getSfggOdds());
             setMaxodds(OddsList);
             setMinodds(OddsList);
         }

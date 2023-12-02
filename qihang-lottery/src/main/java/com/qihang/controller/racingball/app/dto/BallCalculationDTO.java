@@ -2,8 +2,10 @@ package com.qihang.controller.racingball.app.dto;
 
 import com.qihang.controller.basketball.dto.BasketballMatchDTO;
 import com.qihang.controller.beidan.dto.BeiDanMatchDTO;
+import com.qihang.controller.beidan.vo.BeidanSfggMatchVO;
 import com.qihang.controller.football.dto.FootballMatchDTO;
 import com.qihang.controller.winburden.dto.WinBurdenMatchDTO;
+import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;

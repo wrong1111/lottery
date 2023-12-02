@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,19 +32,23 @@ public class BeiDanMatchDTO implements Serializable {
     private String letBall;
 
     @ApiModelProperty(value = "让球赔率")
-    private List<Map<String, Object>> letOddsList;
+    private List<Map<String, Object>> letOddsList = new ArrayList<>();
 
     @ApiModelProperty(value = "单双赔率")
-    private List<Map<String, Object>> oddEvenOdds;
+    private List<Map<String, Object>> oddEvenOdds = new ArrayList<>();
 
     @ApiModelProperty(value = "总进球赔率")
-    private List<Map<String, Object>> goalOddsList;
+    private List<Map<String, Object>> goalOddsList = new ArrayList<>();
 
     @ApiModelProperty(value = "半全场赔率")
-    private List<Map<String, Object>> halfWholeOddsList;
+    private List<Map<String, Object>> halfWholeOddsList = new ArrayList<>();
 
     @ApiModelProperty(value = "比分赔率")
-    private List<Map<String, Object>> scoreOddsList;
+    private List<Map<String, Object>> scoreOddsList = new ArrayList<>();
+
+
+    @ApiModelProperty(value = "胜负过关赔率")
+    private List<Map<String, Object>> sfggOdds = new ArrayList<>();
 
     @ApiModelProperty(value = "主队")
     private String homeTeam;

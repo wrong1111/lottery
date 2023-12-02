@@ -12,65 +12,65 @@
 						:activeStyle="{color: '#FF3F43',fontWeight: 'bold',transform: 'scale(1.05)'}"
 						@click="changeSelectBall"></u-tabs>
 				</u-sticky>
-				<!--胜平负-->
+
 				<u-empty icon="http://cdn.uviewui.com/uview/empty/data.png" :show="beidanList.length<=0" mode="data"
 					text="暂无比赛"></u-empty>
-					<!-- 胜负过关-->
-				<div class="soccer_hunheguoguan" v-if="changeBall == 5">
-						<!--每周比赛-->
-						<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
-							<!--比赛折叠条-->
-							<div class="weekGame_banner" @click="clickBanner(weekIdx)">
-								<div class="banner_left">
-									<span>{{wk.startTime}}</span>
-									<span style="display: block;color: #d4237a;">共有{{wk.count}}场比赛</span>
-								</div>
-								<u-icon :name="isChangeIcon === weekIdx?'arrow-up':'arrow-down'"></u-icon>
+				<!-- 胜负过关-->
+				<div class="soccer_hunheguoguan" v-if="changeBall == 0">
+					<!--每周比赛-->
+					<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
+						<!--比赛折叠条-->
+						<div class="weekGame_banner2" @click="clickBanner(weekIdx)">
+							<div class="banner_left2">
+								<span>{{wk.startTime}}</span>
+								<span style="display: block;color: #d4237a;">共有{{wk.count}}场比赛</span>
 							</div>
-							<!--比赛-->
-							<div class="weekGame_games" v-show="isShowGames === weekIdx">
-								<!--每个比赛-->
-								<div class="games" v-for="(game,index) in wk.beiDanMatchList" :key="index">
-									<div class="games_left">
-										<span><b>{{game.number}}</b></span>
-										<u-tag :borderColor="game.color" :bgColor="game.color"
-											:text="game.match">
-										</u-tag>
-										<span>{{game.deadline|formatDate(that)}} 截止</span>
-										<span style="color: rgb(41, 121, 255);" @click="analysis(game.analysis)">分析</span>
-									</div>
-									<div class="games_right">
-										<!--比赛队伍-->
-										<span class="right_title">
-											<span
-												class="title_team">{{game.homeTeam}}<strong>vs</strong>{{game.visitingTeam}}</span>
-										</span>
-										<!--表格-->
-										<table>
-											<tr>
-												<td class="rangqiu"
-													:class="game.letBall < 0?'rangqiuBlue':game.letBall == 0?'rangqiuGreen':''">
-													{{game.letBall}}
-												</td>
-												<td class="sheng_top">
-													<p>
-														<span v-if="game.letOddsList.length<=0">未开售</span>
-														<span v-else v-for="(lets,letsIndex) in game.letOddsList"
-															style="position: relative;" :class="{active:lets.active}"
-															@tap="selectBtn(game,lets,weekIdx,index,1)">{{lets.describe}}
-															{{lets.odds}}
-														</span>
-													</p>
-												</td>
-											</tr>
-										</table>
-									</div>
+							<u-icon :name="isChangeIcon === weekIdx?'arrow-up':'arrow-down'"></u-icon>
+						</div>
+						<!--比赛-->
+						<div class="weekGame_games" v-show="isShowGames === weekIdx">
+							<!--每个比赛-->
+							<div class="games" v-for="(game,index) in wk.beiDanMatchList" :key="index">
+								<div class="games_left">
+									<span><b>{{game.number}}</b></span>
+									<u-tag :borderColor="game.color" :bgColor="game.color" :text="game.match">
+									</u-tag>
+									<span>{{game.deadline|formatDate(that)}} 截止</span>
+									<span style="color: rgb(41, 121, 255);" @click="analysis(game.analysis)">分析</span>
+								</div>
+								<div class="games_right" style="width: 80%;">
+									<!--比赛队伍-->
+									<span class="right_title">
+										<span
+											class="title_team">{{game.homeTeam}}<strong>vs</strong>{{game.visitingTeam}}</span>
+									</span>
+									<!--表格-->
+									<table>
+										<tr>
+											<td class="rangqiu2"
+												:class="game.letBall < 0?'rangqiuBlue':game.letBall == 0?'rangqiuGreen':''">
+												{{game.letBall}}
+											</td>
+											<td class="sheng_top">
+												<p>
+													<span v-if="game.sfggList.length<=0">未开售</span>
+													<span v-else v-for="(lets,letsIndex) in game.sfggList"
+														style="position: relative;" :class="{active:lets.active}"
+														@tap="selectBtn(game,lets,weekIdx,index,0)">{{lets.describe}}
+														{{lets.odds}}
+													</span>
+												</p>
+											</td>
+										</tr>
+									</table>
 								</div>
 							</div>
 						</div>
-						
 					</div>
-				<div class="soccer_hunheguoguan" v-if="changeBall == 0">
+
+				</div>
+				<!--胜平负-->
+				<div class="soccer_hunheguoguan" v-if="changeBall == 1">
 					<!--每周比赛-->
 					<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
 						<!--比赛折叠条-->
@@ -87,8 +87,7 @@
 							<div class="games" v-for="(game,index) in wk.beiDanMatchList" :key="index">
 								<div class="games_left">
 									<span><b>{{game.number}}</b></span>
-									<u-tag :borderColor="game.color" :bgColor="game.color"
-										:text="game.match">
+									<u-tag :borderColor="game.color" :bgColor="game.color" :text="game.match">
 									</u-tag>
 									<span>{{game.deadline|formatDate(that)}} 截止</span>
 									<span style="color: rgb(41, 121, 255);" @click="analysis(game.analysis)">分析</span>
@@ -124,7 +123,7 @@
 					</div>
 				</div>
 				<!--上线单双-->
-				<div class="soccer_shengpingfu" v-if="changeBall == 1">
+				<div class="soccer_shengpingfu" v-if="changeBall == 2">
 					<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
 						<!--比赛折叠条-->
 						<div class="weekGame_banner" @click="clickBanner(weekIdx)">
@@ -140,8 +139,7 @@
 							<div class="games" v-for="(game,index) in wk.beiDanMatchList">
 								<div class="games_left">
 									<span><b> {{game.number}}</b></span>
-									<u-tag :borderColor="game.color" :bgColor="game.color"
-										:text="game.match">
+									<u-tag :borderColor="game.color" :bgColor="game.color" :text="game.match">
 									</u-tag>
 									<span>{{game.deadline|formatDate(that)}} 截止</span>
 									<span style="color: rgb(41, 121, 255);" @click="analysis(game.analysis)">分析</span>
@@ -175,7 +173,7 @@
 					</div>
 				</div>
 				<!--总进球-->
-				<div class="soccer_zongjinqiu" v-if="changeBall == 2">
+				<div class="soccer_zongjinqiu" v-if="changeBall == 3">
 					<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
 						<!--比赛折叠条-->
 						<div class="weekGame_banner" @click="clickBanner(weekIdx)">
@@ -191,8 +189,7 @@
 							<div class="games" v-for="(game,index) in wk.beiDanMatchList">
 								<div class="games_left">
 									<span><b> {{game.number}}</b></span>
-									<u-tag :borderColor="game.color" :bgColor="game.color"
-										:text="game.match">
+									<u-tag :borderColor="game.color" :bgColor="game.color" :text="game.match">
 									</u-tag>
 									<span>{{game.deadline|formatDate(that)}} 截止</span>
 									<span style="color: rgb(41, 121, 255);" @click="analysis(game.analysis)">分析</span>
@@ -228,48 +225,6 @@
 					</div>
 				</div>
 				<!--比分-->
-				<div class="soccer_bifen" v-if="changeBall == 3">
-					<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
-						<!--比赛折叠条-->
-						<div class="weekGame_banner" @click="clickBanner(weekIdx)">
-							<div class="banner_left">
-								<span>{{wk.startTime}}</span>
-								<span style="display: block;color: #d4237a;">共有{{wk.count}}场比赛</span>
-							</div>
-							<u-icon :name="isChangeIcon === weekIdx?'arrow-up':'arrow-down'"></u-icon>
-						</div>
-						<!--比赛-->
-						<div class="weekGame_games" v-show="isShowGames === weekIdx">
-							<!--每个比赛-->
-							<div class="games" v-for="(game,idx) in wk.beiDanMatchList">
-								<div class="games_left">
-									<span>{{game.number}}</b></span>
-									<u-tag :borderColor="game.color" :bgColor="game.color"
-										:text="game.match">
-									</u-tag>
-									<span>{{game.deadline|formatDate(that)}} 截止</span>
-									<span style="color: rgb(41, 121, 255);" @click="analysis(game.analysis)">分析</span>
-								</div>
-								<div class="games_right">
-									<!--比赛队伍-->
-									<span class="right_title">
-										<span>{{game.homeTeam}}<strong>vs</strong>{{game.visitingTeam}}</span>
-									</span>
-									<!--投注区-->
-									<div @click="morePlay(game,weekIdx,idx)">
-										<span v-for="s in game.scoreOddsList" v-if="s.active" style="color: #FF3F43;font-weight: bold">
-											{{s.describe}} |
-										</span>
-										<span v-if="game.scoreFlag!='false'">
-											点击展开比分投注区
-										</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!--半全场-->
 				<div class="soccer_bifen" v-if="changeBall == 4">
 					<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
 						<!--比赛折叠条-->
@@ -286,8 +241,7 @@
 							<div class="games" v-for="(game,idx) in wk.beiDanMatchList">
 								<div class="games_left">
 									<span>{{game.number}}</b></span>
-									<u-tag :borderColor="game.color" :bgColor="game.color"
-										:text="game.match">
+									<u-tag :borderColor="game.color" :bgColor="game.color" :text="game.match">
 									</u-tag>
 									<span>{{game.deadline|formatDate(that)}} 截止</span>
 									<span style="color: rgb(41, 121, 255);" @click="analysis(game.analysis)">分析</span>
@@ -299,7 +253,50 @@
 									</span>
 									<!--投注区-->
 									<div @click="morePlay(game,weekIdx,idx)">
-										<span v-for="s in game.halfWholeOddsList" v-if="s.active" style="color: #FF3F43;font-weight: bold">
+										<span v-for="s in game.scoreOddsList" v-if="s.active"
+											style="color: #FF3F43;font-weight: bold">
+											{{s.describe}} |
+										</span>
+										<span v-if="game.scoreFlag!='false'">
+											点击展开比分投注区
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--半全场-->
+				<div class="soccer_bifen" v-if="changeBall == 5">
+					<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
+						<!--比赛折叠条-->
+						<div class="weekGame_banner" @click="clickBanner(weekIdx)">
+							<div class="banner_left">
+								<span>{{wk.startTime}}</span>
+								<span style="display: block;color: #d4237a;">共有{{wk.count}}场比赛</span>
+							</div>
+							<u-icon :name="isChangeIcon === weekIdx?'arrow-up':'arrow-down'"></u-icon>
+						</div>
+						<!--比赛-->
+						<div class="weekGame_games" v-show="isShowGames === weekIdx">
+							<!--每个比赛-->
+							<div class="games" v-for="(game,idx) in wk.beiDanMatchList">
+								<div class="games_left">
+									<span>{{game.number}}</b></span>
+									<u-tag :borderColor="game.color" :bgColor="game.color" :text="game.match">
+									</u-tag>
+									<span>{{game.deadline|formatDate(that)}} 截止</span>
+									<span style="color: rgb(41, 121, 255);" @click="analysis(game.analysis)">分析</span>
+								</div>
+								<div class="games_right">
+									<!--比赛队伍-->
+									<span class="right_title">
+										<span>{{game.homeTeam}}<strong>vs</strong>{{game.visitingTeam}}</span>
+									</span>
+									<!--投注区-->
+									<div @click="morePlay(game,weekIdx,idx)">
+										<span v-for="s in game.halfWholeOddsList" v-if="s.active"
+											style="color: #FF3F43;font-weight: bold">
 											{{s.describe}} |
 										</span>
 										<span v-if="game.halfWholeFlag!='false'">
@@ -326,7 +323,7 @@
 					<!--玩法:根据头部index切换更多玩法显示内容-->
 					<div class="morePlay_select">
 						<!--1半全场-->
-						<div v-show="changeBall === 4" class="morePlay_banquanchang">
+						<div v-show="changeBall === 5" class="morePlay_banquanchang">
 							<!--左-->
 							<div class="banquanchang_left">
 								<span>半全场</span>
@@ -340,7 +337,7 @@
 							</div>
 						</div>
 						<!--2比分拆分版-->
-						<div v-show="changeBall === 3" class="morePlay_bifen_zhusheng">
+						<div v-show="changeBall === 4" class="morePlay_bifen_zhusheng">
 							<!--左-->
 							<div class="bifen_left">
 								<span>主胜</span>
@@ -349,14 +346,14 @@
 							<div class="bifen_right" v-if="beidan.scoreOddsList!=undefined">
 								<span v-if="beidan.scoreOddsList.length<=0" style="width: 100%;"><b>未开售</b></span>
 								<span v-if="index <= 9" v-for="(b,index) in beidan.scoreOddsList" :key="index"
-									@tap="selectBtn(beidan,b,listIdx,childIdx,4)"
+									@tap="selectBtn(beidan,b,listIdx,childIdx,5)"
 									:class="{doubleW:index === 0,active:b.active}">
 									<b>{{bifenItems[index]}}</b>
 									<b :class="{active:b.active}">{{b.odds}}</b>
 								</span>
 							</div>
 						</div>
-						<div v-show="changeBall === 3" class="morePlay_bifen_ping">
+						<div v-show="changeBall === 4" class="morePlay_bifen_ping">
 							<!--左-->
 							<div class="bifen_left">
 								<span>平</span>
@@ -364,7 +361,7 @@
 							<!--右-->
 							<div class="bifen_right" v-if="beidan.scoreOddsList!=undefined">
 								<span v-if="beidan.scoreOddsList.length<=0" style="width: 100%;"><b>未开售</b></span>
-								<span v-if="index > 9 && index <= 14" @tap="selectBtn(beidan,b,listIdx,childIdx,4)"
+								<span v-if="index > 9 && index <= 14" @tap="selectBtn(beidan,b,listIdx,childIdx,5)"
 									v-for="(b,index) in beidan.scoreOddsList" :key="index"
 									:class="{doubleW:index === 10,active:b.active}">
 									<b>{{bifenItems[index]}}</b>
@@ -372,7 +369,7 @@
 								</span>
 							</div>
 						</div>
-						<div v-show="changeBall === 3" class="morePlay_bifen_kesheng">
+						<div v-show="changeBall === 4" class="morePlay_bifen_kesheng">
 							<!--左-->
 							<div class="bifen_left">
 								<span>客胜</span>
@@ -381,7 +378,7 @@
 							<div class="bifen_right" v-if="beidan.scoreOddsList!=undefined">
 								<span v-if="beidan.scoreOddsList.length<=0" style="width: 100%;"><b>未开售</b></span>
 								<span v-if="index > 14" v-for="(b,index) in beidan.scoreOddsList" :key="index"
-									@tap="selectBtn(beidan,b,listIdx,childIdx,4)"
+									@tap="selectBtn(beidan,b,listIdx,childIdx,5)"
 									:class="{doubleW:index === 15,active:b.active}">
 									<b>{{bifenItems[index]}}</b>
 									<b :class="{active:b.active}">{{b.odds}}</b>
@@ -403,7 +400,8 @@
 
 <script>
 	import {
-		beidanList
+		beidanList,
+		beidansfggList
 	} from '@/api/beidan.js'
 	import BuyFooterSport from '../common/buy-footer-sport.vue'
 	export default {
@@ -414,6 +412,8 @@
 		data() {
 			return {
 				lassificationcList: [{
+						name: '胜负过关'
+					}, {
 						name: '让球胜平负'
 					}, {
 						name: '上下单双',
@@ -424,9 +424,7 @@
 						name: '比分'
 					}, {
 						name: '半全场'
-					},{
-						name: '胜负过关'
-					}
+					},
 				],
 				bifenItems: ['胜其他', '1:0', '2:0', '2:1', '3:0', '3:1', '3:2', '4:0', '4:1', '4:2', '平其他',
 					'0:0', '1:1', '2:2', '3:3', '负其他', '0:1', '0:2', '1:2', '0:3', '1:3', '2:3', '0:4', '1:4', '2:4'
@@ -447,7 +445,7 @@
 				count: "",
 				total: "",
 				selectItem: [],
-				issueNo:'',
+				issueNo: '',
 			}
 		},
 		//下完单后返回到该页面数据进行重置
@@ -478,7 +476,13 @@
 			 * @param {Object} ,type 类型
 			 */
 			selectBtn(wk, item, weekIdx, index, type) {
-				if (type == 1) {
+				if (type == 0) {
+					this.beidanList[weekIdx].beiDanMatchList[index].sfggList.map(data => {
+						if (item.id == data.id) {
+							this.$set(data, "active", !item.active)
+						}
+					})
+				} else if (type == 1) {
 					//让球
 					this.beidanList[weekIdx].beiDanMatchList[index].letOddsList.map(data => {
 						if (item.id == data.id) {
@@ -507,7 +511,7 @@
 						}
 					})
 					//标识是否选择了比分
-					this.$set(wk,'scoreFlag',"false")
+					this.$set(wk, 'scoreFlag', "false")
 				} else if (type == 5) {
 					//半全场
 					this.beidanList[weekIdx].beiDanMatchList[index].halfWholeOddsList.map(data => {
@@ -515,7 +519,7 @@
 							this.$set(data, "active", !item.active)
 						}
 					})
-					this.$set(wk,'halfWholeFlag',"false")
+					this.$set(wk, 'halfWholeFlag', "false")
 				}
 				//计算选中了几项
 				if (item.active) {
@@ -552,7 +556,7 @@
 				this.count = this.selectItem.length;
 			},
 			clean() {
-				this.count="";
+				this.count = "";
 				this.fecthSoccerData();
 				this.selectItem = []
 			},
@@ -566,6 +570,13 @@
 					});
 					return;
 				}
+				if (this.changeBall == 0 && this.selectItem.length < 3) {
+					uni.showToast({
+						title: '至少选择3场比赛',
+						icon: 'none'
+					});
+					return;
+				}
 				if (this.selectItem.length > 15) {
 					uni.showToast({
 						title: '最多选择15场比赛',
@@ -574,11 +585,11 @@
 					return;
 				}
 				//总投注选项数不能超过20个
-				 let selectCount=1;
+				let selectCount = 1;
 				this.selectItem.map((map, idx) => {
-					selectCount*=map.choiceCount
+					selectCount *= map.choiceCount
 				})
-				if(selectCount*2>100000){
+				if (selectCount * 2 > 100000) {
 					uni.showToast({
 						title: '单倍方案金额不能超过10万元',
 						icon: 'none'
@@ -587,7 +598,8 @@
 				}
 				uni.navigateTo({
 					url: "pages/beidan/beidanConfirm?obj=" + encodeURIComponent(JSON.stringify(this
-						.selectItem)) + "&flag=" + encodeURIComponent(flag)+"&issueNo="+this.issueNo
+							.selectItem)) + "&flag=" + encodeURIComponent(flag) + "&issueNo=" + this.issueNo +
+						"&checkball=" + this.changeBall
 				});
 			},
 			analysis(url) {
@@ -604,10 +616,21 @@
 			},
 			// 获取竞彩北单数据
 			fecthSoccerData() {
+				console.log(this.changeBall)
 				uni.showLoading();
+				if (this.changeBall == 0) {
+					beidansfggList().then(res => {
+						uni.hideLoading();
+						this.beidanList = res.voList
+						if (this.beidanList && this.beidanList.length > 0) {
+							this.issueNo = this.beidanList[0].beiDanMatchList[0].issueNo
+						}
+					})
+					return
+				}
 				beidanList().then(res => {
 					this.beidanList = res.voList
-					if(this.beidanList && this.beidanList.length>0){
+					if (this.beidanList && this.beidanList.length > 0) {
 						this.issueNo = this.beidanList[0].beiDanMatchList[0].issueNo
 					}
 					setTimeout(function() {
@@ -617,10 +640,10 @@
 			},
 			// 不同玩法对应投注
 			changeSelectBall(item) {
-				this.fecthSoccerData();
 				this.changeBall = item.index
 				this.selectItem = [];
-				this.count="";
+				this.count = "";
+				this.fecthSoccerData();
 			},
 			rightText() {
 				uni.navigateTo({
@@ -659,16 +682,18 @@
 </script>
 
 <style scoped lang="scss">
-	/deep/.u-tag{
+	/deep/.u-tag {
 		width: 45px;
 		height: 20px;
 		justify-content: center;
 		align-items: center;
 	}
+
 	/deep/.u-tag__text--medium {
-	    font-size: 11px;
-	    line-height: 11px;
+		font-size: 11px;
+		line-height: 11px;
 	}
+
 	page {
 		background-color: #f7f9fa;
 	}
@@ -720,6 +745,40 @@
 								margin-left: 3.46667vmin;
 								font-size: 3.46667vmin;
 							}
+						}
+
+						i {
+							font-size: 5.26667vmin;
+							color: #c7c7c7;
+							/*transform: rotate(180deg);*/
+						}
+
+						.icon-jiantou2-change {
+							transform: rotate(180deg);
+						}
+					}
+
+					.weekGame_banner2 {
+						width: 100%;
+						background-color: white;
+						display: flex;
+						align-items: center;
+						justify-content: space-between;
+						flex-direction: row;
+						padding: 0 4vmin;
+						height: 12.8vmin;
+						box-sizing: border-box;
+						border-bottom: 1px solid #eee;
+
+						.banner_left2 {
+							span {
+								margin-left: 3.46667vmin;
+								font-size: 3.46667vmin;
+							}
+
+							display: flex;
+							align-items: center;
+							justify-content: space-around;
 						}
 
 						i {
@@ -841,6 +900,17 @@
 											color: white;
 											border: none;
 											width: 3.73333vmin;
+											font-size: 2.93333vmin;
+											text-align: center;
+											background: #FF3F43;
+											height: 9.6vmin;
+											vertical-align: middle
+										}
+
+										.rangqiu2 {
+											color: white;
+											border: none;
+											width: 7.73333vmin;
 											font-size: 2.93333vmin;
 											text-align: center;
 											background: #FF3F43;
@@ -1323,11 +1393,15 @@
 							.games_right {
 								width: 100vmin;
 								box-sizing: border-box;
-								overflow: hidden; /*超出隐藏*/
-								text-overflow: ellipsis;/*隐藏后添加省略号*/
-								white-space: nowrap;/*强制不换行*/
-								 text-overflow: ellipsis;
-								  -o-text-overflow:ellipsis;	
+								overflow: hidden;
+								/*超出隐藏*/
+								text-overflow: ellipsis;
+								/*隐藏后添加省略号*/
+								white-space: nowrap;
+								/*强制不换行*/
+								text-overflow: ellipsis;
+								-o-text-overflow: ellipsis;
+
 								.right_title {
 									display: flex;
 									align-items: center;

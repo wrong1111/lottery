@@ -437,6 +437,7 @@ public class LotteryPipeline implements Pipeline {
                 } else {
                     if (StringUtils.isNotBlank(sffgg.getBonusOdds()) && StringUtils.isBlank(sfggMatchDO.getBonusOdds())) {
                         update = true;
+                        sfggMatchDO.setState("1");
                         sfggMatchDO.setHalfFullCourt(sffgg.getHalfFullCourt());
                         sfggMatchDO.setAward(sffgg.getAward());
                         sfggMatchDO.setBonusOdds(sffgg.getBonusOdds());

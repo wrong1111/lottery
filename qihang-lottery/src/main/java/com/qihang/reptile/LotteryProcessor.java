@@ -329,7 +329,8 @@ public class LotteryProcessor implements PageProcessor {
                         if (hour >= 0 && hour <= 5) {
                             date = DateUtil.offsetDay(date, 1);
                         }
-                        beiDanMatch.setDeadline(DateUtils.addMinutes(date, 10));
+                        // beiDanMatch.setDeadline(DateUtils.addMinutes(date, 10));
+                        beiDanMatch.setDeadline(date);
                         beiDanMatch.setLetOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
                         beiDanMatch.setIssueNo(issueNo);
                         //北单 保留四位数
@@ -400,7 +401,7 @@ public class LotteryProcessor implements PageProcessor {
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL11)) {
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
             try {
-                String issueNo = html.css("#expect_select option", "text").toString().split(" ")[0];
+                String issueNo = html.css("#expect_select option", "text").toString();
                 if (StringUtils.isBlank(issueNo)) {
                     return;
                 }
@@ -434,7 +435,7 @@ public class LotteryProcessor implements PageProcessor {
                             visitingTeam = selectables.get(j).css("tr td:nth-child(6)", "text").toString();
                         }
                         beiDanMatch.setVisitingTeam(visitingTeam.replace(" ", ""));
-                        beiDanMatch.setScoreOdds(StrUtil.join(",", selectables.get(j + 1).css(".hide_table .sp_value", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
+                        beiDanMatch.setScoreOdds(StrUtil.join(",", selectables.get(j + 1).css(".hide_table .sp_value", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
                         beiDanMatch.setCreateTime(new Date());
                         beiDanMatch.setUpdateTime(new Date());
                         beiDanMatch.setGameNo(issueNo + RacingBallServiceImpl.fillZero(beiDanMatch.getNumber(), 4));
@@ -771,7 +772,7 @@ public class LotteryProcessor implements PageProcessor {
                         String visitWinOdds = teamNodes.get(1).xpath("//span[@class='odds_bingo']/text()").get();
 
                         String score = tdNodes.get(5).xpath("//td/a/text()").get();
-                        match.setState("0");
+                        match.setState("1");
                         if (StringUtils.isBlank(score)) {
                             score = tdNodes.get(5).xpath("//td/span/text()").get();
                         }
@@ -782,12 +783,12 @@ public class LotteryProcessor implements PageProcessor {
                         if (StringUtils.isNotBlank(score) && (isScore || "延期".equals(score))) {
                             if ("延期".equals(score)) {
                                 match.setBonusOdds("-");
-                                match.setState("1");
+                                match.setState("0");
                                 match.setAward("延期");
                                 match.setHalfFullCourt("延期");
                             } else if (StringUtils.isNotBlank(homeWinOdds) || StringUtils.isNotBlank(visitWinOdds)) {
                                 //已经开奖
-                                match.setState("1");
+                                match.setState("0");
                                 if (StringUtils.isNotBlank(homeWinOdds)) {
                                     match.setBonusOdds(homeWinOdds.trim());
                                     match.setAward("胜");
@@ -803,12 +804,12 @@ public class LotteryProcessor implements PageProcessor {
                         match.setHostWinOdds(homeOdds);
                         match.setVisitWinOdds(vistiOdds);
                         match.setStartTime(gdate);
-                        try {
-                            match.setDeadline(DateUtils.addMinutes(DateUtils.parseDate(endTime, "yyyy-MM-dd HH:mm"), 10));
-                        } catch (ParseException e) {
-                            throw new RuntimeException(e);
-                        }
-
+//                        try {
+//                            //match.setDeadline(DateUtils.addMinutes(DateUtils.parseDate(endTime, "yyyy-MM-dd HH:mm"), 10));
+//                        } catch (ParseException e) {
+//                            throw new RuntimeException(e);
+//                        }
+                        match.setDeadline(DateUtils.parseDate(endTime, "yyyy-MM-dd HH:mm"));
                         match.setLetBall(letBall);
                         match.setColor(bg);
                         match.setUnionMatch(unionMatch);

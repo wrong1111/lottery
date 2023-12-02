@@ -15,3 +15,19 @@ export function calculation(data) {
 		data
     })
 }
+
+export function beidansfggList() {
+    return request({
+        url: '/beidansfgg/list',
+        method: 'get'
+    })
+}
+
+export function calculationsfgg(data) {
+    return request({
+        url: '/beidansfgg/calculation',
+        method: 'post',
+		timeout:5000000,
+		data
+    })
+}

@@ -35,6 +35,11 @@
 								gutter="10">
 								<u-col span="12" textAlign="center" justify="center" align="center">
 									<u-button style="border-radius: 5px;" color='#F2F2F2' class="font">
+										<span :style="item.letBall.indexOf('-')!=-1?('margin-right: 20px;color:blue'):('margin-right: 20px;color:#ff00ff')" v-if="checkball==0||checkball==1">{{item.letBall}}</span>
+										<span style="color: #FF3F43;" v-for="(lets,index) in item.sfggList"
+											v-if="lets.active">
+											{{lets.describe}}({{lets.odds}}),
+										</span>
 										<span style="color: #FF3F43;" v-for="(lets,index) in item.letOddsList"
 											v-if="lets.active">
 											让{{lets.describe}}({{lets.odds}}),
@@ -97,7 +102,7 @@
 							@change="numberChange">
 						</u-number-box>倍
 					</view>
-					<button size="mini" type="button" @tap="optimization">奖金优化</button>
+					<button size="mini" type="button" @tap="optimization" >奖金优化</button>
 					<button class="buyFooter_buyBtn" type="button" @tap="confirmIsShow=true">提交</button>
 				</div>
 			</div>
@@ -117,7 +122,7 @@
 		<u-modal title="支付给店主" :show="confirmIsShow" :zoom="false" confirmText="立即支付" showCancelButton
 			confirmColor="#FF3F43" @confirm="betting" @cancel="() => confirmIsShow = false">
 			<view class="tip">
-				<p style="text-align: center;">竞彩足球</p>
+				<p style="text-align: center;">北京单场</p>
 				<p style="margin-top: 15px;">共{{notes}}注{{times}}倍，您需要支付{{price}}元</p>
 			</view>
 		</u-modal>
@@ -127,7 +132,8 @@
 
 <script>
 	import {
-		calculation
+		calculation,
+		calculationsfgg
 	} from '@/api/beidan.js'
 	import {
 		createOrder
@@ -161,14 +167,17 @@
 					schemeDetails: ""
 				},
 				optimizationDate: {},
-				issueNo:''
+				issueNo: '',
+				checkball: ''
 			}
 		},
 		onLoad(option) {
 			//获取传过滤的数据
 			let obj = JSON.parse(decodeURIComponent(option.obj));
+			console.log(obj)
 			this.flag = eval(option.flag);
 			this.issueNo = option.issueNo
+			this.checkball = option.checkball
 			//数组通过id进行排序
 			this.selectItem = obj.sort(function(a, b) {
 				return a.id - b.id
@@ -213,87 +222,114 @@
 							arr.push(data);
 						}
 					} else {
-						if (flag) {
-							let data = {};
-							data.name = "单关"
-							data.index = 1
-							data.checked = false;
-							arr.push(data);
-						}
-						for (var i = 1; i < this.selectItem.length; i++) {
-							let data = {};
-							data.name = i + 1 + "串一"
-							data.index = i + 1
-							data.checked = false;
-							//如果组合很多，默认选择最高的
-							if (this.selectItem.length - i == 1) {
-								data.checked = true;
-								this.text = data.name
+						//胜负过关，最少允许3串1以上
+						if(this.checkball != 0){
+							if (flag ) {
+								let data = {};
+								data.name = "单关"
+								data.index = 1
+								data.checked = false;
+								arr.push(data);
 							}
-							arr.push(data);
+							for (var i = 1; i < this.selectItem.length; i++) {
+								let data = {};
+								data.name = i + 1 + "串一"
+								data.index = i + 1
+								data.checked = false;
+								//如果组合很多，默认选择最高的
+								if (this.selectItem.length - i == 1) {
+									data.checked = true;
+									this.text = data.name
+								}
+								arr.push(data);
+							}
+						}else{
+							for (var i = 3; i <= this.selectItem.length; i++) {
+								let data = {};
+								data.name = i  + "串一"
+								data.index = i 
+								data.checked = false;
+								//如果组合很多，默认选择最高的
+								if (this.selectItem.length == i) {
+									data.checked = true;
+									this.text = data.name
+								}
+								arr.push(data);
+							} 
 						}
+						
 					}
 					//移除未选中的数据,方便好做下步的逻辑处理
 					this.selectItem.map((map, idx) => {
+						if (this.checkball == 0) {
+							let sfgg = map.sfggList.filter((notLet, idx) => {
+								return notLet.active == true
+							})
+							//将只有选中的数据放到原数组中
+							this.$set(this.selectItem[idx], "sfggOdds", sfgg)
+						} else {
+							let oddEvenOdds = map.oddEvenOdds.filter((notLet, idx) => {
+								return notLet.active == true
+							})
+							//将只有选中的数据放到原数组中
+							this.$set(this.selectItem[idx], "oddEvenOdds", oddEvenOdds)
 
-						let oddEvenOdds = map.oddEvenOdds.filter((notLet, idx) => {
-							return notLet.active == true
-						})
-						//将只有选中的数据放到原数组中
-						this.$set(this.selectItem[idx], "oddEvenOdds", oddEvenOdds)
+							let letOddsList = map.letOddsList.filter((notLet, idx) => {
+								return notLet.active == true
+							})
+							this.$set(this.selectItem[idx], "letOddsList", letOddsList)
 
-						let letOddsList = map.letOddsList.filter((notLet, idx) => {
-							return notLet.active == true
-						})
-						this.$set(this.selectItem[idx], "letOddsList", letOddsList)
+							let goalOddsList = map.goalOddsList.filter((notLet, idx) => {
+								return notLet.active == true
+							})
+							this.$set(this.selectItem[idx], "goalOddsList", goalOddsList)
 
-						let goalOddsList = map.goalOddsList.filter((notLet, idx) => {
-							return notLet.active == true
-						})
-						this.$set(this.selectItem[idx], "goalOddsList", goalOddsList)
+							let halfWholeOddsList = map.halfWholeOddsList.filter((notLet, idx) => {
+								return notLet.active == true
+							})
+							this.$set(this.selectItem[idx], "halfWholeOddsList", halfWholeOddsList)
 
-						let halfWholeOddsList = map.halfWholeOddsList.filter((notLet, idx) => {
-							return notLet.active == true
-						})
-						this.$set(this.selectItem[idx], "halfWholeOddsList", halfWholeOddsList)
-
-						let scoreOddsList = map.scoreOddsList.filter((notLet, idx) => {
-							return notLet.active == true
-						})
-						this.$set(this.selectItem[idx], "scoreOddsList", scoreOddsList)
+							let scoreOddsList = map.scoreOddsList.filter((notLet, idx) => {
+								return notLet.active == true
+							})
+							this.$set(this.selectItem[idx], "scoreOddsList", scoreOddsList)
+						}
 					})
 					//循环便利看是否有分差和大小分
-					var s1 = false;
-					var s2 = false;
-					for (var i = 0; i < this.selectItem.length; i++) {
-						if (this.selectItem[i].scoreOddsList.length != 0) {
-							s1 = true;
-						} else if (this.selectItem[i].oddEvenOdds.length != 0 || this.selectItem[i].goalOddsList.length !=
-							0 || this.selectItem[i].halfWholeOddsList.length != 0) {
-							s2 = true;
+					if (this.checkball != 0) {
+						var s1 = false;
+						var s2 = false;
+						for (var i = 0; i < this.selectItem.length; i++) {
+							if (this.selectItem[i].scoreOddsList.length != 0) {
+								s1 = true;
+							} else if (this.selectItem[i].oddEvenOdds.length != 0 || this.selectItem[i].goalOddsList
+								.length !=
+								0 || this.selectItem[i].halfWholeOddsList.length != 0) {
+								s2 = true;
+							}
 						}
-					}
 
-					if (s1) {
-						let count = 1;
-						if (flag) {
-							count = 2;
-						}
-						arr.map((item, index) => {
-							if (index > count) {
-								arr.splice(index, 10)
+						if (s1) {
+							let count = 1;
+							if (flag) {
+								count = 2;
 							}
-						})
-					} else if (s2) {
-						let count = 4;
-						if (flag) {
-							count = 5;
-						}
-						arr.map((item, index) => {
-							if (index > count) {
-								arr.splice(index, 10)
+							arr.map((item, index) => {
+								if (index > count) {
+									arr.splice(index, 10)
+								}
+							})
+						} else if (s2) {
+							let count = 4;
+							if (flag) {
+								count = 5;
 							}
-						})
+							arr.map((item, index) => {
+								if (index > count) {
+									arr.splice(index, 10)
+								}
+							})
+						}
 					}
 					this.strandArr = arr;
 					//选中玩法
@@ -318,6 +354,19 @@
 			},
 			//计算注，预计金额
 			calculationBeiDan() {
+				if (this.checkball == 0) {
+					calculationsfgg(this.calculationParam).then(res => {
+						//多少注
+						this.notes = res.notes;
+						//计算多少钱
+						this.price = this.times * res.notes * 2
+						//预计奖金最小最大值
+						this.minPrice = res.minPrice
+						this.maxPrice = res.maxPrice
+						this.optimizationDate = res
+					})
+					return
+				}
 				calculation(this.calculationParam).then(res => {
 					//多少注
 					this.notes = res.notes;

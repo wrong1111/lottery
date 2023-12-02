@@ -75,7 +75,7 @@ public class IBeidanSfggMatchServiceImpl extends ServiceImpl<BeiDanSfggMatchMapp
                 mapObj.put("index", 1);
                 mapList.add(mapObj);
                 //添加对对象中
-                beiDanMatchVO.setLetOddsList(mapList);
+                beiDanMatchVO.setSfggList(mapList);
                 beiDanMatchList.add(beiDanMatchVO);
             }
             beiDan.setBeiDanMatchList(beiDanMatchList);

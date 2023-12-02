@@ -84,7 +84,7 @@ public class SpiderRunner {
                         , CrawlingAddressConstant.URL8 //北京单场
                         , CrawlingAddressConstant.URL9 //北京单场 进球
                         , CrawlingAddressConstant.URL10 //北京单场 上下单双
-                        , CrawlingAddressConstant.URL11 //北京单场 比分
+                         ,CrawlingAddressConstant.URL11 //北京单场 比分
                         , CrawlingAddressConstant.URL12 //北京单场 半全场进球
                         , CrawlingAddressConstant.URL18 //胜负彩比赛
                         , CrawlingAddressConstant.URL3 //足彩对局分析
