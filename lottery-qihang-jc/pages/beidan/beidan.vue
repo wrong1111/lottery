@@ -15,6 +15,61 @@
 				<!--胜平负-->
 				<u-empty icon="http://cdn.uviewui.com/uview/empty/data.png" :show="beidanList.length<=0" mode="data"
 					text="暂无比赛"></u-empty>
+					<!-- 胜负过关-->
+				<div class="soccer_hunheguoguan" v-if="changeBall == 5">
+						<!--每周比赛-->
+						<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
+							<!--比赛折叠条-->
+							<div class="weekGame_banner" @click="clickBanner(weekIdx)">
+								<div class="banner_left">
+									<span>{{wk.startTime}}</span>
+									<span style="display: block;color: #d4237a;">共有{{wk.count}}场比赛</span>
+								</div>
+								<u-icon :name="isChangeIcon === weekIdx?'arrow-up':'arrow-down'"></u-icon>
+							</div>
+							<!--比赛-->
+							<div class="weekGame_games" v-show="isShowGames === weekIdx">
+								<!--每个比赛-->
+								<div class="games" v-for="(game,index) in wk.beiDanMatchList" :key="index">
+									<div class="games_left">
+										<span><b>{{game.number}}</b></span>
+										<u-tag :borderColor="game.color" :bgColor="game.color"
+											:text="game.match">
+										</u-tag>
+										<span>{{game.deadline|formatDate(that)}} 截止</span>
+										<span style="color: rgb(41, 121, 255);" @click="analysis(game.analysis)">分析</span>
+									</div>
+									<div class="games_right">
+										<!--比赛队伍-->
+										<span class="right_title">
+											<span
+												class="title_team">{{game.homeTeam}}<strong>vs</strong>{{game.visitingTeam}}</span>
+										</span>
+										<!--表格-->
+										<table>
+											<tr>
+												<td class="rangqiu"
+													:class="game.letBall < 0?'rangqiuBlue':game.letBall == 0?'rangqiuGreen':''">
+													{{game.letBall}}
+												</td>
+												<td class="sheng_top">
+													<p>
+														<span v-if="game.letOddsList.length<=0">未开售</span>
+														<span v-else v-for="(lets,letsIndex) in game.letOddsList"
+															style="position: relative;" :class="{active:lets.active}"
+															@tap="selectBtn(game,lets,weekIdx,index,1)">{{lets.describe}}
+															{{lets.odds}}
+														</span>
+													</p>
+												</td>
+											</tr>
+										</table>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+					</div>
 				<div class="soccer_hunheguoguan" v-if="changeBall == 0">
 					<!--每周比赛-->
 					<div class="soccer_weekGame" v-for="(wk,weekIdx) in beidanList" :key="weekIdx">
@@ -369,6 +424,8 @@
 						name: '比分'
 					}, {
 						name: '半全场'
+					},{
+						name: '胜负过关'
 					}
 				],
 				bifenItems: ['胜其他', '1:0', '2:0', '2:1', '3:0', '3:1', '3:2', '4:0', '4:1', '4:2', '平其他',

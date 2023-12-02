@@ -261,7 +261,7 @@ public class LotteryPipeline implements Pipeline {
                 return;
             }
             for (BeiDanMatchDO beiDanMatchDO : beiDanMatchList) {
-                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber()).eq(BeiDanMatchDO::getMatch, beiDanMatchDO.getMatch()).like(BeiDanMatchDO::getHomeTeam, beiDanMatchDO.getHomeTeam()).like(BeiDanMatchDO::getVisitingTeam, beiDanMatchDO.getVisitingTeam()));
+                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getGameNo, beiDanMatchDO.getGameNo()));
                 if (ObjectUtil.isNotNull(beiDanMatch)) {
                     beiDanMatchDO.setId(beiDanMatch.getId());
                     beiDanMatchDO.setUpdateTime(new Date());
@@ -276,7 +276,7 @@ public class LotteryPipeline implements Pipeline {
                 return;
             }
             for (BeiDanMatchDO beiDanMatchDO : beiDanMatchList) {
-                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber()).eq(BeiDanMatchDO::getMatch, beiDanMatchDO.getMatch()).like(BeiDanMatchDO::getHomeTeam, beiDanMatchDO.getHomeTeam()).like(BeiDanMatchDO::getVisitingTeam, beiDanMatchDO.getVisitingTeam()));
+                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getGameNo, beiDanMatchDO.getGameNo()));
                 if (ObjectUtil.isNotNull(beiDanMatch)) {
                     beiDanMatchDO.setId(beiDanMatch.getId());
                     beiDanMatchDO.setUpdateTime(new Date());
@@ -293,10 +293,10 @@ public class LotteryPipeline implements Pipeline {
                 return;
             }
             for (BeiDanMatchDO beiDanMatchDO : beiDanMatchList) {
-                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getNumber, beiDanMatchDO.getNumber()).eq(BeiDanMatchDO::getMatch, beiDanMatchDO.getMatch()).like(BeiDanMatchDO::getHomeTeam, beiDanMatchDO.getHomeTeam()).like(BeiDanMatchDO::getVisitingTeam, beiDanMatchDO.getVisitingTeam()));
+                BeiDanMatchDO beiDanMatch = beiDanMatchService.getOne(new QueryWrapper<BeiDanMatchDO>().lambda().eq(BeiDanMatchDO::getGameNo, beiDanMatchDO.getGameNo()));
 
                 if (ObjectUtil.isNotNull(beiDanMatch)) {
-                    if (StrUtil.isBlank(beiDanMatch.getBonusOdds()) && StrUtil.isBlank(beiDanMatch.getAward()) && StrUtil.isBlank(beiDanMatch.getHalfFullCourt()) || beiDanMatch.getBonusOdds().indexOf("-") != -1) {
+                    if (StrUtil.isBlank(beiDanMatch.getBonusOdds()) && StrUtil.isBlank(beiDanMatch.getAward()) && (StrUtil.isBlank(beiDanMatch.getHalfFullCourt()) || beiDanMatch.getBonusOdds().indexOf("-") != -1)) {
                         beiDanMatch.setUpdateTime(new Date());
                         beiDanMatch.setAward(beiDanMatchDO.getAward());
                         beiDanMatch.setHalfFullCourt(beiDanMatchDO.getHalfFullCourt());
@@ -306,6 +306,26 @@ public class LotteryPipeline implements Pipeline {
                 }
             }
             log.info(" 北单开奖 ： {} 场 ", beiDanMatchList.size());
+        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL_BD_SFGG_AWARD)) {
+            //北单开奖
+            List<BeiDanSFGGMatchDO> beiDanMatchList = resultItems.get("beiDanSfggMatchList");
+            if (CollectionUtils.isEmpty(beiDanMatchList)) {
+                return;
+            }
+            for (BeiDanSFGGMatchDO beiDanMatchDO : beiDanMatchList) {
+                BeiDanSFGGMatchDO beiDanMatch = beidanSfggMatchService.getOne(new QueryWrapper<BeiDanSFGGMatchDO>().lambda().eq(BeiDanSFGGMatchDO::getGameNo, beiDanMatchDO.getGameNo()));
+
+                if (ObjectUtil.isNotNull(beiDanMatch)) {
+                    if (StrUtil.isBlank(beiDanMatch.getBonusOdds())) {
+                        beiDanMatch.setUpdateTime(new Date());
+                        beiDanMatch.setAward(beiDanMatchDO.getAward());
+                        beiDanMatch.setHalfFullCourt(beiDanMatchDO.getHalfFullCourt());
+                        beiDanMatch.setBonusOdds(beiDanMatchDO.getBonusOdds());
+                        beidanSfggMatchService.updateById(beiDanMatch);
+                    }
+                }
+            }
+            log.info(" 北单胜负过关开奖 ： {} 场 ", beiDanMatchList.size());
         } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL14)) {
             //存储爬取到的篮球的比赛数据
             List<BasketballMatchDO> basketballMatchList = resultItems.get("basketballMatchList");
@@ -338,7 +358,7 @@ public class LotteryPipeline implements Pipeline {
                 return;
             }
             for (WinBurdenMatchDO winBurdenMatchDO : winBurdenMatchList) {
-                WinBurdenMatchDO winBurdenMatch = winBurdenMatchService.getOne(new QueryWrapper<WinBurdenMatchDO>().lambda().eq(WinBurdenMatchDO::getNumber, winBurdenMatchDO.getNumber()).eq(WinBurdenMatchDO::getMatch, winBurdenMatchDO.getMatch()).eq(WinBurdenMatchDO::getOpenTime, winBurdenMatchDO.getOpenTime()).like(WinBurdenMatchDO::getHomeTeam, winBurdenMatchDO.getHomeTeam().substring(winBurdenMatchDO.getHomeTeam().indexOf("]") + 1)).like(WinBurdenMatchDO::getVisitingTeam, winBurdenMatchDO.getVisitingTeam().substring(winBurdenMatchDO.getVisitingTeam().indexOf("]") + 1)));
+                WinBurdenMatchDO winBurdenMatch = winBurdenMatchService.getOne(new QueryWrapper<WinBurdenMatchDO>().lambda().eq(WinBurdenMatchDO::getGameNo, winBurdenMatchDO.getGameNo()));
                 if (ObjectUtil.isNull(winBurdenMatch)) {
                     winBurdenMatchService.save(winBurdenMatchDO);
                 } else {
@@ -415,12 +435,12 @@ public class LotteryPipeline implements Pipeline {
                     update = true;
                     beidanSfggMatchService.save(sffgg);
                 } else {
-                    if (StringUtils.isNotBlank(sffgg.getHalfFullCourt()) && StringUtils.isBlank(sfggMatchDO.getHalfFullCourt())) {
+                    if (StringUtils.isNotBlank(sffgg.getBonusOdds()) && StringUtils.isBlank(sfggMatchDO.getBonusOdds())) {
                         update = true;
                         sfggMatchDO.setHalfFullCourt(sffgg.getHalfFullCourt());
                         sfggMatchDO.setAward(sffgg.getAward());
                         sfggMatchDO.setBonusOdds(sffgg.getBonusOdds());
-                        beidanSfggMatchService.updateById(sffgg);
+                        beidanSfggMatchService.updateById(sfggMatchDO);
                     }
                 }
             }

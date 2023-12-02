@@ -1,5 +1,6 @@
 package com.qihang.reptile;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -7,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.qihang.common.util.reward.LotteryAlgorithmUtil;
 import com.qihang.constant.CrawlingAddressConstant;
+import com.qihang.controller.beidan.vo.BeiDanSfggVO;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
@@ -278,7 +280,14 @@ public class LotteryProcessor implements PageProcessor {
             page.putField("basketballMatchList", basketballMatchList);
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL8)) {
             //ID=expect_select
-            String issueNo = html.css("#expect_select option", "text").toString().split(" ")[0];
+            String issueNo = html.xpath("/html/body/div[3]/div[1]/div/div/div[2]/select/option[1]/text()").get();
+            if (StringUtils.isBlank(issueNo)) {
+                issueNo = html.xpath("//select[@id=expect_select]/option[1]/text()").get();
+                if (StringUtils.isBlank(issueNo)) {
+                    return;
+                }
+            }
+            issueNo = issueNo.replaceAll("当前期", "").trim();
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
             try {
                 List<Selectable> nodes = html.css("#vsTable #vs_table tbody").nodes();
@@ -293,8 +302,8 @@ public class LotteryProcessor implements PageProcessor {
                         //过滤第一个标题
                         if (selectables.get(j).css("tr", "style").toString().equals("display:none")) continue;
                         BeiDanMatchDO beiDanMatch = new BeiDanMatchDO();
-                        beiDanMatch.setStartTime(startTime);
-                        beiDanMatch.setNumber(selectables.get(j).css("tr td:nth-child(1) .chnum", "text").toString());
+                        beiDanMatch.setStartTime(startTime.trim());
+                        beiDanMatch.setNumber(selectables.get(j).css("tr td:nth-child(1) .chnum", "text").toString().trim());
                         String match = selectables.get(j).css("tr .league a", "text").toString();
                         if (null == match) {
                             match = selectables.get(j).css("tr .league span", "text").toString();
@@ -302,7 +311,7 @@ public class LotteryProcessor implements PageProcessor {
                         beiDanMatch.setMatch(match);
                         String color = selectables.get(j).xpath("//*[@class='vs_lines']/td[2]/@style").toString();
                         beiDanMatch.setColor(color.substring(color.indexOf("#"), color.indexOf(";")));
-                        String openTime = selectables.get(j).css("tr td:nth-child(3) .eng", "text").toString();
+                        String openTime = selectables.get(j).css("tr td:nth-child(3) .eng", "text").toString().trim();
                         String homeTeam = selectables.get(j).css("tr td:nth-child(4) a", "text").toString();
                         if (null == homeTeam) {
                             homeTeam = selectables.get(j).css("tr td:nth-child(4)", "text").toString();
@@ -314,14 +323,14 @@ public class LotteryProcessor implements PageProcessor {
                             visitingTeam = selectables.get(j).css("tr td:nth-child(6)", "text").toString();
                         }
                         beiDanMatch.setVisitingTeam(visitingTeam.replace(" ", ""));
-                        String deadline = beiDanMatch.getStartTime().substring(0, beiDanMatch.getStartTime().indexOf(" ")) + " " + openTime + ":00";
+                        String deadline = beiDanMatch.getStartTime().split(" ")[0] + " " + openTime + ":00";
                         DateTime date = DateUtil.parse(deadline);
                         int hour = DateUtil.hour(date, true);
                         if (hour >= 0 && hour <= 5) {
                             date = DateUtil.offsetDay(date, 1);
                         }
-                        beiDanMatch.setDeadline(date);
-                        beiDanMatch.setLetOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
+                        beiDanMatch.setDeadline(DateUtils.addMinutes(date, 10));
+                        beiDanMatch.setLetOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
                         beiDanMatch.setIssueNo(issueNo);
                         //北单 保留四位数
                         beiDanMatch.setGameNo(issueNo + RacingBallServiceImpl.fillZero(beiDanMatch.getNumber(), 4));
@@ -336,7 +345,11 @@ public class LotteryProcessor implements PageProcessor {
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL9) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL10) || ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL12)) {
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
             try {
-                String issueNo = html.css("#expect_select option", "text").toString().split(" ")[0];
+                String issueNo = html.xpath("//select[@id=expect_select]/option[1]/text()").get();
+                if (StringUtils.isBlank(issueNo)) {
+                    return;
+                }
+                issueNo = issueNo.replaceAll("当前期", "").trim();
                 List<Selectable> nodes = html.css("#vsTable #vs_table tbody").nodes();
                 String url = page.getUrl().toString();
                 for (int i = 0; i < nodes.size(); i++) {
@@ -349,7 +362,7 @@ public class LotteryProcessor implements PageProcessor {
                         //如果是隐藏的直接就跳过
                         if (selectables.get(j).css("tr", "style").toString().equals("display:none")) continue;
                         BeiDanMatchDO beiDanMatch = new BeiDanMatchDO();
-                        beiDanMatch.setNumber(selectables.get(j).css("tr td:nth-child(1) .chnum", "text").toString());
+                        beiDanMatch.setNumber(selectables.get(j).css("tr td:nth-child(1) .chnum", "text").toString().trim());
                         String match = selectables.get(j).css("tr .league a", "text").toString();
                         if (null == match) {
                             match = selectables.get(j).css("tr .league span", "text").toString();
@@ -366,15 +379,16 @@ public class LotteryProcessor implements PageProcessor {
                         }
                         beiDanMatch.setVisitingTeam(visitingTeam.replace(" ", ""));
                         if (url.equals(CrawlingAddressConstant.URL9)) {
-                            beiDanMatch.setGoalOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(" ", "").replaceAll(",↑", "").replaceAll(",↓", ""));
+                            beiDanMatch.setGoalOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(" ", "").replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
                         } else if (url.equals(CrawlingAddressConstant.URL10)) {
-                            beiDanMatch.setOddEvenOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
+                            beiDanMatch.setOddEvenOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
                         } else if (url.equals(CrawlingAddressConstant.URL12)) {
-                            beiDanMatch.setHalfWholeOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(" ", "").replaceAll(",↑", "").replaceAll(",↓", ""));
+                            beiDanMatch.setHalfWholeOdds(StrUtil.join(",", selectables.get(j).css(".sp_value.eng", "text").all()).replaceAll(" ", "").replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
                         }
                         beiDanMatch.setCreateTime(new Date());
                         beiDanMatch.setUpdateTime(new Date());
                         beiDanMatch.setIssueNo(issueNo);
+                        beiDanMatch.setGameNo(issueNo + RacingBallServiceImpl.fillZero(beiDanMatch.getNumber(), 4));
                         beiDanMatchList.add(beiDanMatch);
                     }
                 }
@@ -386,6 +400,11 @@ public class LotteryProcessor implements PageProcessor {
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL11)) {
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
             try {
+                String issueNo = html.css("#expect_select option", "text").toString().split(" ")[0];
+                if (StringUtils.isBlank(issueNo)) {
+                    return;
+                }
+                issueNo = issueNo.replaceAll("当前期", "").trim();
                 List<Selectable> nodes = html.css("#vsTable #vs_table>tbody").nodes();
                 for (int i = 0; i < nodes.size(); i++) {
                     //过滤第一个标题
@@ -399,7 +418,7 @@ public class LotteryProcessor implements PageProcessor {
                         //过滤其它的tr标签
                         if (selectables.get(j).css(".vs_lines").toString() == null) continue;
                         BeiDanMatchDO beiDanMatch = new BeiDanMatchDO();
-                        beiDanMatch.setNumber(selectables.get(j).css("tr td:nth-child(1) .chnum", "text").toString());
+                        beiDanMatch.setNumber(selectables.get(j).css("tr td:nth-child(1) .chnum", "text").toString().trim());
                         String match = selectables.get(j).css("tr .league a", "text").toString();
                         if (null == match) {
                             match = selectables.get(j).css("tr .league span", "text").toString();
@@ -418,6 +437,7 @@ public class LotteryProcessor implements PageProcessor {
                         beiDanMatch.setScoreOdds(StrUtil.join(",", selectables.get(j + 1).css(".hide_table .sp_value", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
                         beiDanMatch.setCreateTime(new Date());
                         beiDanMatch.setUpdateTime(new Date());
+                        beiDanMatch.setGameNo(issueNo + RacingBallServiceImpl.fillZero(beiDanMatch.getNumber(), 4));
                         beiDanMatchList.add(beiDanMatch);
                     }
                 }
@@ -429,6 +449,11 @@ public class LotteryProcessor implements PageProcessor {
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL13)) {
             //北单开奖
             List<BeiDanMatchDO> beiDanMatchList = new ArrayList<>();
+            String isseNo = html.xpath("//option[@selected='selected']/text()").get();
+            if (StringUtils.isBlank(isseNo)) {
+                return;
+            }
+            isseNo = isseNo.replaceAll("期", "").trim();
             try {
                 List<Selectable> nodes = html.css("table.ld_table > tbody>tr").nodes();
                 for (int i = 1; i < nodes.size(); i++) {
@@ -438,10 +463,10 @@ public class LotteryProcessor implements PageProcessor {
                     beiDanMatch.setHomeTeam((nodes.get(i).css(".text_r a", "text").toString()).replace(" ", ""));
                     beiDanMatch.setVisitingTeam((nodes.get(i).css(".text_l a", "text").toString()).replace(" ", ""));
                     //比分
-                    String str = nodes.get(i).css("td:nth-child(7)", "text").toString();
-                    String winData = nodes.get(i).css("td:nth-child(9)", "text").toString();
+                    String str = nodes.get(i).css("td:nth-child(7)", "text").toString().trim();
+                    String winData = nodes.get(i).css("td:nth-child(9)", "text").toString().trim();
                     //查到为空的就不需要继续解析了直接跳出
-                    if (StrUtil.isBlank(winData) || nodes.get(i).css("td:nth-child(10) span", "text").toString().equals("-")) {
+                    if (StrUtil.isBlank(winData) || nodes.get(i).css("td:nth-child(10) span", "text").toString().trim().equals("-")) {
                         continue;
                     }
                     if (winData.equals("3")) {
@@ -453,7 +478,8 @@ public class LotteryProcessor implements PageProcessor {
                     }
                     beiDanMatch.setAward(winData + "," + nodes.get(i).css("td:nth-child(12)", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(15)", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(18)", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(21)", "text").toString().trim());
                     beiDanMatch.setHalfFullCourt(StrUtil.join(",", str.split(" ")));
-                    beiDanMatch.setBonusOdds(nodes.get(i).css("td:nth-child(10) span", "text").toString() + "," + nodes.get(i).css("td:nth-child(13) span", "text") + "," + nodes.get(i).css("td:nth-child(16) span", "text") + "," + nodes.get(i).css("td:nth-child(19) span", "text") + "," + nodes.get(i).css("td:nth-child(22) span", "text"));
+                    beiDanMatch.setBonusOdds(nodes.get(i).css("td:nth-child(10) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(13) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(16) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(19) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(22) span", "text").toString().trim());
+                    beiDanMatch.setGameNo(isseNo + RacingBallServiceImpl.fillZero(beiDanMatch.getNumber(), 4));
                     beiDanMatchList.add(beiDanMatch);
                 }
             } catch (Exception e) {
@@ -461,6 +487,44 @@ public class LotteryProcessor implements PageProcessor {
             }
             log.info(" 北单开奖 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(beiDanMatchList));
             page.putField("beiDanMatchList", beiDanMatchList);
+        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_BD_SFGG_AWARD)) {
+            //北单 胜平负 开奖
+            List<BeiDanSFGGMatchDO> beiDanMatchList = new ArrayList<>();
+            String isseNo = html.xpath("//option[@selected='selected']/text()").get();
+            if (StringUtils.isBlank(isseNo)) {
+                return;
+            }
+            isseNo = isseNo.replaceAll("期", "").trim();
+            try {
+                List<Selectable> nodes = html.css("table.ld_table > tbody>tr").nodes();
+                for (int i = 1; i < nodes.size(); i++) {
+                    BeiDanSFGGMatchDO beiDanMatch = new BeiDanSFGGMatchDO();
+                    beiDanMatch.setNumber(nodes.get(i).css("td:nth-child(1)", "text").toString().trim());
+                    String str = nodes.get(i).css("td:nth-child(8)", "text").toString().trim();//比分
+                    String winData = nodes.get(i).css("td:nth-child(9)", "text").toString().trim();//赛 果
+                    String sp = nodes.get(i).css("td:nth-child(11)", "text").toString().trim();
+                    //查到为空的就不需要继续解析了直接跳出
+                    //考虑改期。
+                    String times = nodes.get(i).css("td:nth-child(4)>span", "text").get();
+                    if (StringUtils.isNotBlank(times) && times.indexOf("改期") != -1) {
+                        //改期 ，默认给1.0
+                        winData = "延期";
+                        str = "延期";
+                    } else if (StrUtil.isBlank(winData) || sp.equals("-")) {
+                        continue;
+                    }
+                    beiDanMatch.setAward(winData);
+                    beiDanMatch.setHalfFullCourt(str);
+                    beiDanMatch.setBonusOdds(sp);
+                    beiDanMatch.setGameNo(isseNo + RacingBallServiceImpl.fillZero(beiDanMatch.getNumber(), 4));
+                    beiDanMatchList.add(beiDanMatch);
+                }
+            } catch (Exception e) {
+                log.error(" url {},error :{} ", page.getUrl().toString(), e);
+            }
+            log.info(" 北单胜负过关开奖 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(beiDanMatchList));
+            page.putField("beiDanSfggMatchList", beiDanMatchList);
+
         } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL14)) {
             List<BasketballMatchDO> basketballMatchList = new ArrayList<>();
             try {
@@ -534,7 +598,7 @@ public class LotteryProcessor implements PageProcessor {
                 List<Selectable> nodes = html.css(".bet-tb-dg .bet-tb-tr").nodes();
                 for (int i = 0; i < nodes.size(); i++) {
                     WinBurdenMatchDO winBurdenMatch = new WinBurdenMatchDO();
-                    winBurdenMatch.setNumber(nodes.get(i).css(".td-no", "text").toString());
+                    winBurdenMatch.setNumber(nodes.get(i).css(".td-no", "text").toString().trim());
                     winBurdenMatch.setMatch(nodes.get(i).css(".td-evt a", "text").toString());
                     String color = nodes.get(i).xpath("//*[@class='td-evt']/a/@style").toString();
                     winBurdenMatch.setColor(color.substring(color.indexOf("#"), color.length() - 1));
@@ -557,7 +621,7 @@ public class LotteryProcessor implements PageProcessor {
         } else if (page.getUrl().toString().startsWith(CrawlingAddressConstant.URL18_01)) {
             List<WinBurdenMatchDO> winBurdenMatchList = new ArrayList<>();
             try {
-                String issueNo = page.getUrl().toString().split("=")[1];
+                String issueNo = page.getUrl().toString().split("=")[1].trim();
                 //胜负彩比赛 下一期
                 String deadlineTime = html.css(".zcfilter-endtime", "text").toString();
                 if (StringUtils.isBlank(deadlineTime)) {
@@ -567,14 +631,18 @@ public class LotteryProcessor implements PageProcessor {
                     page.putField("winBurdenMatchList", winBurdenMatchList);
                     return;
                 }
-                deadlineTime = deadlineTime.replaceAll("官方售彩已截止", "").trim();
-                deadlineTime = deadlineTime.substring(deadlineTime.indexOf("：") + 1);
-                deadlineTime = DateUtil.year(DateUtil.date()) + "-" + deadlineTime + ":00";
+                if (deadlineTime.indexOf("开奖信息") > 0) {
+                    deadlineTime = "";
+                } else {
+                    deadlineTime = deadlineTime.replaceAll("官方售彩已截止", "").trim();
+                    deadlineTime = deadlineTime.substring(deadlineTime.indexOf("：") + 1);
+                    deadlineTime = DateUtil.year(DateUtil.date()) + "-" + deadlineTime + ":00";
+                }
                 //String issueNo = html.xpath("/html/body/div[6]/div/div[2]/div[1]/div/ul/li[1]/@data-expect").toString();
                 List<Selectable> nodes = html.css(".bet-tb-dg .bet-tb-tr").nodes();
                 for (int i = 0; i < nodes.size(); i++) {
                     WinBurdenMatchDO winBurdenMatch = new WinBurdenMatchDO();
-                    winBurdenMatch.setNumber(nodes.get(i).css(".td-no", "text").toString());
+                    winBurdenMatch.setNumber(nodes.get(i).css(".td-no", "text").toString().trim());
                     winBurdenMatch.setMatch(nodes.get(i).css(".td-evt a", "text").toString());
                     String color = nodes.get(i).xpath("//*[@class='td-evt']/a/@style").toString();
                     winBurdenMatch.setColor(color.substring(color.indexOf("#"), color.length() - 1));
@@ -582,7 +650,12 @@ public class LotteryProcessor implements PageProcessor {
                     winBurdenMatch.setHomeTeam(nodes.get(i).css(".team-l i", "text").toString() + nodes.get(i).css(".td-team .team-l a", "text").toString().replaceAll(" ", ""));
                     winBurdenMatch.setVisitingTeam(nodes.get(i).css(".team-r i", "text").toString() + nodes.get(i).css(".td-team .team-r a", "text").toString().replaceAll(" ", ""));
                     winBurdenMatch.setNotLetOdds(StrUtil.join(",", nodes.get(i).css(".td-pei span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
-                    winBurdenMatch.setDeadline(DateUtil.parse(deadlineTime));
+                    if (StringUtils.isNotBlank(deadlineTime)) {
+                        winBurdenMatch.setDeadline(DateUtil.parse(deadlineTime));
+                    } else {
+                        String tdendtime = nodes.get(i).css(".td-endtime", "text").toString().trim();
+                        winBurdenMatch.setDeadline(DateUtil.parse(DateUtil.year(new Date()) + "-" + tdendtime + ":00"));
+                    }
                     winBurdenMatch.setIssueNo(issueNo);
                     winBurdenMatch.setCreateTime(new Date());
                     winBurdenMatch.setUpdateTime(new Date());
@@ -598,14 +671,14 @@ public class LotteryProcessor implements PageProcessor {
             //胜负彩开奖
             List<WinBurdenMatchDO> winBurdenMatchList = new ArrayList<>();
             try {
-                String issueNo = html.css(".cfont2 strong", "text").toString();
+                String issueNo = html.css(".cfont2 strong", "text").toString().trim();
                 List<Selectable> nodes = html.css(".div_shupai").nodes();
                 int idx = 1;
                 for (Selectable node : nodes) {
                     WinBurdenMatchDO winBurdenMatch = new WinBurdenMatchDO();
                     winBurdenMatch.setIssueNo(issueNo);
                     winBurdenMatch.setHomeTeam(node.css(".div_shupai", "text").toString().replaceAll(" ", ""));
-                    String str = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[1]/tbody/tr[3]/td[" + idx++ + "]/span/text()").toString();
+                    String str = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[1]/tbody/tr[3]/td[" + idx++ + "]/span/text()").toString().trim();
                     if ("3".equals(str)) {
                         winBurdenMatch.setAward("胜");
                     } else if ("1".equals(str)) {
@@ -615,7 +688,7 @@ public class LotteryProcessor implements PageProcessor {
                     } else {
                         winBurdenMatch.setAward("-");
                     }
-                    winBurdenMatch.setMoneyAward(html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().replaceAll(",", ""));
+                    winBurdenMatch.setMoneyAward(html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", ""));
                     winBurdenMatchList.add(winBurdenMatch);
                 }
             } catch (Exception e) {
@@ -687,35 +760,48 @@ public class LotteryProcessor implements PageProcessor {
                         String bg = tdNodes.get(2).xpath("//span/@style").get().replaceAll("background:", "").trim();
                         //主队
                         List<Selectable> teamNodes = tdNodes.get(4).xpath("//span[@class='odds_item']").nodes();
-                        String homeWinOdds = teamNodes.get(0).xpath("//span/@data-sp-ori").get();
-                        String homeTeam = teamNodes.get(0).xpath("//span[@class='gray']/text()").get() + teamNodes.get(0).xpath("//span[@class='item_left']/text()").get();
+                        String homeOdds = teamNodes.get(0).xpath("//span/@data-sp-ori").get();
+                        String homeTeam = teamNodes.get(0).xpath("//span[@class='gray']/text()").get().trim() + teamNodes.get(0).xpath("//span[@class='item_left']/text()").get().trim();
 
-                        String homeOdds = teamNodes.get(0).xpath("//span[@class='js-sp']/text()").get();
+                        String homeWinOdds = teamNodes.get(0).xpath("//span[@class='odds_bingo']/text()").get();
 
-                        String visitWinOdds = teamNodes.get(1).xpath("//span/@data-sp-ori").get();
-                        String visitTeam = teamNodes.get(1).xpath("//span/text()").get() + teamNodes.get(1).xpath("//span[@class='gray']/text()").get();
+                        String vistiOdds = teamNodes.get(1).xpath("//span/@data-sp-ori").get().trim();
+                        String visitTeam = teamNodes.get(1).xpath("//span/text()").get().trim() + teamNodes.get(1).xpath("//span[@class='gray']/text()").get().trim();
                         //visitTeam 需要处理下 1.57  佩特罗鲁 [6]
-                        String visitOdds = teamNodes.get(1).xpath("//span[@class='js-sp']/text()").get();
+                        String visitWinOdds = teamNodes.get(1).xpath("//span[@class='odds_bingo']/text()").get();
 
-                        String score = tdNodes.get(5).xpath("//a/text()").get();
+                        String score = tdNodes.get(5).xpath("//td/a/text()").get();
                         match.setState("0");
+                        if (StringUtils.isBlank(score)) {
+                            score = tdNodes.get(5).xpath("//td/span/text()").get();
+                        }
+                        if (StringUtils.isNotBlank(score)) {
+                            score = score.trim();
+                        }
                         boolean isScore = (StringUtils.isNotBlank(score) && score.matches("^\\d+:\\d+$")) ? true : false;
-                        if (StringUtils.isNotBlank(score) && (isScore) && (StringUtils.isNotBlank(homeWinOdds) || StringUtils.isNotBlank(visitWinOdds))) {
-                            String boundsOdds = homeWinOdds + "," + visitOdds;
-                            match.setBonusOdds(boundsOdds);
-                            //已经开奖
-                            match.setState("1");
-                            if (StringUtils.isNotBlank(homeWinOdds)) {
-                                match.setAward("胜");
-                            } else if (StringUtils.isNotBlank(visitWinOdds)) {
-                                match.setAward("负");
+                        if (StringUtils.isNotBlank(score) && (isScore || "延期".equals(score))) {
+                            if ("延期".equals(score)) {
+                                match.setBonusOdds("-");
+                                match.setState("1");
+                                match.setAward("延期");
+                                match.setHalfFullCourt("延期");
+                            } else if (StringUtils.isNotBlank(homeWinOdds) || StringUtils.isNotBlank(visitWinOdds)) {
+                                //已经开奖
+                                match.setState("1");
+                                if (StringUtils.isNotBlank(homeWinOdds)) {
+                                    match.setBonusOdds(homeWinOdds.trim());
+                                    match.setAward("胜");
+                                } else if (StringUtils.isNotBlank(visitWinOdds)) {
+                                    match.setAward("负");
+                                    match.setBonusOdds(visitWinOdds.trim());
+                                }
                             }
                         }
                         if (isScore) {
                             match.setHalfFullCourt(score);
                         }
                         match.setHostWinOdds(homeOdds);
-                        match.setVisitWinOdds(visitOdds);
+                        match.setVisitWinOdds(vistiOdds);
                         match.setStartTime(gdate);
                         try {
                             match.setDeadline(DateUtils.addMinutes(DateUtils.parseDate(endTime, "yyyy-MM-dd HH:mm"), 10));
@@ -748,9 +834,9 @@ public class LotteryProcessor implements PageProcessor {
     private List<String> getNodeText(List<Selectable> nodes) {
         List<String> list = new ArrayList<>();
         for (Selectable node : nodes) {
-            String str = node.css(".num-yl", "text").toString();
+            String str = node.css(".num-yl", "text").toString().trim();
             if (str.equals("")) {
-                str = node.css(".num-yl span", "text").toString();
+                str = node.css(".num-yl span", "text").toString().trim();
             }
             list.add(str);
         }

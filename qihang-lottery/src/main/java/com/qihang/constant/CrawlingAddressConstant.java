@@ -64,7 +64,7 @@ public class CrawlingAddressConstant {
     public static final String URL_BD_SFGG = "https://trade.500.com/bjdcsf/";
 
     /**
-     * 北京单场 胜负过关结果
+     * 北京单场 胜负过关结果https://zx.500.com/zqdc/kaijiang.php?playid=6
      */
 
     public static final String URL_BD_SFGG_AWARD = "https://zx.500.com/zqdc/kaijiang.php?playid=6";

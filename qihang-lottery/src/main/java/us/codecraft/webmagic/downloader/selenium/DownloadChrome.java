@@ -1,5 +1,7 @@
 package us.codecraft.webmagic.downloader.selenium;
 
+import com.qihang.constant.CrawlingAddressConstant;
+import com.qihang.reptile.spiders.WebClientUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
@@ -57,8 +59,8 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
             options.addArguments("disable-gpu-program-cache");
             // 禁用扩展
             options.addArguments("disable-extensions");
-            // 禁用JS
-            options.addArguments("disable-javascript");
+            // 禁用JS 需要页面运行JS扩展以后抓取数据项。
+            // options.addArguments("disable-javascript");
             // 禁用java
             options.addArguments("disable-java");
             //禁止加载所有插件，可以增加速度。可以通过about:plugins页面查看效果
@@ -105,58 +107,76 @@ public class DownloadChrome extends AbstractDownloader implements Closeable {
 
     @Override
     public Page download(Request request, Task task) {
+        String url = request.getUrl();
+        log.info("<<<<<<<<<<<<<<<<< downloading page {} >>>>>>>>>>", request.getUrl());
+        String content = WebClientUtils.spiderRun(url);
         Page page = Page.fail();
-        try {
-            if (driver == null) {
-                initWebDriver(this.execPath);
-                log.error("ERROR<<<<<<<<<<<<<<<<< 初始化driver {} >>>>>>>>>>", request.getUrl());
-            }
-            log.info("<<<<<<<<<<<<<<<<< downloading page {} >>>>>>>>>>", request.getUrl());
-            driver.get(request.getUrl());
-            try {
-                Thread.sleep(sleepTime * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            WebDriver.Options manage = driver.manage();
-            Site site = task.getSite();
-            if (site.getCookies() != null) {
-                for (Map.Entry<String, String> cookieEntry : site.getCookies()
-                        .entrySet()) {
-                    Cookie cookie = new Cookie(cookieEntry.getKey(),
-                            cookieEntry.getValue());
-                    manage.addCookie(cookie);
-                }
-            }
-            /*
-             * TODO You can add mouse event or other processes
-             *
-             * @author: bob.li.0718@gmail.com
-             */
-            try {
-                //休眠3秒就是为了动态的数据渲染完成后在进行获取
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            WebElement webElement = driver.findElement(By.xpath("/html"));
-            log.info("<<<<<<<<<<<<<<<<<  page {} Ok >>>>>>>>>>>>>>>>>>>>" + request.getUrl());
-            String content = webElement.getAttribute("outerHTML");
-            page.setDownloadSuccess(true);
-            page.setRawText(content);
-            page.setHtml(new Html(content, request.getUrl()));
-            page.setUrl(new PlainText(request.getUrl()));
-            page.setRequest(request);
-            onSuccess(request, task);
-        } catch (Exception e) {
-            log.warn("download page {} error", request.getUrl(), e);
-            onError(request, task, e);
-        } finally {
-
-        }
+        page.setDownloadSuccess(true);
+        page.setRawText(content);
+        page.setHtml(new Html(content, request.getUrl()));
+        page.setUrl(new PlainText(request.getUrl()));
+        page.setRequest(request);
+        onSuccess(request, task);
         return page;
     }
+//    @Override
+//    public Page download(Request request, Task task) {
+//        Page page = Page.fail();
+//        try {
+//            if (driver == null) {
+//                initWebDriver(this.execPath);
+//                log.error("ERROR<<<<<<<<<<<<<<<<< 初始化driver {} >>>>>>>>>>", request.getUrl());
+//            }
+//            log.info("<<<<<<<<<<<<<<<<< downloading page {} >>>>>>>>>>", request.getUrl());
+//            driver.get(request.getUrl());
+//            try {
+//                Thread.sleep(sleepTime * 1000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//
+//            WebDriver.Options manage = driver.manage();
+//            Site site = task.getSite();
+//            if (site.getCookies() != null) {
+//                for (Map.Entry<String, String> cookieEntry : site.getCookies()
+//                        .entrySet()) {
+//                    Cookie cookie = new Cookie(cookieEntry.getKey(),
+//                            cookieEntry.getValue());
+//                    manage.addCookie(cookie);
+//                }
+//            }
+//            /*
+//             * TODO You can add mouse event or other processes
+//             *
+//             * @author: bob.li.0718@gmail.com
+//             */
+//            try {
+//                //休眠3秒就是为了动态的数据渲染完成后在进行获取
+//                Thread.sleep(3000);
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
+//            WebElement webElement = driver.findElement(By.xpath("/html"));
+//            log.info("<<<<<<<<<<<<<<<<<  page {} Ok >>>>>>>>>>>>>>>>>>>>" + request.getUrl());
+//
+//            String content = webElement.getAttribute("outerHTML");
+//            if (request.getUrl().equals(CrawlingAddressConstant.URL8)) {
+//                log.info(" {}", content);
+//            }
+//            page.setDownloadSuccess(true);
+//            page.setRawText(content);
+//            page.setHtml(new Html(content, request.getUrl()));
+//            page.setUrl(new PlainText(request.getUrl()));
+//            page.setRequest(request);
+//            onSuccess(request, task);
+//        } catch (Exception e) {
+//            log.warn("download page {} error", request.getUrl(), e);
+//            onError(request, task, e);
+//        } finally {
+//
+//        }
+//        return page;
+//    }
 
     @Override
     public void setThread(int threadNum) {
