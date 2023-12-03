@@ -260,6 +260,7 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
         order.setCreateTime(new Date());
         order.setUpdateTime(new Date());
         order.setTimes(ballCalculation.getMultiple());
+        order.setBetType(ballCalculation.getBetType());
         orderMapper.insert(order);
         racingBallOrder.setId(order.getId());
         return racingBallOrder;

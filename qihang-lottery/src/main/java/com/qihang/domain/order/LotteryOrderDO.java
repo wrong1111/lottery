@@ -120,4 +120,8 @@ public class LotteryOrderDO implements Serializable {
     String transferOrderNo;
 
     Date transferTime;
+    /*
+     1 奖金优化
+     */
+    Integer betType;
 }

@@ -209,6 +209,7 @@ public class BasketballUtil {
             footballCombinationVO.setHomeTeam(footballMatchDTO.getHomeTeam());
             footballCombinationVO.setNumber(footballMatchDTO.getNumber());
             footballCombinationVO.setVisitingTeam(footballMatchDTO.getVisitingTeam());
+            footballCombinationVO.setState("0");
             String fen = "";
             if (type == 1) {
                 fen = footballMatchDTO.getSizeOddsList().get(0).get("score").toString();

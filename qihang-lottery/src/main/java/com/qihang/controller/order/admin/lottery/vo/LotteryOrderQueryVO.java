@@ -83,5 +83,8 @@ public class LotteryOrderQueryVO extends PageDTO {
     @ApiModelProperty(value = "转单日期")
     Date transferTime;
 
+    Integer betType;
+    Integer multi;
+
 
 }

@@ -145,6 +145,7 @@ public class DocumentaryServiceHelper {
                 racingBall.setContent(racingBallDO.getContent());
                 racingBall.setTargetId(racingBallDO.getTargetId());
                 racingBall.setTenantId(userDo.getTenantId());
+                racingBall.setGameNo(racingBallDO.getGameNo());
                 racingBallDOS.add(racingBall);
                 contentList.add(racingBallDO.getContent());
             }

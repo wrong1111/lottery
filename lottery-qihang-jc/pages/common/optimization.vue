@@ -206,10 +206,11 @@
 				}
 				uni.showLoading();
 				this.confirmIsShow = false;
+				this.calculationParam.betType = 1 //标记奖金优化
 				this.calculationParam.schemeDetails = this.current == 0 ? JSON.stringify(this.averageOptimizationList) : (
 					this.current == 1 ? JSON.stringify(this.heatOptimizationList) : JSON.stringify(this
 						.coldOptimizationList))
-				console.log(" 现在选择的是 ", this.current, this.calculationParam)
+				//console.log(" 现在选择的是 ", this.current, this.calculationParam)
 				createOrder(this.calculationParam).then(res => {
 					if (res.success) {
 						//标识为已经下单了

@@ -590,7 +590,7 @@
 									</view>
 								</uni-td>
 								<uni-td align="center">
-									{{item.notes}}
+									{{item.notes * (lotteryOrder.betType ==0? lotteryOrder.times:1)}}
 								</uni-td>
 								<uni-td align="center"
 									v-if="lotteryOrder.type!=6 && lotteryOrder.type!=7">{{item.forecastBonus}}</uni-td>

@@ -95,4 +95,6 @@ public class LotteryOrderVO extends BaseVO {
 
 
     Integer winCounts;
+
+    Integer betType;
 }

@@ -28,6 +28,7 @@ import com.qihang.controller.winburden.dto.WinBurdenMatchDTO;
 import com.qihang.domain.ballgame.BallGameDO;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
+import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import com.qihang.domain.documentary.DocumentaryDO;
 import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.follow.FollowDO;
@@ -49,6 +50,7 @@ import com.qihang.enumeration.order.pay.PayTypeEnum;
 import com.qihang.mapper.ballgame.BallGameMapper;
 import com.qihang.mapper.basketball.BasketballMatchMapper;
 import com.qihang.mapper.beidan.BeiDanMatchMapper;
+import com.qihang.mapper.beidan.BeiDanSfggMatchMapper;
 import com.qihang.mapper.documentary.DocumentaryMapper;
 import com.qihang.mapper.documentary.DocumentaryUserMapper;
 import com.qihang.mapper.follow.FollowMapper;
@@ -129,6 +131,9 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
 
     @Resource
     PermutationMapper permutationMapper;
+
+    @Resource
+    BeiDanSfggMatchMapper beiDanSfggMatchMapper;
 
     @Override
     @TenantIgnore
@@ -445,10 +450,11 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
         }
         //查询待开奖的订单信息
         List<LotteryOrderDO> orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()).in(CollUtil.isNotEmpty(userIds), LotteryOrderDO::getUserId, userIds));
-        for (LotteryOrderDO lotteryOrderDO : orderList) {
+        if (!CollectionUtils.isEmpty(orderList)) {
+            List<Integer> lotteryIdsList = orderList.stream().map(item -> item.getId()).collect(Collectors.toList());
             //根据订单号和类型查询发单信息
-            List<DocumentaryDO> documentaryList = documentaryMapper.selectList(new QueryWrapper<DocumentaryDO>().lambda().eq(DocumentaryDO::getLotteryOrderId, lotteryOrderDO.getId()));
-            if (CollUtil.isNotEmpty(documentaryList)) {
+            List<DocumentaryDO> documentaryList = documentaryMapper.selectList(new QueryWrapper<DocumentaryDO>().lambda().in(DocumentaryDO::getLotteryOrderId, lotteryIdsList));
+            if (!CollectionUtils.isEmpty(documentaryList)) {
                 for (DocumentaryDO documentaryDO : documentaryList) {
                     DocumentaryByTypeVO documentary = new DocumentaryByTypeVO();
                     //查詢发单是否在比赛截止时间之内
@@ -483,6 +489,11 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
                         //按截止时间升序
                         beiDanMatchDOS = beiDanMatchDOS.stream().sorted(Comparator.comparing(BeiDanMatchDO::getDeadline)).collect(Collectors.toList());
                         endTime = beiDanMatchDOS.get(0).getDeadline();
+                    } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+                        List<BeiDanSFGGMatchDO> beiDanMatchDOS = beiDanSfggMatchMapper.selectBatchIds(ids);
+                        //按截止时间升序
+                        beiDanMatchDOS = beiDanMatchDOS.stream().sorted(Comparator.comparing(BeiDanSFGGMatchDO::getDeadline)).collect(Collectors.toList());
+                        endTime = beiDanMatchDOS.get(0).getDeadline();
                     } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || lotteryOrder.getType().equals(LotteryOrderTypeEnum.REN_JIU.getKey())) {
                         List<WinBurdenMatchDO> winBurdenMatchDOS = winBurdenMatchMapper.selectBatchIds(ids);
                         //按截止时间升序
@@ -492,19 +503,18 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
                         //所有数字彩目前定在晚上21:00停售
                         //当前期号
                         //TODO 数字彩截止时间需要完善
-                        List<PermutationAwardDO> permutationAwardDOS = permutationAwardMapper.selectList(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, lotteryOrder.getType()).orderByDesc(PermutationAwardDO::getCreateTime));
+                        List<PermutationAwardDO> permutationAwardDOS = permutationAwardMapper.selectList(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, lotteryOrder.getType()).eq(PermutationAwardDO::getStageNumber, lotteryOrder.getStageNumber()));
                         if (CollectionUtils.isEmpty(permutationAwardDOS)) {
                             endTime = DateUtil.parse(DateUtil.format(new Date(), "yyyy-MM-dd") + " 21:00:00", "yyyy-MM-dd HH:mm:ss");
                         } else {
                             PermutationAwardDO lastAwardDO = permutationAwardDOS.get(0);
-                            if (lotteryOrder.getStageNumber() != null && lotteryOrder.getStageNumber() > lastAwardDO.getStageNumber()) {
-                                endTime = DateUtil.parse(DateUtil.format(new Date(), "yyyy-MM-dd") + " 21:00:00", "yyyy-MM-dd HH:mm:ss");
-                            } else {
-                                endTime = DateUtils.addDays(new Date(), -1);
-                            }
+                            endTime = lastAwardDO.getDeadTime();
                         }
                     }
                     String names = LotteryOrderTypeEnum.valueOFS(lotteryOrder.getType()).getValue();
+                    if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+                        names = LotteryOrderTypeEnum.SINGLE.getValue();
+                    }
                     BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, names)).get(0);
                     name = ballGameDO.getName();
                     url = ballGameDO.getUrl();
@@ -637,8 +647,12 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
             documentaryById.setTimes(racingBallList.get(0).getTimes());
             //过关类型
             documentaryById.setPssTypeList(Convert.toList(Integer.class, racingBallList.get(0).getType()));
-            //启投金额
-            documentaryById.setRiseThrowPrice(new BigDecimal(racingBallList.get(0).getNotes() * 2));
+            //启投金额 如果是奖金优化，需要全部
+            if (0==lotteryOrder.getBetType()) {
+                documentaryById.setRiseThrowPrice(new BigDecimal(racingBallList.get(0).getNotes() * 2));
+            } else {
+                documentaryById.setRiseThrowPrice(lotteryOrder.getPrice());
+            }
             //下注的比赛信息
             List<BallInfoVO> ballInfoList = new ArrayList<>();
             List<Integer> ids = new ArrayList<>();
@@ -686,6 +700,18 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
                     ballInfo.setHalfFullCourt(beiDanMatchDO.getHalfFullCourt());
                     ballInfo.setLetBall(beiDanMatchDTO.getLetBall());
                     ballInfoList.add(ballInfo);
+                } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+                    BeiDanMatchDTO beiDanMatchDTO = JSONUtil.toBean(racingBall.getContent(), BeiDanMatchDTO.class);
+                    BeiDanSFGGMatchDO beiDanMatchDO = beiDanSfggMatchMapper.selectById(beiDanMatchDTO.getId());
+                    ids.add(beiDanMatchDO.getId());
+                    ballInfo.setHomeTeam(beiDanMatchDTO.getHomeTeam());
+                    ballInfo.setVisitingTeam(beiDanMatchDTO.getVisitingTeam());
+                    ballInfo.setNumber(beiDanMatchDTO.getNumber());
+                    ballInfo.setAward(beiDanMatchDO.getAward());
+                    ballInfo.setContent(racingBall.getContent());
+                    ballInfo.setHalfFullCourt(beiDanMatchDO.getHalfFullCourt());
+                    ballInfo.setLetBall(beiDanMatchDTO.getLetBall());
+                    ballInfoList.add(ballInfo);
                 } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey()) ||
                         StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey())) {
                     WinBurdenMatchDTO winBurdenMatch = JSONUtil.toBean(racingBall.getContent(), WinBurdenMatchDTO.class);
@@ -721,6 +747,10 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
                 beiDanMatchDOS = beiDanMatchDOS.stream().sorted(Comparator.comparing(BeiDanMatchDO::getDeadline)).collect(Collectors.toList());
                 endTime = beiDanMatchDOS.get(0).getDeadline();
 
+            } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+                List<BeiDanSFGGMatchDO> beiDanMatchDOS = beiDanSfggMatchMapper.selectBatchIds(ids);
+                beiDanMatchDOS = beiDanMatchDOS.stream().sorted(Comparator.comparing(BeiDanSFGGMatchDO::getDeadline)).collect(Collectors.toList());
+                endTime = beiDanMatchDOS.get(0).getDeadline();
             } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey())
                     || lotteryOrder.getType().equals(LotteryOrderTypeEnum.REN_JIU.getKey())) {
                 List<WinBurdenMatchDO> winBurdenMatchDOS = winBurdenMatchMapper.selectBatchIds(ids);
@@ -747,20 +777,21 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
                 endTime = DateUtil.parse(DateUtil.format(new Date(), "yyyy-MM-dd") + " 21:00:00", "yyyy-MM-dd HH:mm:ss");
             } else {
                 PermutationAwardDO lastAwardDO = permutationAwardDOS.get(0);
-                if (lotteryOrder.getStageNumber() != null && lotteryOrder.getStageNumber() > lastAwardDO.getStageNumber()) {
-                    endTime = DateUtil.parse(DateUtil.format(new Date(), "yyyy-MM-dd") + " 21:00:00", "yyyy-MM-dd HH:mm:ss");
-                } else {
-                    endTime = DateUtils.addDays(new Date(), -1);
-                }
+                endTime = lastAwardDO.getDeadTime();
             }
 
         }
-        BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, LotteryOrderTypeEnum.valueOFS(lotteryOrder.getType()).getValue())).get(0);
+        String names = "";
+        if (LotteryOrderTypeEnum.SIGLE_SFGG.getKey().equals(lotteryOrder.getType())) {
+            names = LotteryOrderTypeEnum.SINGLE.getValue();
+        } else {
+            names = LotteryOrderTypeEnum.valueOFS(lotteryOrder.getType()).getValue();
+        }
+        BallGameDO ballGameDO = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, names)).get(0);
         name = ballGameDO.getName();
         url = ballGameDO.getUrl();
         //截止时间
         documentaryById.setDeadline(endTime);
-
         //logo
         documentaryById.setUrl(url);
         //彩票名称
@@ -871,7 +902,7 @@ public class DocumentaryServiceImpl extends ServiceImpl<DocumentaryMapper, Docum
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
             basketballHelper.setRacingBallList(racingBallList);
             return basketballHelper.templateDocumentary(createDocumentaryUser, documentary, user, order);
-        } else if (order.getType().equals(LotteryOrderTypeEnum.SINGLE.getKey())) {
+        } else if (order.getType().equals(LotteryOrderTypeEnum.SINGLE.getKey()) || order.getType().equals(LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
             beidanHelper.setRacingBallList(racingBallList);
             return beidanHelper.templateDocumentary(createDocumentaryUser, documentary, user, order);

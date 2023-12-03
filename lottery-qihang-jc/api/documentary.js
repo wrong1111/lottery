@@ -26,7 +26,8 @@ export function getLottery(type) {
 		21: '福彩3D',
 		22: '七乐彩',
 		23: '快乐8',
-		24: '双色球'
+		24: '双色球',
+		25:'北京单场-胜负过关',
 	}
 	const lotteryName = lotterys[type]
 	if (typeof(lotteryName) == 'undefined' || lotteryName == null) {
@@ -42,6 +43,7 @@ export function decisionSport(type) {
 		case "2":
 		case "6":
 		case "7":
+		case "25":
 			return true
 		default:
 			return false

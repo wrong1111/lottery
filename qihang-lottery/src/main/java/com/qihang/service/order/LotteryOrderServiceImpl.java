@@ -260,6 +260,7 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         //转换vo
         LotteryOrderVO lotteryOrderVO = BeanUtil.copyProperties(lotteryOrder, LotteryOrderVO.class);
         lotteryOrderVO.setReaward("");
+        lotteryOrderVO.setBetType(lotteryOrder.getBetType());
         //是否有开奖
         if (null != lotteryOrder.getStageNumber()) {
             PermutationAwardDO permutationAwardDO = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, lotteryOrder.getType()).eq(PermutationAwardDO::getStageNumber, lotteryOrder.getStageNumber()));
@@ -482,6 +483,8 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         for (LotteryOrderDO lotteryOrder : lotteryOrderPage.getRecords()) {
             LotteryOrderQueryVO lotteryOrderQueryVO = new LotteryOrderQueryVO();
             BeanUtils.copyProperties(lotteryOrder, lotteryOrderQueryVO);
+            lotteryOrderQueryVO.setBetType(lotteryOrder.getBetType());
+            lotteryOrderQueryVO.setMulti(lotteryOrder.getTimes());
             UserDO userDO = userMapper.selectById(lotteryOrder.getUserId());
             lotteryOrderQueryVO.setNickname(userDO.getNickname());
             ShopTransferDO shopTransferDO = shopTransferDOMap.get(lotteryOrder.getTransferType() + "-" + lotteryOrder.getTransferShopId());

@@ -58,6 +58,7 @@ public class Constant {
             case "2"://北单
             case "6"://14场
             case "7":
+            case "25":
                 return true;
             default:
                 return false;

@@ -36,7 +36,7 @@
 								</image>
 							</view>
 						</view>
-						<view style="margin-left: 5px;">{{documentaryData.name}}</view>
+						<view style="margin-left: 5px;">{{documentaryData.name}}   {{documentaryData.lotId ==25?'-胜负过关':''}}</view>
 					</view>
 					<view>
 						<text style="color: grey;"><span>佣金</span></text>
@@ -189,7 +189,7 @@
 								</uni-card>
 								<uni-card is-shadow v-if="documentaryData.name=='北京单场'">
 									<view>
-										<span class="title">{{documentaryData.name}}</span>
+										<span class="title">{{documentaryData.name}} </span>
 										<p style="display: flex;justify-content: flex-end;align-items: center;">
 											<uni-row>
 												<uni-col :span="documentaryData.pssTypeList.length<=2?12:24">
@@ -268,12 +268,21 @@
 														v-if="record.content.scoreOddsList.length-index>1">,</span>
 													<br>
 												</span>
-												<span v-if="record.content.scoreOddsList.length>0">|<br></span>
-
+												 
+												 <span :style="sfgg.describe==record.award[5]?'color:#FF3F43':''"
+													v-for="(sfgg,index) in record.content.sfggOdds"
+													v-if="sfgg.active">
+													{{sfgg.describe}}({{sfgg.odds}})<span
+														v-if="record.content.sfggOdds.length-index>1">,</span>
+													<br>
+												 </span>
 											</uni-td>
 											<uni-td width="50" align="center">
-												<span v-if="record.halfFullCourt!=undefined">
+												<span v-if="record.halfFullCourt!=undefined && documentaryData.lotId!=25">
 													{{record.halfFullCourt.split(',')[1]}}<br>半{{record.halfFullCourt.split(',')[0]}}
+												</span>
+												<span v-if="record.halfFullCourt!=undefined && documentaryData.lotId ==25">
+													{{record.halfFullCourt}}
 												</span>
 											</uni-td>
 										</uni-tr>
@@ -665,7 +674,7 @@
 				this.documentaryId = id;
 				queryDocumentaryById(id, uid).then(res => {
 					this.documentaryData = res;
-					console.log(' 合买详情页 documentaryInfo ==》', this.documentaryData)
+					//console.log(' 合买详情页 documentaryInfo ==》', this.documentaryData)
 					this.price = this.documentaryData.riseThrowPrice
 					if (this.documentaryData.documentaryUserList.length <= 0) {
 						this.tabsList[1].name = "跟单次数（0）"
@@ -678,27 +687,41 @@
 					if (decisionSport(this.documentaryData.lotId)) {
 						this.documentaryData.issport = true
 						this.documentaryData.ballInfoList.map((item, idx) => {
-							this.$set(this.documentaryData.ballInfoList[idx], "content", JSON.parse(item
-								.content))
+							this.$set(this.documentaryData.ballInfoList[idx], "content", JSON.parse(item.content))
 							//將比賽结果转换成数组，并返回
-							if (item.award != null) {
-								this.$set(this.documentaryData.ballInfoList[idx], "award", item.award
-									.split(
-										','))
-							} else {
-								//考虑比赛结果还没有出的话设置一个默认值，防止报错
-								var moren = ['', '', '', '', '', '', '', '', '', '', '', '', '', '']
-								this.$set(this.documentaryData.ballInfoList[idx], "award", moren)
+							if(this.documentaryData.lotId ==25){
+								if (item.award != null) {
+									var moren = ['', '', '', '', '', item.award]
+									this.$set(this.documentaryData.ballInfoList[idx], "award", moren)
+								} else {
+									//考虑比赛结果还没有出的话设置一个默认值，防止报错
+									var moren = ['', '', '', '', '', '']
+									this.$set(this.documentaryData.ballInfoList[idx], "award", moren)
+								}
+								if (item.bonusOdds != null) {
+									this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", ['','','','','',item.bonusOdds])
+								} else {
+									//考虑比赛结果还没有出的话设置一个默认值，防止报错
+									var moren = ['', '', '', '', '', '']
+									this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", moren)
+								}
+							}else{
+								if (item.award != null) {
+									this.$set(this.documentaryData.ballInfoList[idx], "award", item.award.split(','))
+								} else {
+									//考虑比赛结果还没有出的话设置一个默认值，防止报错
+									var moren = ['', '', '', '', '', '', '', '', '', '', '', '', '', '']
+									this.$set(this.documentaryData.ballInfoList[idx], "award", moren)
+								}
+								if (item.bonusOdds != null) {
+									this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", item.bonusOdds.split(','))
+								} else {
+									//考虑比赛结果还没有出的话设置一个默认值，防止报错
+									var moren = ['', '', '', '', '', '', '', '', '', '', '', '', '', '']
+									this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", moren)
+								}
 							}
-							if (item.bonusOdds != null) {
-								this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", item
-									.bonusOdds
-									.split(','))
-							} else {
-								//考虑比赛结果还没有出的话设置一个默认值，防止报错
-								var moren = ['', '', '', '', '', '', '', '', '', '', '', '', '', '']
-								this.$set(this.documentaryData.ballInfoList[idx], "bonusOdds", moren)
-							}
+							
 						})
 					} else {
 						this.documentaryData.issport = false
@@ -719,8 +742,6 @@
 								//可以直接按位处理
 								this.$set(this.documentaryData.permutationList[idx], "isArrays", false)
 							}
-
-
 
 							//將比賽结果转换成数组，并返回
 							if (typeof(item.award) != 'undefined' && item.award != null) {

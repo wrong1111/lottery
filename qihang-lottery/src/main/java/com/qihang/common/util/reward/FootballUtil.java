@@ -213,6 +213,7 @@ public class FootballUtil {
             footballCombinationVO.setHomeTeam(footballMatchDTO.getHomeTeam());
             footballCombinationVO.setNumber(footballMatchDTO.getNumber());
             footballCombinationVO.setVisitingTeam(footballMatchDTO.getVisitingTeam());
+            footballCombinationVO.setState("0");
             if (args.length > 0) {
                 footballCombinationVO.setContent("让" + oddlist.get(i).get("describe").toString() + "(" + Double.parseDouble(oddlist.get(i).get("odds").toString()) + ")");
             } else {

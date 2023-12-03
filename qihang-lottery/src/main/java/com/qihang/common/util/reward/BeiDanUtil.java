@@ -208,6 +208,7 @@ public class BeiDanUtil {
             footballCombinationVO.setHomeTeam(footballMatchDTO.getHomeTeam());
             footballCombinationVO.setNumber(footballMatchDTO.getNumber());
             footballCombinationVO.setVisitingTeam(footballMatchDTO.getVisitingTeam());
+            footballCombinationVO.setState("0");
             if (args.length > 0) {
                 footballCombinationVO.setContent("让" + oddlist.get(i).get("describe").toString() + "(" + Double.parseDouble(oddlist.get(i).get("odds").toString()) + ")");
             } else {
@@ -299,8 +300,7 @@ public class BeiDanUtil {
             BallOptimizationVO vo = new BallOptimizationVO();
             vo.setBallCombinationList(p);
             vo.setType(p.size() + "串1");
-            vo.setNotes(multiple);
-
+            vo.setNotes(1); //1倍
             BigDecimal forest = FootballUtil.foreast(vo.getBallCombinationList()).multiply(BigDecimal.valueOf(multiple)).multiply(BigDecimal.valueOf(0.65d));
             vo.setForecastBonus(forest.setScale(2, RoundingMode.HALF_UP));
             if (idx == 0) {
@@ -369,7 +369,7 @@ public class BeiDanUtil {
             BallOptimizationVO vo = new BallOptimizationVO();
             vo.setBallCombinationList(p);
             vo.setType(p.size() + "串1");
-            vo.setNotes(multiple);
+            vo.setNotes(1);//普通 的1倍
             BigDecimal forest = FootballUtil.foreast(vo.getBallCombinationList()).multiply(BigDecimal.valueOf(multiple)).multiply(BigDecimal.valueOf(0.65d));
             vo.setForecastBonus(forest.setScale(2, RoundingMode.HALF_UP));
             if (idx == 0) {

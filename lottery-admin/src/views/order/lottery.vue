@@ -89,6 +89,7 @@
                 <el-col :span="8">
                   <el-form-item label="订单号：">
                     <span>{{ scope.row.orderId }}</span>
+                     <el-tag type="danger" size="mini" class="ml5" v-if="scope.row.betType==1">奖金优化</el-tag>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
@@ -111,6 +112,7 @@
                 <el-col :span="8">
                   <el-form-item label="下注金额：">
                     <span>{{ scope.row.price }}</span>
+                    <el-tag type="danger" size="mini" class="ml5" v-if="scope.row.betType==1">奖金优化</el-tag>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
@@ -246,7 +248,8 @@
           <span :class="getAward(scope.row)">{{ scope.row.winPrice }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="下注金额" align="center" prop="price" width="100" :show-overflow-tooltip="true" />
+      <el-table-column label="下注金额" align="center" prop="price" width="100">
+        </el-table-column>
       <el-table-column label="预测金额" align="center" prop="forecast" width="100" :show-overflow-tooltip="true" />
       <el-table-column label="订单状态" align="center" width="80" :show-overflow-tooltip="true">
         <template slot-scope="scope">
@@ -322,6 +325,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="types" width="100" align="center" label="玩法" />
+           <el-table-column prop="note" width="100" align="center" label="倍数" />
           <el-table-column prop="ballCombinationList" width="380" align="center" label="投注内容">
             <template slot-scope="scope">
               <span v-for="(item,index) in scope.row.ballCombinationList">
@@ -646,6 +650,7 @@
             const o = {
               id: idx++,
               types: items[i]['type'],
+              note: items[i]['notes'] * (row.betType ==0?row.multi:1),
               reawardx: (typeof(items[i]['award']) == 'undefined' || !items[i]['award']) ? false : true,
               awardx: typeof(items[i]['award']) == 'undefined' ? false : items[i]['award'],
               moneyx: typeof(items[i]['money']) == 'undefined' ? '0' : items[i]['money'],
@@ -665,6 +670,7 @@
               idx: i + 1,
               cont: items[i]['content'],
               mode: items[i]['mode'],
+              notes: items[i]['notes'],
               stageNumber: items[i]['stageNumber'],
               reaward: typeof(items[i]['award']) == 'undefined' ? false : true,
               award: typeof(items[i]['award']) == 'undefined' ? false : items[i]['award'],

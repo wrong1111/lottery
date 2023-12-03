@@ -65,4 +65,7 @@ public class BallCalculationDTO implements Serializable {
 
     @ApiModelProperty(value = "玩法 0 胜负过关  1 让球胜平负 2 上下单双 3总进球 4比分 5半全场")
     String model;
+
+    @ApiModelProperty(value = "是否是奖金优化 1是，默认 0 不是")
+    Integer betType = 0;
 }

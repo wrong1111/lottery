@@ -30,4 +30,8 @@ public class BallCombinationVO implements Serializable {
 
     @ApiModelProperty(value = "让球")
     String letball;
+
+
+    @ApiModelProperty(value = "0 状态正常 1 退票")
+    String state;
 }
