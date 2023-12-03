@@ -17,5 +17,6 @@ public class SportSchemeDetailsListVO implements Serializable {
     List<SportSchemeDetailsVO> ballCombinationList;
     String money;
     boolean award;
+    String state;
 
 }

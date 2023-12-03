@@ -14,4 +14,5 @@ public class SportSchemeDetailsVO implements Serializable {
     String visitingTeam;
     String content;
     // {"number":"周二004","homeTeam":"[2]斯托克港","visitingTeam":"[1]博尔顿","content":"让平(4.2)"
+    String letball;
 }

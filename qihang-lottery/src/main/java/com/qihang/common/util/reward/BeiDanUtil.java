@@ -617,15 +617,26 @@ public class BeiDanUtil {
     public static void awardSchemeDetails(List<SportSchemeDetailsListVO> sportsDetails, Map<String, String> awardMap, Map<String, String> bonuseMap) {
 
         for (SportSchemeDetailsListVO detailsVOS : sportsDetails) {
-
             Map<String, String> matchMaps = detailsVOS.getBallCombinationList().stream().collect(Collectors.toMap(SportSchemeDetailsVO::getNumber, SportSchemeDetailsVO::getContent, (a, b) -> a));
             boolean allFinished = true;
+            boolean hasDelayMathc = false;
             for (Map.Entry<String, String> keyEntity : matchMaps.entrySet()) {
                 if (awardMap.get(keyEntity.getKey()) == null) {
                     //没有开奖
                     allFinished = false;
                     break;
                 }
+                if ("延期".equals(bonuseMap.get(keyEntity.getKey()))) {
+                    hasDelayMathc = true;
+                    break;
+                }
+            }
+            if (hasDelayMathc) {
+                //直接还还购物资金
+                BigDecimal money = BigDecimal.valueOf(Integer.valueOf(detailsVOS.getNotes())).multiply(BigDecimal.valueOf(2));
+                detailsVOS.setMoney(money.toPlainString());
+                detailsVOS.setAward(true);
+                break;
             }
             if (allFinished) {
                 List<String> resultOddsList = new ArrayList<>();
