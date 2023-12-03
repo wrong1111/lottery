@@ -27,4 +27,7 @@ public class BallCombinationVO implements Serializable {
 
     @ApiModelProperty(value = "投注内容 格式为 平(3.05) ")
     private String content;
+
+    @ApiModelProperty(value = "让球")
+    String letball;
 }

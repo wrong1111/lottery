@@ -37,6 +37,7 @@ import com.qihang.controller.winburden.dto.WinBurdenMatchDTO;
 import com.qihang.domain.ballgame.BallGameDO;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
+import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import com.qihang.domain.documentary.DocumentaryDO;
 import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.football.FootballMatchDO;
@@ -61,6 +62,7 @@ import com.qihang.enumeration.order.pay.PayTypeEnum;
 import com.qihang.mapper.ballgame.BallGameMapper;
 import com.qihang.mapper.basketball.BasketballMatchMapper;
 import com.qihang.mapper.beidan.BeiDanMatchMapper;
+import com.qihang.mapper.beidan.BeiDanSfggMatchMapper;
 import com.qihang.mapper.documentary.DocumentaryMapper;
 import com.qihang.mapper.documentary.DocumentaryUserMapper;
 import com.qihang.mapper.football.FootballMatchMapper;
@@ -158,6 +160,9 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
 
     @Resource
     RedisService redisService;
+
+    @Resource
+    BeiDanSfggMatchMapper beidansfggMapper;
 
     @Override
     public CommonListVO<LotteryOrderVO> getLotteryOrderPage(LotteryOrderDTO lotteryOrder, Integer userId) {
@@ -291,12 +296,21 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                         basketballMatchList = basketballMatchList.stream().sorted(Comparator.comparing(BasketballMatchDO::getDeadline)).collect(Collectors.toList());
                         lotteryOrderVO.setIsEnd(basketballMatchList.get(0).getState().equals("0") ? true : false);
                         lotteryOrderVO.setDeadline(basketballMatchList.get(0).getDeadline());
+                    } else if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+                        List<BeiDanSFGGMatchDO> basketballMatchList = beidansfggMapper.selectBatchIds(ids);
+                        //按截止时间升序
+                        basketballMatchList = basketballMatchList.stream().sorted(Comparator.comparing(BeiDanSFGGMatchDO::getDeadline)).collect(Collectors.toList());
+                        lotteryOrderVO.setIsEnd(basketballMatchList.get(0).getState().equals("0") ? true : false);
+                        lotteryOrderVO.setDeadline(basketballMatchList.get(0).getDeadline());
                     }
                 }
             }
         }
         //设置订单对应的彩票名字和logo
         LotteryOrderTypeEnum lotteryEnum = LotteryOrderTypeEnum.valueOFS(lotteryOrderVO.getType());
+        if (lotteryOrder.getType().equals(LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+            lotteryEnum = LotteryOrderTypeEnum.SINGLE;
+        }
         BallGameDO ballGame = ballGameMapper.selectList(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, lotteryEnum.getValue())).get(0);
         lotteryOrderVO.setBallName(ballGame.getName());
         lotteryOrderVO.setBallUrl(ballGame.getUrl());
@@ -320,7 +334,12 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             lotteryOrderVO.setTimes(permutationList.get(0).getTimes());
             List<PermutationRecordVO> list = BeanUtil.copyToList(permutationList, PermutationRecordVO.class);
             lotteryOrderVO.setRecordList(list);
-        } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FOOTBALL.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SINGLE.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey())) {
+        } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FOOTBALL.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SINGLE.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey())
+                || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey())) {
             //竞球数据
             List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(ids);
             //因为都是一样的取一个值就可以
@@ -364,6 +383,21 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                     BeiDanMatchDTO beiDanMatch = JSONUtil.toBean(racingBallDO.getContent(), BeiDanMatchDTO.class);
                     //根据id查询足球数据
                     BeiDanMatchDO beiDanMatchDO = beiDanMatchMapper.selectById(beiDanMatch.getId());
+                    ballInfo.setHomeTeam(beiDanMatchDO.getHomeTeam());
+                    ballInfo.setVisitingTeam(beiDanMatchDO.getVisitingTeam());
+                    ballInfo.setNumber(beiDanMatchDO.getNumber());
+                    ballInfo.setAward(beiDanMatchDO.getAward());
+                    //投注内容
+                    ballInfo.setContent(racingBallDO.getContent());
+                    //赛果
+                    ballInfo.setHalfFullCourt(beiDanMatchDO.getHalfFullCourt());
+                    ballInfo.setLetBall(beiDanMatchDO.getLetBall());
+                    ballInfo.setBonusOdds(beiDanMatchDO.getBonusOdds());
+                    ballInfoList.add(ballInfo);
+                } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+                    BeiDanMatchDTO beiDanMatch = JSONUtil.toBean(racingBallDO.getContent(), BeiDanMatchDTO.class);
+                    //根据id查询足球数据
+                    BeiDanSFGGMatchDO beiDanMatchDO = beidansfggMapper.selectById(beiDanMatch.getId());
                     ballInfo.setHomeTeam(beiDanMatchDO.getHomeTeam());
                     ballInfo.setVisitingTeam(beiDanMatchDO.getVisitingTeam());
                     ballInfo.setNumber(beiDanMatchDO.getNumber());
@@ -638,7 +672,29 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                         }
                         racingBallVOList.add(racingBall);
                     }
-                } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey())) {
+                } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+                    if (!CollectionUtils.isEmpty(matchIdsList)) {
+                        List<BeiDanSFGGMatchDO> basketballMatchDOS =  beidansfggMapper.selectBatchIds(matchIdsList);
+                        if (!CollectionUtils.isEmpty(basketballMatchDOS)) {
+                            basketballMatchDOS.stream().forEach(p -> {
+                                String key = getKeys(lotteryOrder.getType(), p.getId());
+                                matchMap.put(key, p);
+                            });
+                        }
+                    }
+                    for (RacingBallDO racingBallDO : ballList) {
+                        RacingBallVO racingBall = new RacingBallVO();
+                        BeanUtils.copyProperties(racingBallDO, racingBall);
+                        String key = getKeys(lotteryOrder.getType(), racingBallDO.getTargetId());
+                        BeiDanSFGGMatchDO matchDO = (BeiDanSFGGMatchDO) matchMap.get(key);
+                        if (ObjectUtil.isNotNull(matchDO)) {
+                            racingBall.setReward(matchDO.getHalfFullCourt());
+                            racingBall.setAward(matchDO.getAward());
+                            racingBall.setDeadline(matchDO.getDeadline());
+                        }
+                        racingBallVOList.add(racingBall);
+                    }
+                }else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey())) {
                     if (!CollectionUtils.isEmpty(matchIdsList)) {
                         List<WinBurdenMatchDO> basketballMatchDOS = winBurdenMatchMapper.selectBatchIds(matchIdsList);
                         if (!CollectionUtils.isEmpty(basketballMatchDOS)) {

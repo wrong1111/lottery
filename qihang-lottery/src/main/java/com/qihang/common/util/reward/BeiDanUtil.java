@@ -213,6 +213,7 @@ public class BeiDanUtil {
             } else {
                 footballCombinationVO.setContent(oddlist.get(i).get("describe").toString() + "(" + Double.parseDouble(oddlist.get(i).get("odds").toString()) + ")");
             }
+            footballCombinationVO.setLetball(footballMatchDTO.getLetBall());
             footballCombinationVOList.add(footballCombinationVO);
 
         }
@@ -299,6 +300,7 @@ public class BeiDanUtil {
             vo.setBallCombinationList(p);
             vo.setType(p.size() + "串1");
             vo.setNotes(multiple);
+
             BigDecimal forest = FootballUtil.foreast(vo.getBallCombinationList()).multiply(BigDecimal.valueOf(multiple)).multiply(BigDecimal.valueOf(0.65d));
             vo.setForecastBonus(forest.setScale(2, RoundingMode.HALF_UP));
             if (idx == 0) {

@@ -47,7 +47,6 @@ public class RacingBallVO implements Serializable {
     String award;
 
     @ApiModelProperty(value = "比赛时间")
-    @JsonFormat(pattern = "MM-dd HH:mm", timezone = "+8")
     Date deadline;
 
 }

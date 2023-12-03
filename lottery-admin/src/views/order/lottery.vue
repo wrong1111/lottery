@@ -178,7 +178,9 @@
                         </template>
                       </el-table-column>
                       <el-table-column prop="deadline" label="比赛时间" align="center">
-
+                          <template slot-scope="inner">
+                            {{parseTime(inner.row.deadline)}}
+                          </template>
                       </el-table-column>
                       <el-table-column label="下注内容" align="center">
                         <template slot-scope="inner">
@@ -484,6 +486,10 @@
           {
             label: "北京单场",
             value: "2",
+          },
+          {
+            label: "单场-胜负过关",
+            value: "25",
           },
           {
             label: "排列3",
@@ -819,6 +825,16 @@
           }
         } else {
           const content = row.content;
+          //胜负过关
+          if(content.sfggOdds && content.sfggOdds.length){
+            let oddsList = [];
+            for (let index = 0; index < content.sfggOdds.length; index++) {
+              const element = content.sfggOdds[index];
+              const result =   element.describe + "(" + element.odds + ")";
+              oddsList.push(result);
+            }
+            result = result + oddsList.join(",");
+          }
           // 让球胜平负
           if (content.letOddsList && content.letOddsList.length) {
             let oddsList = [];

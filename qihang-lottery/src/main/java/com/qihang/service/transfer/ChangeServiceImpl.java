@@ -31,6 +31,7 @@ import com.qihang.domain.transfer.LotteryTransferDO;
 import com.qihang.domain.transfer.OrderTransferLogDO;
 import com.qihang.domain.transfer.ShopTransferDO;
 import com.qihang.enumeration.order.lottery.LotteryOrderStateEnum;
+import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import com.qihang.mapper.ballgame.BallGameMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.permutation.PermutationMapper;
@@ -262,6 +263,10 @@ public class ChangeServiceImpl implements IChangeService {
             return BaseVO.builder().errorMsg("订单已转出,单号:" + orderDO.getTransferOrderNo()).build();
         }
         String lotteryId = orderDO.getType();
+        //北单胜负过关 特殊处理。
+        if (LotteryOrderTypeEnum.SIGLE_SFGG.getKey().equals(lotteryId)) {
+            lotteryId = LotteryOrderTypeEnum.SINGLE.getKey();
+        }
         LotteryTransferDO lotteryTransferDO = lotteryTransferMapper.selectOne(new QueryWrapper<LotteryTransferDO>().lambda()
                 .eq(LotteryTransferDO::getStates, 0).eq(LotteryTransferDO::getLotteryType, lotteryId).eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferOut.code).orderByDesc(LotteryTransferDO::getId).last(" limit 1 "));
         if (null == lotteryTransferDO) {
@@ -286,6 +291,8 @@ public class ChangeServiceImpl implements IChangeService {
         } else {
             permutationDOList = permutationMapper.selectBatchIds(new ArrayList<>(Arrays.asList(orderDO.getTargetIds().split(","))));
         }
+
+        //底层网络交互
         BaseDataVO baseVO = sendOrder(shopTransferDO, orderDO, racingBallDOList, permutationDOList);
         Map<String, Object> dataMap = new HashMap<>();
         dataMap.put("order", orderDO);
@@ -426,6 +433,8 @@ public class ChangeServiceImpl implements IChangeService {
         //查询当前需要自动派送的订单 5分钟以内的
         Date now = DateUtils.addMinutes(new Date(), -15);
         List<String> lotteryListIds = lotteryTransferDOS.stream().map(item -> "" + item.getLotteryType()).collect(Collectors.toList());
+        //增加北单胜负过关
+        lotteryListIds.add(LotteryOrderTypeEnum.SIGLE_SFGG.getKey());
         List<LotteryOrderDO> lotteryOrderDOS = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().in(LotteryOrderDO::getType, lotteryListIds)
                 .gt(LotteryOrderDO::getCreateTime, now).isNull(LotteryOrderDO::getTransferType).isNull(LotteryOrderDO::getTransferOrderNo).orderByDesc(LotteryOrderDO::getId));
         if (CollectionUtil.isNotEmpty(lotteryOrderDOS)) {

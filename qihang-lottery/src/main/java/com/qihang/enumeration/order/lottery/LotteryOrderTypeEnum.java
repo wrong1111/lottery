@@ -29,7 +29,8 @@ public enum LotteryOrderTypeEnum {
     FC3D("21", "福彩3D"),
     FCQLC("22", "七乐彩"),
     FCKL8("23", "快乐8"),
-    FCSSQ("24", "双色球");
+    FCSSQ("24", "双色球"),
+    SIGLE_SFGG("25", "胜负过关");
 
 
     private String key;

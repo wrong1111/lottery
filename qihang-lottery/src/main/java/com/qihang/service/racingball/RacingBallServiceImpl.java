@@ -14,6 +14,7 @@ import com.qihang.controller.racingball.app.vo.RacingBallOrderVO;
 import com.qihang.controller.winburden.dto.WinBurdenMatchDTO;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
+import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.order.PayOrderDO;
@@ -26,6 +27,7 @@ import com.qihang.enumeration.order.pay.PayOrderTypeEnum;
 import com.qihang.enumeration.order.pay.PayTypeEnum;
 import com.qihang.mapper.basketball.BasketballMatchMapper;
 import com.qihang.mapper.beidan.BeiDanMatchMapper;
+import com.qihang.mapper.beidan.BeiDanSfggMatchMapper;
 import com.qihang.mapper.football.FootballMatchMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.order.PayOrderMapper;
@@ -67,6 +69,9 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
 
     @Resource
     private BeiDanMatchMapper beiDanMatchMapper;
+
+    @Resource
+    BeiDanSfggMatchMapper beiDanSfggMatchMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -110,9 +115,19 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 if (date.after(beiDanMatchDO.getDeadline())) {
                     return new BaseVO(false, ErrorCodeEnum.E084.getKey(), ErrorCodeEnum.E084.getValue());
                 }
+                issueNo = beiDanMatchDO.getIssueNo();
+            }
+            //胜负过关
+        } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+            List<BeiDanMatchDTO> beiDanMatchList = ballCalculation.getBeiDanMatchList();
+            for (BeiDanMatchDTO beiDanMatchDTO : beiDanMatchList) {
+                BeiDanSFGGMatchDO beiDanMatchDO = beiDanSfggMatchMapper.selectById(beiDanMatchDTO.getId());
+                if (date.after(beiDanMatchDO.getDeadline())) {
+                    return new BaseVO(false, ErrorCodeEnum.E084.getKey(), ErrorCodeEnum.E084.getValue());
+                }
+                issueNo = beiDanMatchDO.getIssueNo();
             }
         }
-
         RacingBallOrderVO racingBallOrder = new RacingBallOrderVO();
         PayOrderDO payOrder = new PayOrderDO();
         //总金额
@@ -174,7 +189,7 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
             }
             payOrder.setType(PayOrderTypeEnum.BASKETBALL.getKey());
             //北单
-        } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.SINGLE.getKey())) {
+        } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.SINGLE.getKey()) || StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
             for (BeiDanMatchDTO beiDanMatch : ballCalculation.getBeiDanMatchList()) {
                 RacingBallDO racingBall = new RacingBallDO();
                 racingBall.setUserId(userId);

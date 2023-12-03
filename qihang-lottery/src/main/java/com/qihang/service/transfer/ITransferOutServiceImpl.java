@@ -19,6 +19,7 @@ import com.qihang.controller.transferOut.app.dto.ChangeOrderDTO;
 import com.qihang.controller.transferOut.app.vo.TransferLotteryVO;
 import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
+import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.order.PayOrderDO;
@@ -38,6 +39,7 @@ import com.qihang.enumeration.order.pay.PayOrderTypeEnum;
 import com.qihang.enumeration.order.pay.PayTypeEnum;
 import com.qihang.mapper.basketball.BasketballMatchMapper;
 import com.qihang.mapper.beidan.BeiDanMatchMapper;
+import com.qihang.mapper.beidan.BeiDanSfggMatchMapper;
 import com.qihang.mapper.football.FootballMatchMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.order.PayOrderMapper;
@@ -111,6 +113,9 @@ public class ITransferOutServiceImpl implements ITransferOutService {
 
     @Resource
     PayOrderMapper payOrderMapper;
+
+    @Resource
+    BeiDanSfggMatchMapper beiDanSfggMatchMapper;
 
     @TenantIgnore
     @Override
@@ -220,6 +225,10 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         lotteryOrderDO.setTransferShopId(shopTransferDO.getId());
         lotteryOrderDO.setTransferType(TransferEnum.TransferIn.code);//收单
         //判断此彩种是否收单
+
+        if (LotteryOrderTypeEnum.SIGLE_SFGG.getKey().equals(lotteryOrderDO.getType())) {
+            lotteryId = Integer.valueOf(LotteryOrderTypeEnum.SINGLE.getKey());
+        }
         LotteryTransferDO lotteryTransferDOS = lotteryTransferMapper.selectOne(new QueryWrapper<LotteryTransferDO>().lambda().eq(LotteryTransferDO::getLotteryType, lotteryId).eq(LotteryTransferDO::getTransferFlag, TransferEnum.TransferIn.code));
         if (null == lotteryTransferDOS || lotteryTransferDOS.getStates() != 0) {
             return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("彩种暂停收单，请联系商家").build();
@@ -285,6 +294,22 @@ public class ITransferOutServiceImpl implements ITransferOutService {
             Map<String, BeiDanMatchDO> beiDanMatchDOMap = beiDanMatchDOS.stream().collect(Collectors.toMap(BeiDanMatchDO::getGameNo, a -> a, (b, c) -> b));
             for (RacingBallDO racingBallDO : racingBallDOList) {
                 BeiDanMatchDO beiDanMatchDO = beiDanMatchDOMap.get(racingBallDO.getGameNo());
+                if (null != beiDanMatchDO) {
+                    racingBallDO.setTargetId(beiDanMatchDO.getId());
+                } else {
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("未找到匹配赛事" + racingBallDO.getGameNo()).build();
+                }
+                if (DateUtils.addSeconds(now, beforeTimes).getTime() > beiDanMatchDO.getDeadline().getTime()) {
+                    return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("赛事" + racingBallDO.getGameNo() + " 已到截止时间，不再收单").build();
+                }
+            }
+            payOrder.setType(PayOrderTypeEnum.SINGLE.getKey());
+        } else if (LotteryOrderTypeEnum.SIGLE_SFGG.getKey().equals(lotteryOrderDO.getType())) {
+            List<String> gameNoList = racingBallDOList.stream().map(racingBallDO -> racingBallDO.getGameNo()).collect(Collectors.toList());
+            List<BeiDanSFGGMatchDO> beiDanMatchDOS = beiDanSfggMatchMapper.selectList(new QueryWrapper<BeiDanSFGGMatchDO>().lambda().in(BeiDanSFGGMatchDO::getGameNo, gameNoList));
+            Map<String, BeiDanSFGGMatchDO> beiDanMatchDOMap = beiDanMatchDOS.stream().collect(Collectors.toMap(BeiDanSFGGMatchDO::getGameNo, a -> a, (b, c) -> b));
+            for (RacingBallDO racingBallDO : racingBallDOList) {
+                BeiDanSFGGMatchDO beiDanMatchDO = beiDanMatchDOMap.get(racingBallDO.getGameNo());
                 if (null != beiDanMatchDO) {
                     racingBallDO.setTargetId(beiDanMatchDO.getId());
                 } else {
@@ -520,7 +545,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
                             && !lotteryOrderDO.getState().equals(LotteryOrderStateEnum.REFUND.getKey())) {
                         String json = "已出|" + DateUtil.formatDateTime(lotteryOrderDO.getTicketingTime()) + "|" + (StringUtils.isBlank(lotteryOrderDO.getBill()) ? "" : lotteryOrderDO.getBill());
                         redisService.set(lotteryOrderDO.getOrderId(), json, 864000L);
-                        resultMap.put(lotteryOrderDO.getOrderId(),json);
+                        resultMap.put(lotteryOrderDO.getOrderId(), json);
                     } else if (lotteryOrderDO.getState().equals(LotteryOrderStateEnum.TO_BE_ISSUED.getKey())) {
                         redisService.set(lotteryOrderDO.getOrderId(), "待出", 300L);
                         resultMap.put(lotteryOrderDO.getOrderId(), "待出");
@@ -537,7 +562,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
 
     public static boolean isSports(Integer lotteryId) {
         return (lotteryId == 0 || lotteryId == 2 || lotteryId == 1 ||
-                lotteryId == 6 || lotteryId == 7) ? true : false;
+                lotteryId == 6 || lotteryId == 7||lotteryId==25) ? true : false;
 
     }
 }

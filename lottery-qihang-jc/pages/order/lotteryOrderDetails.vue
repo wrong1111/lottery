@@ -376,9 +376,9 @@
 				</view>
 			</uni-card>
 			<!-- 北京单场 2-->
-			<uni-card is-shadow v-if="lotteryOrder.type=='2'">
+			<uni-card is-shadow v-if="lotteryOrder.type=='2' || lotteryOrder.type ==25">
 				<view>
-					<span class="title">{{lotteryOrder.ballName}}</span>
+					<span class="title">{{lotteryOrder.ballName}} {{lotteryOrder.type ==25?'-胜负过关':''}}</span>
 					<p style="display: flex;justify-content: flex-end;align-items: center;">
 						<uni-row>
 							<uni-col :span="lotteryOrder.pssTypeList.length<=2?12:24">
@@ -405,7 +405,8 @@
 						<uni-th width="10" align="center">场次</uni-th>
 						<uni-th width="100" align="center">主队/客队</uni-th>
 						<uni-th width="65" align="center">投注内容</uni-th>
-						<uni-th width="50" align="center">赛果<br>(全/半)</uni-th>
+						<uni-th width="50" align="center" v-if="lotteryOrder.type!=25">赛果<br>(全/半)</uni-th>
+						<uni-th width="50" align="center" v-if="lotteryOrder.type==25">赛果</uni-th>
 					</uni-tr>
 					<!-- 表格数据行 -->
 					<uni-tr v-for="(record,index) in lotteryOrder.ballInfoList" :key="index">
@@ -469,10 +470,35 @@
 								</span>
 								<br>
 							</span>
+							<span :style="half.describe==record.award[4]?'color:#FF3F43':''"
+								v-for="(half,index) in record.content.halfWholeOddsList" v-if="half.active">
+								<!-- 判断如果中了就显示开奖后的赔率，没中的就显示开始下注的赔率 -->
+								<span v-if="half.describe==record.award[4]">
+									{{half.describe}}({{record.bonusOdds[4]}})
+								</span>
+								<span v-else>
+									{{half.describe}}({{half.odds}})
+								</span>
+								<br>
+							</span>
+							<span :style="sfgg.describe==record.award[5]?'color:#FF3F43':''"
+								v-for="(sfgg,index) in record.content.sfggOdds" v-if="sfgg.active">
+								<!-- 判断如果中了就显示开奖后的赔率，没中的就显示开始下注的赔率 -->
+								<span v-if="sfgg.describe==record.award[5]">
+									{{sfgg.describe}}({{record.bonusOdds[5]}})
+								</span>
+								<span v-else>
+									{{sfgg.describe}}({{sfgg.odds}})
+								</span>
+								<br>
+							</span>
 						</uni-td>
 						<uni-td align="center">
-							<span v-if="record.halfFullCourt!=undefined">
+							<span v-if="record.halfFullCourt!=undefined && lotteryOrder.type !=25" >
 								{{record.halfFullCourt.split(',')[1]}}<br>半{{record.halfFullCourt.split(',')[0]}}
+							</span>
+							<span v-if="record.halfFullCourt!=undefined && lotteryOrder.type ==25" >
+								{{record.halfFullCourt}}
 							</span>
 						</uni-td>
 					</uni-tr>
@@ -584,7 +610,7 @@
 							<uni-tr v-for="(data,idx) in item.ballCombinationList" :key="idx" v-if="item.isShow"
 								style="background: #FAF9DE">
 								<uni-td align="center">{{data.number}}</uni-td>
-								<uni-td align="center">{{data.homeTeam}}</uni-td>
+								<uni-td align="center">{{data.homeTeam}} <span :style="data.letball.indexOf('-')==-1?'color:red;font-size: 16px;margin-left:5px':'color:blue;font-size: 16px;margin-left:5px'" v-if="data.letball!=null && lotteryOrder.type ==25"></br>({{data.letball}})</span></uni-td>
 								<uni-td align="center">{{data.visitingTeam}}</uni-td>
 								<uni-td align="center">{{data.content}}</uni-td>
 							</uni-tr>
@@ -829,24 +855,44 @@
 							this.$set(this.lotteryOrder.ballInfoList[idx], "content", JSON.parse(item
 								.content))
 							//將比賽结果转换成数组，并返回
-							if (item.award != null) {
-								this.$set(this.lotteryOrder.ballInfoList[idx], "award", item.award
-									.split(
-										','))
-							} else {
-								//考虑比赛结果还没有出的话设置一个默认值，防止报错
-								var moren = ["", "", "", "", ""]
-								this.$set(this.lotteryOrder.ballInfoList[idx], "award", moren)
+							if(this.lotteryOrder.type ==25){
+								//胜负过关
+								if (item.award != null) {
+									var moren = ["", "", "", "", "",item.award]
+									this.$set(this.lotteryOrder.ballInfoList[idx], "award", moren)
+								} else {
+									//考虑比赛结果还没有出的话设置一个默认值，防止报错
+									var moren = ["", "", "", "", "",""]
+									this.$set(this.lotteryOrder.ballInfoList[idx], "award", moren)
+								}
+								if (item.bonusOdds != null) {
+									var moren = ["", "", "", "", "",item.bonusOdds]
+									this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
+								} else {
+									//考虑比赛结果还没有出的话设置一个默认值，防止报错
+									var moren = ["", "", "", "", "",""]
+									this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
+								}
+							}else{
+								
+								if (item.award != null) {
+									var more = [...item.award.split(','),""]
+									this.$set(this.lotteryOrder.ballInfoList[idx], "award", more)
+								} else {
+									//考虑比赛结果还没有出的话设置一个默认值，防止报错
+									var moren = ["", "", "", "", "",""]
+									this.$set(this.lotteryOrder.ballInfoList[idx], "award", moren)
+								}
+								if (item.bonusOdds != null) {
+									var   moren = [...item.bonusOdds.split(','),""]
+									this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
+								} else {
+									//考虑比赛结果还没有出的话设置一个默认值，防止报错
+									var moren = ["", "", "", "", "","",""]
+									this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
+								}
 							}
-							if (item.bonusOdds != null) {
-								this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", item
-									.bonusOdds
-									.split(','))
-							} else {
-								//考虑比赛结果还没有出的话设置一个默认值，防止报错
-								var moren = ["", "", "", "", ""]
-								this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
-							}
+							
 						})
 					}
 					//处理超过一定高度采用滚动条

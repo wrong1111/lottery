@@ -164,7 +164,8 @@
 					notes: "",
 					type: 2,
 					forecast: "",
-					schemeDetails: ""
+					schemeDetails: "",
+					model:''
 				},
 				optimizationDate: {},
 				issueNo: '',
@@ -174,7 +175,6 @@
 		onLoad(option) {
 			//获取传过滤的数据
 			let obj = JSON.parse(decodeURIComponent(option.obj));
-			console.log(obj)
 			this.flag = eval(option.flag);
 			this.issueNo = option.issueNo
 			this.checkball = option.checkball
@@ -182,12 +182,17 @@
 			this.selectItem = obj.sort(function(a, b) {
 				return a.id - b.id
 			})
+			if(this.checkball ==0){
+				//标记 胜负过关
+				this.calculationParam.type = 25 
+			}
 			//初始化数据
 			this.init(this.selectItem, this.flag);
 		},
 		methods: {
 			//发起合买设置
 			documentary() {
+				this.calculationParam.model= this.checkball
 				this.calculationParam.notes = this.notes
 				this.calculationParam.forecast = this.maxPrice
 				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.normalOptimizatinList)
@@ -396,6 +401,7 @@
 				}
 				uni.showLoading();
 				this.confirmIsShow = false;
+				this.calculationParam.model = this.checkball
 				this.calculationParam.notes = this.notes
 				this.calculationParam.forecast = this.maxPrice
 				this.calculationParam.schemeDetails = JSON.stringify(this.optimizationDate.normalOptimizatinList)

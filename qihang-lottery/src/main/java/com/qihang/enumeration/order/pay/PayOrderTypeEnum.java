@@ -75,6 +75,9 @@ public enum PayOrderTypeEnum {
     FCQLC("39", "下单七乐彩"),
     FCQLC_AWARD("40", "七乐彩派奖"),
     FCQLC_REFUND("41", "七乐彩退票");
+
+
+
     private String key;
     private String value;
 }
