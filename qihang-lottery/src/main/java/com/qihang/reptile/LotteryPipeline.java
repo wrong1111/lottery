@@ -122,7 +122,7 @@ public class LotteryPipeline implements Pipeline {
                 PermutationAwardDO next = PermutationUtils.next(permutationAwardDO);
                 if (null != next) {
                     PermutationAwardDO existNextIssue = permutationAwardService.getOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getStageNumber, next.getStageNumber()).eq(PermutationAwardDO::getType, next.getType()));
-                    if (ObjectUtil.isNull(existNextIssue)) {
+                    if (null == existNextIssue) {
                         permutationAwardService.save(next);
                     }
                 }

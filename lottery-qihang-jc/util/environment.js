@@ -16,7 +16,7 @@ const dev = {
 /*
 =================注意根据需要改变环境================
  */
-const environment =dev;
+const environment =prod;
 export default {
   BASE_API: environment.BASE_API,
 }
