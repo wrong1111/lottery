@@ -126,7 +126,8 @@ public class SpiderRunner {
      双色球，快乐8，福彩3D，七乐彩,排列3,排列5，七星彩， 开奖
      */
     public void runDay() {
-        Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
+        Spider.create(new LotteryProcessor()).addUrl(
+                CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
                 , CrawlingAddressConstant.URL_SSQ // 双色球 开奖
                 , CrawlingAddressConstant.URL_KL8 // 快乐8 开奖
                 , CrawlingAddressConstant.URL_QLC // 七乐彩 开奖

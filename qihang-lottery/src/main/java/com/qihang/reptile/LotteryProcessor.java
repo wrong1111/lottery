@@ -149,12 +149,24 @@ public class LotteryProcessor implements PageProcessor {
                     permutationAward.setType(LotteryOrderTypeEnum.ARRANGE.getKey());
                 } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL17)) {
                     permutationAward.setType(LotteryOrderTypeEnum.SEVEN_STAR.getKey());
-                    String r = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[6]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[7]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[8]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[9]/td[3]/text()").toString().trim().replaceAll(",", "");
-                    permutationAward.setMoneyAward(r.replaceAll(" ",""));
+                    //String r = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[6]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[7]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[8]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[9]/td[3]/text()").toString().trim().replaceAll(",", "");
+                    List<Selectable> tdList = html.css(".kj_tablelist02").nodes().get(1).css("tr[align='center']").nodes();
+                    List<String> moneyList = new ArrayList<>();
+                    int idx = 0;
+                    for (Selectable td : tdList) {
+                        if (idx == 0) {
+                            continue;
+                        }
+                        String tdStr = td.css("td:nth-child(3)", "text").get().trim();
+                        if (StringUtils.isNotBlank(tdStr)) {
+                            moneyList.add(tdStr);
+                        }
+                    }
+                    permutationAward.setMoneyAward(moneyList.size() == 6 ? StrUtil.join(",", moneyList) : "");
                 } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL20)) {
                     permutationAward.setType(LotteryOrderTypeEnum.GRAND_LOTTO.getKey());
                     rewardList = page.getHtml().css(".ball_box01 li", "text").all();
-                    permutationAward.setMoneyAward((html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[4]/text()").toString().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[4]/text()").toString().replaceAll(",", "")).replaceAll(" ",""));
+                    permutationAward.setMoneyAward((html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[4]/text()").toString().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[4]/text()").toString().replaceAll(",", "")).replaceAll(" ", ""));
                 } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_FC3D)) {
                     permutationAward.setType(LotteryOrderTypeEnum.FC3D.getKey());
                 } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_QLC)) {
@@ -162,7 +174,7 @@ public class LotteryProcessor implements PageProcessor {
                     //开奖号码
                     rewardList = page.getHtml().css(".ball_box01 li", "text").all();
                     String r = html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[3]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[4]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[5]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[6]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[7]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[8]/td[3]/text()").toString().trim().replaceAll(",", "") + "," + html.xpath("/html/body/div[6]/div[3]/div[2]/div[1]/div[2]/table[2]/tbody/tr[9]/td[3]/text()").toString().trim().replaceAll(",", "");
-                    permutationAward.setMoneyAward(r.replaceAll(" ",""));
+                    permutationAward.setMoneyAward(r.replaceAll(" ", ""));
                 } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL_SSQ)) {
                     permutationAward.setType(LotteryOrderTypeEnum.FCSSQ.getKey());
                     //开奖号码
@@ -172,7 +184,7 @@ public class LotteryProcessor implements PageProcessor {
                     //开奖号码
                     rewardList = page.getHtml().css(".ball_box01 li", "text").all();
                 }
-                permutationAward.setReward(StrUtil.join(",", rewardList).replaceAll(" ",""));
+                permutationAward.setReward(StrUtil.join(",", rewardList).replaceAll(" ", ""));
             } catch (Exception e) {
                 log.error(" url {},error :{}", page.getUrl().toString(), e);
 

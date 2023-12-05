@@ -107,12 +107,16 @@ public class LotteryPipeline implements Pipeline {
                 PermutationAwardDO permutationAwardDO = permutationAwardService.getOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getStageNumber, permutationAward.getStageNumber()).eq(PermutationAwardDO::getType, permutationAward.getType()));
                 if (ObjectUtil.isNull(permutationAwardDO)) {
                     permutationAward.setCreateTime(new Date());
+                    Date deadline = PermutationUtils.getTodayDeadline(permutationAward.getType());
+                    permutationAward.setDeadTime(deadline);
                     permutationAwardService.save(permutationAward);
-                } else if (ObjectUtil.isNotNull(permutationAwardDO) && StringUtils.isBlank(permutationAwardDO.getReward())) {
-                    permutationAward.setId(permutationAwardDO.getId());
-                    permutationAwardService.updateById(permutationAward);
+                    permutationAwardDO = permutationAward;
+                } else if (ObjectUtil.isNotNull(permutationAwardDO)) {
+                    if (StringUtils.isBlank(permutationAwardDO.getReward())) {
+                        permutationAward.setId(permutationAwardDO.getId());
+                        permutationAwardService.updateById(permutationAward);
+                    }
                 }
-
                 //修改此期下注的开奖结果
 //                PermutationDO permutation = new PermutationDO();
 //                permutation.setReward(permutationAward.getReward());

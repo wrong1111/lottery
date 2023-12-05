@@ -9,6 +9,47 @@ import java.util.Date;
 public class PermutationUtils {
 
 
+    public static Date getTodayDeadline(String type) {
+        Date now = new Date();
+        String nowString = DateUtil.format(now, "yyyy-MM-dd");
+        int weekDay = DateUtil.dayOfWeek(new Date()) - 1;
+        switch (type) {
+            case "3":// "排列3" 每日 开奖 21：25 截止 21：00
+            case "4"://排列5  每日 开奖 21：25 截止 21：00
+            case "21"://福彩3D 每日开奖 21:15 截止21：00
+            case "23"://快乐8 每日开奖 21:30 截止21：00
+                //如果小于当天截止，则生成当天的
+                Date nowEnd = DateUtil.parse(nowString + " 21:00:00", "yyyy-MM-dd HH:mm:ss");
+                return nowEnd;
+            case "5"://七星彩每周二、五、日开奖 dayOfweek 周日0 21:00 截止 21:00
+                int days = 0;
+                nowEnd = DateUtil.parse(nowString + " 21:00:00", "yyyy-MM-dd HH:mm:ss");
+                if (weekDay == 2 || weekDay == 4 || weekDay == 0) {
+                    return nowEnd;
+                }
+                break;
+            case "8"://大乐透 每周一、三、六开奖 21:00
+                nowEnd = DateUtil.parse(nowString + " 21:00:00", "yyyy-MM-dd HH:mm:ss");
+                if ((weekDay == 1 || weekDay == 3 || weekDay == 6)) {
+                    return nowEnd;
+                }
+                break;
+            case "22"://七乐彩 每周一 三 五开奖 21：15 开奖，截止21：00
+                nowEnd = DateUtil.parse(nowString + " 21:00:00", "yyyy-MM-dd HH:mm:ss");
+                if ((weekDay == 1 || weekDay == 3 || weekDay == 5)) {
+                    return nowEnd;
+                }
+                break;
+            case "24"://双色球 每周二 四 日开奖 21:15 截止21：00
+                nowEnd = DateUtil.parse(nowString + " 21:00:00", "yyyy-MM-dd HH:mm:ss");
+                if ((weekDay == 2 || weekDay == 4 || weekDay == 0)) {
+                    return nowEnd;
+                }
+                break;
+        }
+        return new Date();
+    }
+
     /**
      * 生成下一期 截止时间
      * 必须截止时间 小于当前时间 才会生成。否则返回当前期 数据
@@ -113,6 +154,10 @@ public class PermutationUtils {
                     next.setDeadTime(DateUtils.addDays(curIssue.getDeadTime(), days));
                 }
                 break;
+        }
+        if (next.getDeadTime() != null) {
+            String dateStr = DateUtil.format(next.getDeadTime(), "yyyy-MM-dd");
+            next.setDeadTime(DateUtil.parse(dateStr + " 21:00:00", "yyyy-MM-dd HH:mm:ss"));
         }
         return next;
     }
