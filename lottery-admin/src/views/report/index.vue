@@ -61,13 +61,13 @@
           </el-col>
           <el-col :span="6">
             <div>
-              <StatisticsItem :value="reportData.changeCounts" title="充值数" unit="">
+              <StatisticsItem :value="reportData.rechargeCounts" title="充值数" unit="">
               </StatisticsItem>
             </div>
           </el-col>
           <el-col :span="6">
             <div>
-              <StatisticsItem :value="reportData.changeMoney" title="充值金额" unit="">
+              <StatisticsItem :value="reportData.rechargeMoney" title="充值金额" unit="">
               </StatisticsItem>
             </div>
           </el-col>
@@ -85,7 +85,18 @@
               </StatisticsItem>
             </div>
           </el-col>
-
+          <el-col :span="6">
+            <div>
+              <StatisticsItem :value="reportData.awardCounts" title="中奖数" unit="">
+              </StatisticsItem>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div>
+              <StatisticsItem :value="reportData.awardMoney" title="中奖金额" unit="">
+              </StatisticsItem>
+            </div>
+          </el-col>
         </el-row>
         <el-divider content-position="center">总数据</el-divider>
         <el-row :gutter="24">
@@ -159,13 +170,13 @@
           </el-col>
           <el-col :span="6">
             <div>
-              <StatisticsItem :value="reportData.changeCounts" title="充值数" unit="">
+              <StatisticsItem :value="reportData.rechargeCounts" title="充值数" unit="">
               </StatisticsItem>
             </div>
           </el-col>
           <el-col :span="6">
             <div>
-              <StatisticsItem :value="reportData.changeMoney" title="充值金额" unit="">
+              <StatisticsItem :value="reportData.rechargeMoney" title="充值金额" unit="">
               </StatisticsItem>
             </div>
           </el-col>
@@ -183,8 +194,20 @@
               </StatisticsItem>
             </div>
           </el-col>
+          <el-col :span="6">
+            <div>
+              <StatisticsItem :value="reportData.awardCounts" title="中奖数" unit="">
+              </StatisticsItem>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div>
+              <StatisticsItem :value="reportData.awardMoney" title="中奖金额" unit="">
+              </StatisticsItem>
+            </div>
+          </el-col>
         </el-row>
-        <el-divider content-position="center">总数据</el-divider>
+       <!-- <el-divider content-position="center">总数据</el-divider>
         <el-row :gutter="24">
           <el-col :span="6">
             <div>
@@ -198,7 +221,7 @@
               </StatisticsItem>
             </div>
           </el-col>
-        </el-row>
+        </el-row> -->
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -248,6 +271,8 @@
           drawCounts: 0,
           drawMoney: 0.00,
           revokePrice: 0.00,
+          awardCounts:0,
+          awardMoney:0.00
         }
       };
     },

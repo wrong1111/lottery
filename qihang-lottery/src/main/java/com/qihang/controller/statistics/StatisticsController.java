@@ -46,7 +46,7 @@ public class StatisticsController {
         ReportVO reportVO = ReportVO.builder().changeCounts(0).changeMoney(BigDecimal.ZERO).allMoney(BigDecimal.ZERO).drawCounts(0)
                 .drawMoney(BigDecimal.ZERO).orderCounts(0).orderMoney(BigDecimal.ZERO).receiveCounts(0)
                 .receiveMoney(BigDecimal.ZERO).rechargeCounts(0).rechargeMoney(BigDecimal.ZERO).revokePrice(BigDecimal.ZERO)
-                .users(0).build();
+                .awardCounts(0).awardMoney(BigDecimal.ZERO).users(0).build();
         Map<String, Object> bmap = JSONUtil.toBean(JSONUtil.toJsonStr(reportVO), Map.class);
         if (StringUtils.isBlank(queryDTO.getStart()) || StringUtils.isBlank(queryDTO.getEnd())) {
 //            Date startDate = DateUtils.addDays(DateUtil.parse(DateUtil.format(DateUtil.date(), "yyyy-MM-dd")), -1);
@@ -66,7 +66,7 @@ public class StatisticsController {
         ReportVO reportVO = ReportVO.builder().changeCounts(0).changeMoney(BigDecimal.ZERO).allMoney(BigDecimal.ZERO).drawCounts(0)
                 .drawMoney(BigDecimal.ZERO).orderCounts(0).orderMoney(BigDecimal.ZERO).receiveCounts(0)
                 .receiveMoney(BigDecimal.ZERO).rechargeCounts(0).rechargeMoney(BigDecimal.ZERO).revokePrice(BigDecimal.ZERO)
-                .users(0).build();
+                .awardCounts(0).awardMoney(BigDecimal.ZERO).users(0).build();
         Map<String, Object> bmap = JSONUtil.toBean(JSONUtil.toJsonStr(reportVO), Map.class);
         if (StringUtils.isBlank(queryDTO.getStart())) {
             return BaseDataVO.builder().success(true).data(bmap).build();

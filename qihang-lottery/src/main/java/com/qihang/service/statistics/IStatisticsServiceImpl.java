@@ -199,6 +199,8 @@ public class IStatisticsServiceImpl implements IStatisticsService {
                 "sum(case when transfer_type = 0 then price else 0 end ) receiveMoney",
                 "sum(case when transfer_type = 1 then 1 else 0 end ) changeCounts",
                 "sum(case when transfer_type = 1 then price else 0 end ) changeMoney",
+                "sum(case when state in (3,4) and win_price >0   then 1 else 0 end ) awardCounts",
+                "sum(case when state in (3,4) and win_price >0 then win_price else 0 end ) awardMoney",
         };
         LambdaQueryWrapper<LotteryOrderDO> qw = new QueryWrapper<LotteryOrderDO>()
                 .select(sqlColum).lambda();

@@ -29,4 +29,7 @@ public class ReportVO extends BaseVO {
     Integer drawCounts;
     BigDecimal drawMoney = BigDecimal.ZERO;
     BigDecimal revokePrice = BigDecimal.ZERO;
+    Integer awardCounts = 0;
+    BigDecimal awardMoney = BigDecimal.ZERO;
+
 }
