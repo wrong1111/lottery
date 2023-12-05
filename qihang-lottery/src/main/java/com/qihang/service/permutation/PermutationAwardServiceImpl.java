@@ -30,10 +30,10 @@ public class PermutationAwardServiceImpl extends ServiceImpl<PermutationAwardMap
     public IssueNoVO getIssueNo(String type) {
         IssueNoVO issueNo = new IssueNoVO();
         //查询最新的一期数据，
-        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).gt(PermutationAwardDO::getDeadTime, new Date()).orderByAsc(PermutationAwardDO::getDeadTime).last("limit 1"));
+        PermutationAwardDO permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).gt(PermutationAwardDO::getDeadTime, new Date()).orderByAsc(PermutationAwardDO::getStageNumber).last("limit 1"));
         if (null == permutationAward) {
             //最后一期的旧期 号
-            permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).gt(PermutationAwardDO::getDeadTime, DateUtils.addMonths(new Date(), -1)).orderByDesc(PermutationAwardDO::getId).last("limit 1"));
+            permutationAward = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, type).gt(PermutationAwardDO::getDeadTime, DateUtils.addMonths(new Date(), -1)).orderByDesc(PermutationAwardDO::getStageNumber).last("limit 1"));
             if (null == permutationAward) {
                 //重新生成新的
                 log.error("=================================================");

@@ -93,7 +93,7 @@ public class SpiderRunner {
     public void runHour() {
         Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
                         CrawlingAddressConstant.URL1 //足彩比赛
-                       ,  CrawlingAddressConstant.URL4 // 篮彩比赛
+                        , CrawlingAddressConstant.URL4 // 篮彩比赛
                         , CrawlingAddressConstant.URL8 //北京单场
                         , CrawlingAddressConstant.URL9 //北京单场 进球
                         , CrawlingAddressConstant.URL10 //北京单场 上下单双
