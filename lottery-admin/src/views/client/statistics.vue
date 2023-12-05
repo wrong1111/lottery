@@ -54,41 +54,41 @@
       </el-table-column>
       <el-table-column
         label="下注金额"
-        align="center"
+        align="right"
         prop="bettingPrice"
         :show-overflow-tooltip="true"
         width="120"
       />
       <el-table-column
         label="充值金额"
-        align="center"
+        align="right"
         prop="rechargePrice"
         :show-overflow-tooltip="true"
         width="120"
       />
       <el-table-column
         label="提现金额"
-        align="center"
+        align="right"
         prop="withdrawalPrice"
         :show-overflow-tooltip="true"
         width="120"
       />
       <el-table-column
         label="彩金金额"
-        align="center"
+        align="right"
         prop="gold"
         :show-overflow-tooltip="true"
         width="120"
       />
       <el-table-column
         label="奖金余额"
-        align="center"
+        align="right"
         prop="price"
         :show-overflow-tooltip="true"
         width="120"
       />
       <el-table-column label="上级" align="center" prop="parentName" />
-      <el-table-column label="操作" align="center" width="100">
+      <el-table-column label="操作" align="center" width="150">
         <template slot-scope="scope">
           <el-button size="mini" type="warning" @click="queryChild(scope.row)"
             >查看下级</el-button

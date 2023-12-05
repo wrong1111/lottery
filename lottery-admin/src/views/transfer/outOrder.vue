@@ -36,9 +36,9 @@
       </el-form-item>
     </el-form>
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <span>订单数量： {{sumData.counts}}</span><span> 订单金额： ￥{{sumData.price}}</span>
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <span>待出票： {{sumData.waitPrintCounts}}</span><span> 待出票金额： ￥{{sumData.waitPrintPrice}}</span>
       </el-col>
@@ -48,10 +48,10 @@
       <el-col :span="1.5">
         <span>待派奖： {{sumData.waitBounsCounts}}</span><span> 待派奖金额： ￥{{sumData.waitBounsPrice}}</span>
       </el-col>
-      <el-col :span="1.5">
+     <!-- <el-col :span="1.5">
         <span>中奖数量： {{sumData.awardCounts}}</span><span> 中奖金额：￥ {{sumData.awardPrice}}</span><span> 中奖订单投入：
           ￥{{sumData.awardBetPrice}}</span>
-      </el-col>
+      </el-col> -->
     </el-row>
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">

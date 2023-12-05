@@ -48,8 +48,7 @@ public class LotteryProcessor implements PageProcessor {
     @Override
     public void process(Page page) {
         Html html = page.getHtml();
-        if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL1)) {
-
+        if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL1) || page.getUrl().toString().startsWith(CrawlingAddressConstant.URL1)) {
             List<FootballMatchDO> footballMatchList = new ArrayList<>();
             try {
                 List<Selectable> nodes = html.css(".bet-date-wrap").nodes();
@@ -66,21 +65,64 @@ public class LotteryProcessor implements PageProcessor {
                         }
                         index += 2;
                         FootballMatchDO footballMatch = new FootballMatchDO();
-                        footballMatch.setStartTime(selectableDate.css(".bet-date", "text").get());
-                        footballMatch.setNumber(number);
-                        footballMatch.setMatch(match);
-                        String color = tr.get(j).xpath("//*[@class='td-evt']/a/@style").toString();
+                        String score = tr.get(j).css(".team-bf a", "text").toString().trim();
+                        boolean isEndFlag = false;
+                        if (StringUtils.isNotBlank(score)) {
+                            isEndFlag = true;
+                            footballMatch.setHalfFullCourt(score);
+                        }
+                        footballMatch.setStartTime(selectableDate.css(".bet-date", "text").get().trim());
+                        footballMatch.setNumber(number.trim());
+                        footballMatch.setMatch(match.trim());
+                        String color = tr.get(j).xpath("//*[@class='td-evt']/a/@style").toString().trim();
                         footballMatch.setColor(color.substring(color.indexOf("#"), color.length() - 1));
-                        footballMatch.setOpenTime(tr.get(j).css(".td-endtime", "text").toString());
-                        footballMatch.setHomeTeam(tr.get(j).css(".td-team .team-l i", "text").toString() + tr.get(j).css(".td-team .team-l a", "text").toString());
-                        footballMatch.setVisitingTeam(tr.get(j).css(".td-team .team-r i", "text").toString() + tr.get(j).css(".td-team .team-r a", "text").toString());
-                        footballMatch.setLetBall(tr.get(j).css(".td-rang .itm-rangA2", "text").toString());
-                        footballMatch.setNotLetOdds(StrUtil.join(",", tr.get(j).css(".itm-rangB1 .betbtn span:first-child", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
-                        footballMatch.setLetOdds(StrUtil.join(",", tr.get(j).css(".itm-rangB2 .betbtn span:first-child", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
+                        footballMatch.setOpenTime(tr.get(j).css(".td-endtime", "text").toString().trim());
+                        footballMatch.setHomeTeam((tr.get(j).css(".td-team .team-l i", "text").toString() + tr.get(j).css(".td-team .team-l a", "text").toString()).trim());
+                        footballMatch.setVisitingTeam((tr.get(j).css(".td-team .team-r i", "text").toString() + tr.get(j).css(".td-team .team-r a", "text").toString()).trim());
+                        footballMatch.setLetBall(tr.get(j).css(".td-rang .itm-rangA2", "text").toString().trim());
+                        footballMatch.setNotLetOdds(StrUtil.join(",", tr.get(j).css(".itm-rangB1 .betbtn span:first-child", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
+                        footballMatch.setLetOdds(StrUtil.join(",", tr.get(j).css(".itm-rangB2 .betbtn span:first-child", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
                         footballMatch.setIsSingle((tr.get(j).css(".td-rang .itm-rangA1 .ico-dg", "text").toString()) != null || (tr.get(j).css(".td-rang .itm-rangA2 .ico-dg", "text").toString()) != null ? "1" : "0");
-                        footballMatch.setHalfWholeOdds(StrUtil.join(",", html.xpath("/html/body/div[6]/div/div[3]/table[" + i + "]/tbody/tr[" + index + "]/td/div/table[1]/tbody/tr/td/p/i/text()").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
-                        footballMatch.setScoreOdds(StrUtil.join(",", html.xpath("/html/body/div[6]/div/div[3]/table[" + i + "]/tbody/tr[" + index + "]/td/div/table[2]/tbody/tr/td/p/i/text()").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
-                        footballMatch.setGoalOdds(StrUtil.join(",", html.xpath("/html/body/div[6]/div/div[3]/table[" + i + "]/tbody/tr[" + index + "]/td/div/table[3]/tbody/tr/td/p/i/text()").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
+                        String bqc = StrUtil.join(",", html.css(".bet-more-tb").nodes().get(0).css("i", "text").all()).replaceAll(" ", "");
+                        //StrUtil.join(",", html.xpath("/html/body/div[6]/div/div[3]/table[" + i + "]/tbody/tr[" + index + "]/td/div/table[1]/tbody/tr/td/p/i/text()").all()).replaceAll(",↑", "").replaceAll(",↓", "")
+                        footballMatch.setHalfWholeOdds(bqc);
+                        String bf_3 = StrUtil.join(",", html.css(".bet-more-tb").nodes().get(1).css("tr:nth-child(1)").nodes().get(0).css("i", "text").all()).replaceAll(" ", "");
+                        String bf_1 = StrUtil.join(",", html.css(".bet-more-tb").nodes().get(1).css("tr:nth-child(2)").nodes().get(0).css("i", "text").all()).replaceAll(" ", "");
+                        String bf_0 = StrUtil.join(",", html.css(".bet-more-tb").nodes().get(1).css("tr:nth-child(3)").nodes().get(0).css("i", "text").all()).replaceAll(" ", "");
+                        String bf = StrUtil.join(",", html.xpath("/html/body/div[6]/div/div[3]/table[" + i + "]/tbody/tr[" + index + "]/td/div/table[2]/tbody/tr/td/p/i/text()").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", "");
+                        footballMatch.setScoreOdds(StringUtils.isBlank(bf) ? bf_3 + "," + bf_1 + "," + bf_0 : bf);
+                        String goals = StrUtil.join(",", html.xpath("/html/body/div[6]/div/div[3]/table[" + i + "]/tbody/tr[" + index + "]/td/div/table[3]/tbody/tr/td/p/i/text()").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", "");
+                        String allgoals = StrUtil.join(",", html.css(".bet-more-tb").nodes().get(2).css("tr:nth-child(1)").nodes().get(0).css("i", "text").all()).replaceAll(" ", "");
+                        footballMatch.setGoalOdds(StringUtils.isBlank(goals) ? allgoals : goals);
+                        String r_sf = tr.get(j).css(".itm-rangB1 .betbtn-ok", "data-value").get();
+                        if (StringUtils.isNotBlank(r_sf)) {
+                            if ("3".equals(r_sf)) {
+                                r_sf = "胜";
+                            } else if ("1".equals(r_sf)) {
+                                r_sf = "平";
+                            } else if ("0".equals(r_sf)) {
+                                r_sf = "负";
+                            }
+                        }
+                        String r_rqsf = tr.get(j).css(".itm-rangB2 .betbtn-ok", "data-value").get();
+                        if (StringUtils.isNotBlank(r_rqsf)) {
+                            if ("3".equals(r_rqsf)) {
+                                r_rqsf = "胜";
+                            } else if ("1".equals(r_rqsf)) {
+                                r_rqsf = "平";
+                            } else if ("0".equals(r_rqsf)) {
+                                r_rqsf = "负";
+                            }
+                        }
+                        String r_bq = tr.get(j + 1).css(".bet-more-tb").nodes().get(0).css(".sbetbtn-ok", "data-value").get();
+                        if (StringUtils.isNotBlank(r_bq)) {
+                            r_bq = r_bq.replaceAll("3", "胜").replaceAll("1", "平").replaceAll("0", "负");
+                        }
+                        String r_bf = tr.get(j + 1).css(".bet-more-tb").nodes().get(1).css(".sbetbtn-ok", "data-value").get();
+                        String r_goals = tr.get(j + 1).css(".bet-more-tb").nodes().get(2).css(".sbetbtn-ok", "data-value").get();
+                        if (isEndFlag) {
+                            footballMatch.setAward(r_sf + "," + r_rqsf + "," + r_goals + "," + r_bq + "," + r_bf);
+                        }
                         footballMatch.setDeadline(LotteryAlgorithmUtil.calculationDeadline(footballMatch.getOpenTime(), footballMatch.getStartTime()));
                         footballMatch.setCreateTime(new Date());
                         footballMatch.setUpdateTime(new Date());
@@ -156,7 +198,7 @@ public class LotteryProcessor implements PageProcessor {
             }
             log.info(" 足彩对局分析 >>>>>>>{} ,result:{} ", page.getUrl().toString(), JSON.toJSONString(footballMatchList));
             page.putField("footballGoalList", footballMatchList);
-        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL4)) {
+        } else if (ObjectUtil.equal(page.getUrl().toString(), CrawlingAddressConstant.URL4) || page.getUrl().toString().startsWith(CrawlingAddressConstant.URL4)) {
             List<BasketballMatchDO> basketballMatchList = new ArrayList<>();
             try {
                 List<Selectable> nodes = html.css(".bet-date-wrap").nodes();
@@ -173,19 +215,66 @@ public class LotteryProcessor implements PageProcessor {
                         }
                         index += 2;
                         BasketballMatchDO basketballMatch = new BasketballMatchDO();
-                        basketballMatch.setStartTime(selectableDate.css(".bet-date", "text").get());
-                        basketballMatch.setNumber(number);
-                        basketballMatch.setMatch(match);
+                        basketballMatch.setStartTime(selectableDate.css(".bet-date", "text").get().trim());
+                        if (StringUtils.isBlank(basketballMatch.getStartTime())) {
+                            basketballMatch.setStartTime(selectableDate.css(".td-endtime >span", "text").get().trim());
+                        }
+                        basketballMatch.setNumber(number.trim());
+                        basketballMatch.setMatch(match.trim());
+                        String bf = tr.get(j).css(".team-bf >a", "text").get();
+                        boolean isEndFlag = false;
+                        if (StringUtils.isNotBlank(bf)) {
+                            basketballMatch.setHalfFullCourt(bf.trim());
+                        }
+                        if (StringUtils.isNotBlank(basketballMatch.getHalfFullCourt())) {
+                            isEndFlag = true;
+                        }
                         String color = tr.get(j).xpath("//*[@class='td-evt']/a/@style").toString();
                         basketballMatch.setColor(color.substring(color.indexOf("#"), color.length() - 1));
-                        basketballMatch.setOpenTime(tr.get(j).css(".td-endtime span", "text").toString());
-                        basketballMatch.setVisitingTeam(tr.get(j).css(".td-team .team-l i", "text").toString() + tr.get(j).css(".td-team .team-l a", "text").toString());
-                        basketballMatch.setHomeTeam(tr.get(j).css(".td-team .team-r i", "text").toString() + tr.get(j).css(".td-team .team-r a", "text").toString());
-                        basketballMatch.setWinNegativeOdds(StrUtil.join(",", tr.get(j).css(".betbtn-row-sf .betbtn span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
-                        basketballMatch.setCedePointsOdds(StrUtil.join(",", tr.get(j).css(".betbtn-row-rfsf .betbtn span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
-                        basketballMatch.setCedePoints(StrUtil.join(",", tr.get(j).css(".betbtn-row-rfsf .betmsg span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
-                        basketballMatch.setSizeOdds(StrUtil.join(",", tr.get(j).css(".betbtn-row-dxf p span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
-                        basketballMatch.setDifferenceOdds(StrUtil.join(",", html.xpath("/html/body/div[6]/div/div[2]/table[" + i + "]/tbody/tr[" + index + "]/td/div/table/tbody/tr/td/p/i/text()").all()).replaceAll(",↑", "").replaceAll(",↓", ""));
+                        basketballMatch.setOpenTime(tr.get(j).css(".td-endtime span", "text").toString().trim());
+                        basketballMatch.setVisitingTeam((tr.get(j).css(".td-team .team-l i", "text").toString() + tr.get(j).css(".td-team .team-l a", "text").toString()).replaceAll(" ", ""));
+                        basketballMatch.setHomeTeam((tr.get(j).css(".td-team .team-r i", "text").toString() + tr.get(j).css(".td-team .team-r a", "text").toString()).replaceAll(" ", ""));
+                        basketballMatch.setWinNegativeOdds(StrUtil.join(",", tr.get(j).css(".betbtn-row-sf .betbtn span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
+                        basketballMatch.setCedePointsOdds(StrUtil.join(",", tr.get(j).css(".betbtn-row-rfsf .betbtn span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
+                        basketballMatch.setCedePoints(StrUtil.join(",", tr.get(j).css(".betbtn-row-rfsf .betmsg span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
+                        basketballMatch.setSizeOdds(StrUtil.join(",", tr.get(j).css(".betbtn-row-dxf p span", "text").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
+                        basketballMatch.setDifferenceOdds(StrUtil.join(",", html.xpath("/html/body/div[6]/div/div[2]/table[" + i + "]/tbody/tr[" + index + "]/td/div/table/tbody/tr/td/p/i/text()").all()).replaceAll(",↑", "").replaceAll(",↓", "").replaceAll(" ", ""));
+                        if (StringUtils.isBlank(basketballMatch.getDifferenceOdds())) {
+                            String zs = StrUtil.join(",", tr.get(j + 1).css(".bet-more-tb tr").nodes().get(0).css(".sbetbtn >i", "text").all()).replaceAll(" ", "");
+                            String ks = StrUtil.join(",", tr.get(j + 1).css(".bet-more-tb tr").nodes().get(1).css(".sbetbtn >i", "text").all()).replaceAll(" ", "");
+                            basketballMatch.setDifferenceOdds(zs + "," + ks);
+                        }
+                        if (isEndFlag) {
+                            String sf = tr.get(j).css("td").nodes().get(4).css(".betbtn-ok").xpath("//p/@data-value").get();
+                            if (StringUtils.isBlank(sf)) {
+                                sf = "";
+                            }
+                            if ("1".equals(sf)) {
+                                sf = "主胜";
+                            } else if ("2".equals(sf)) {
+                                sf = "主负";
+                            }
+                            String rqspf = tr.get(j).css("td").nodes().get(5).css(".betbtn-ok").xpath("//p/@data-value").get();
+                            if ("1".equals(rqspf)) {
+                                rqspf = "主胜";
+                            } else if ("2".equals(rqspf)) {
+                                rqspf = "主负";
+                            }
+                            String dxf = tr.get(j).css("td").nodes().get(6).css(".betbtn-ok").xpath("//p/@data-value").get();
+                            if ("2".equals(dxf)) {
+                                dxf = "小";
+                            } else if ("2".equals(dxf)) {
+                                dxf = "大";
+                            }
+                            String sfx = tr.get(j + 1).css(".bet-more-tb .sbetbtn-ok").xpath("//p/@data-value").get();
+                            if (StringUtils.isNotBlank(sfx)) {
+                                String[] ARRAYS = new String[]{"", "主胜1-5", "主胜6-10", "主胜11-15", "主胜16-20", "主胜21-25", "主胜26+",
+                                        "客胜1-5", "客胜6-10", "客胜11-15", "客胜16-20", "客胜21-25", "客胜26+"};
+                                sfx = ARRAYS[Integer.valueOf(sfx)];
+                            }
+                            String result = sf + "," + rqspf + "," + sfx + "," + dxf;
+                            basketballMatch.setAward(result);
+                        }
                         basketballMatch.setDeadline(LotteryAlgorithmUtil.calculationDeadline(basketballMatch.getOpenTime(), basketballMatch.getStartTime()));
                         basketballMatch.setCreateTime(new Date());
                         basketballMatch.setUpdateTime(new Date());
@@ -466,20 +555,30 @@ public class LotteryProcessor implements PageProcessor {
                     //比分
                     String str = nodes.get(i).css("td:nth-child(7)", "text").toString().trim();
                     String winData = nodes.get(i).css("td:nth-child(9)", "text").toString().trim();
-                    //查到为空的就不需要继续解析了直接跳出
-                    if (StrUtil.isBlank(winData) || nodes.get(i).css("td:nth-child(10) span", "text").toString().trim().equals("-")) {
-                        continue;
+                    String startTime = nodes.get(i).css("td:nth-child(3)").get();
+                    if ("113".equals(beiDanMatch.getNumber())) {
+                        System.out.println("thp");
                     }
-                    if (winData.equals("3")) {
-                        winData = "胜";
-                    } else if (winData.equals("1")) {
-                        winData = "平";
-                    } else if (winData.equals("0")) {
-                        winData = "负";
+                    if (startTime.indexOf("改期") != -1) {
+                        beiDanMatch.setAward("-,-,-,-,-");
+                        beiDanMatch.setHalfFullCourt("延期");
+                        beiDanMatch.setBonusOdds("1.00,1.00,1.00,1.00,1.00");
+                    } else {
+                        //查到为空的就不需要继续解析了直接跳出
+                        if (StrUtil.isBlank(winData) || nodes.get(i).css("td:nth-child(10) span", "text").toString().trim().equals("-")) {
+                            continue;
+                        }
+                        if (winData.equals("3")) {
+                            winData = "胜";
+                        } else if (winData.equals("1")) {
+                            winData = "平";
+                        } else if (winData.equals("0")) {
+                            winData = "负";
+                        }
+                        beiDanMatch.setAward(winData + "," + nodes.get(i).css("td:nth-child(12)", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(15)", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(18)", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(21)", "text").toString().trim());
+                        beiDanMatch.setHalfFullCourt(StrUtil.join(",", str.split(" ")));
+                        beiDanMatch.setBonusOdds(nodes.get(i).css("td:nth-child(10) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(13) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(16) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(19) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(22) span", "text").toString().trim());
                     }
-                    beiDanMatch.setAward(winData + "," + nodes.get(i).css("td:nth-child(12)", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(15)", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(18)", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(21)", "text").toString().trim());
-                    beiDanMatch.setHalfFullCourt(StrUtil.join(",", str.split(" ")));
-                    beiDanMatch.setBonusOdds(nodes.get(i).css("td:nth-child(10) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(13) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(16) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(19) span", "text").toString().trim() + "," + nodes.get(i).css("td:nth-child(22) span", "text").toString().trim());
                     beiDanMatch.setGameNo(isseNo + RacingBallServiceImpl.fillZero(beiDanMatch.getNumber(), 4));
                     beiDanMatchList.add(beiDanMatch);
                 }

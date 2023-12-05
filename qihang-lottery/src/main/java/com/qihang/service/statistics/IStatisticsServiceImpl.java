@@ -1,9 +1,14 @@
 package com.qihang.service.statistics;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.qihang.common.vo.BaseDataVO;
+import com.qihang.controller.statistics.vo.ReportVO;
 import com.qihang.controller.statistics.vo.StatisticsVO;
 import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.order.PayOrderDO;
@@ -17,11 +22,15 @@ import com.qihang.mapper.order.LotteryOrderMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.user.UserMapper;
 import com.qihang.mapper.withdrawal.WithdrawalMapper;
+import org.apache.catalina.User;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,6 +54,7 @@ public class IStatisticsServiceImpl implements IStatisticsService {
 
     @Resource
     private PayOrderMapper payOrderMapper;
+
 
     @Override
     public StatisticsVO calculation() {
@@ -178,4 +188,79 @@ public class IStatisticsServiceImpl implements IStatisticsService {
         statistics.setAlreadyAwardPrice(alreadyAwardPrice);
         return statistics;
     }
+
+    @Override
+    public Map<String, Object> daGet(String start, String end) {
+        Map<String, Object> allMap = new HashMap<>();
+        //订单 相关的数据项
+        String[] sqlColum = new String[]{"sum(1) orderCounts", "sum(price) orderMoney",
+                "sum(case when revoke_price is not null then revoke_price else 0 end ) revokePrice",
+                "sum(case when transfer_type = 0 then 1 else 0 end ) receiveCounts",
+                "sum(case when transfer_type = 0 then price else 0 end ) receiveMoney",
+                "sum(case when transfer_type = 1 then 1 else 0 end ) changeCounts",
+                "sum(case when transfer_type = 1 then price else 0 end ) changeMoney",
+        };
+        LambdaQueryWrapper<LotteryOrderDO> qw = new QueryWrapper<LotteryOrderDO>()
+                .select(sqlColum).lambda();
+        qw.between(LotteryOrderDO::getCreateTime,
+                DateUtil.parse(start, DateUtil.newSimpleFormat("yyyy-MM-dd")),
+                DateUtils.addDays(DateUtil.parse(end, DateUtil.newSimpleFormat("yyyy-MM-dd")), 1));
+        List<Map<String, Object>> resultList = lotteryOrderMapper.selectMaps(qw);
+        if (!CollectionUtil.isEmpty(resultList)) {
+            Map<String, Object> paymentMap = resultList.get(0);
+            if (null != paymentMap) {
+                allMap.putAll(paymentMap);
+            }
+        }
+
+        //充值
+        String[] sqlColumnPay = new String[]{"sum(case when type =0 and state = 1 then 1 else 0 end  ) rechargeCounts ",
+                "sum(case when type =0 and state = 1 then price else 0 end ) rechargeMoney "};
+        LambdaQueryWrapper<PayOrderDO> payQw = new QueryWrapper<PayOrderDO>()
+                .select(sqlColumnPay).lambda();
+        payQw.between(PayOrderDO::getCreateTime,
+                DateUtil.parse(start, DateUtil.newSimpleFormat("yyyy-MM-dd")),
+                DateUtils.addDays(DateUtil.parse(end, DateUtil.newSimpleFormat("yyyy-MM-dd")), 1));
+        List<Map<String, Object>> payOrderList = payOrderMapper.selectMaps(payQw);
+        if (CollectionUtil.isNotEmpty(payOrderList)) {
+            Map<String, Object> payOrderMap = payOrderList.get(0);
+            if (null != payOrderMap) {
+                allMap.putAll(payOrderMap);
+            }
+        }
+
+        //提现
+        String[] sqlColumWithraw = new String[]{
+                " sum(case when state in (0,1) then 1 else 0 end) drawCounts ", "sum(case when state in (0,1) then amount else 0 end) drawMoney "
+        };
+        LambdaQueryWrapper<WithdrawalDO> withrawQw = new QueryWrapper<WithdrawalDO>()
+                .select(sqlColumWithraw).lambda();
+        withrawQw.between(WithdrawalDO::getCreateTime,
+                DateUtil.parse(start, DateUtil.newSimpleFormat("yyyy-MM-dd")),
+                DateUtils.addDays(DateUtil.parse(end, DateUtil.newSimpleFormat("yyyy-MM-dd")), 1));
+        List<Map<String, Object>> withrawList = withdrawalMapper.selectMaps(withrawQw);
+        if (CollectionUtil.isNotEmpty(withrawList)) {
+            Map<String, Object> withrawMap = withrawList.get(0);
+            if (null != withrawMap) {
+                allMap.putAll(withrawMap);
+            }
+        }
+
+        //会员
+        String[] sqlColumnUser = new String[]{"count(1) users", "sum(gold+price) allMoney "};
+        LambdaQueryWrapper<UserDO> userQw = new QueryWrapper<UserDO>()
+                .select(sqlColumnUser).lambda();
+//        userQw.between(UserDO::getCreateTime,
+//                DateUtil.parse(start, DateUtil.newSimpleFormat("yyyy-MM-dd")),
+//                DateUtils.addDays(DateUtil.parse(end, DateUtil.newSimpleFormat("yyyy-MM-dd")), 1));
+        List<Map<String, Object>> userMap = userMapper.selectMaps(userQw);
+        if (CollectionUtil.isNotEmpty(userMap)) {
+            Map<String, Object> user = userMap.get(0);
+            if (null != user) {
+                allMap.putAll(user);
+            }
+        }
+        return allMap;
+    }
+
 }

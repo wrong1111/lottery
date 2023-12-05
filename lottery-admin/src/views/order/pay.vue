@@ -217,7 +217,7 @@ export default {
       // 是否显示搜索
       showSearch: true,
       // 是否全部展开
-      isExpand: true,
+      isExpand: false,
       // 重新渲染表格状态
       refreshTable: true,
       // 订单状态
@@ -317,6 +317,90 @@ export default {
           label: "七星彩（退票）",
           value: "20",
         },
+        {
+          label: "下单足球14场",
+          value: "21",
+        },
+        {
+          label: "足球14场（派奖）",
+          value: "22",
+        },
+        {
+          label: "足球14场（退票）",
+          value: "23",
+        },
+        {
+          label: "下单任选九",
+          value: "24",
+        },
+        {
+          label: "任选九（派奖）",
+          value: "25",
+        },
+        {
+          label: "任选九（退票）",
+          value: "26",
+        },
+        {
+          label: "下单大乐透",
+          value: "27",
+        },
+        {
+          label: "大乐透（派奖）",
+          value: "28",
+        },
+        {
+          label: "大乐透（退票）",
+          value: "29",
+        },
+        {
+          label: "下单福彩3D",
+          value: "30",
+        },
+        {
+          label: "福彩3D（派奖）",
+          value: "31",
+        },
+        {
+          label: "福彩3D（退票）",
+          value: "32",
+        },
+        {
+          label: "下单双色球",
+          value: "33",
+        },
+        {
+          label: "双色球（派奖）",
+          value: "34",
+        },
+        {
+          label: "双色球（退票）",
+          value: "35",
+        },
+        {
+          label: "下单快乐8",
+          value: "36",
+        },
+        {
+          label: "快乐8（派奖）",
+          value: "37",
+        },
+        {
+          label: "快乐8（退票）",
+          value: "38",
+        },
+        {
+          label: "下单七乐彩",
+          value: "39",
+        },
+        {
+          label: "七乐彩（派奖）",
+          value: "40",
+        },
+        {
+          label: "七乐彩（退票）",
+          value: "41",
+        }
       ],
     };
   },

@@ -551,7 +551,7 @@
 							<!-- notLet.describe==record.award[0] 如果选择的和中奖的结果一样标记为红色 -->
 							<span :style="notLet.describe==record.award[0]?'color:#FF3F43':''"
 								v-for="(notLet,index) in record.content.notLetOddsList" v-if="notLet.active">
-								{{notLet.describe}}({{notLet.odds}})<br>
+								{{notLet.describe}}<br>
 							</span>
 						</uni-td>
 						<uni-td align="center">

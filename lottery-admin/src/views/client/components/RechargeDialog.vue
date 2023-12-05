@@ -3,9 +3,9 @@
     <el-dialog
       v-bind="$attrs"
       v-on="$listeners"
-      width="500px"
       open="onOpen"
       close="onClose"
+      custom-class="cus"
     >
       <el-form
         :model="form"
@@ -41,8 +41,16 @@
       </div>
     </el-dialog>
   </div>
-</template>
 
+</template>
+  <style>
+    .cus{
+      width: 350px;
+    }
+    .el-input--medium{
+      width: 75%;
+    }
+  </style>
 <script>
 export default {
   name: "RechargeDialog",
@@ -50,7 +58,7 @@ export default {
   props: {
     nickname: {
       type: String,
-    },
+    }
   },
   data() {
     return {

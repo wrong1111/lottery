@@ -41,7 +41,7 @@ public class RenJiuUtil {
             int i = 0;
             String[] str = code.split(",");
             for (String s : str) {
-                if (!"X(0)".equals(s)) {
+                if (!"X(0)".equals(s) && !"X".equals(s)) {
                     BallCombinationVO ballCombination = new BallCombinationVO();
                     ballCombination.setNumber((i + 1) + "");
                     for (WinBurdenMatchDTO winBurdenMatchDTO : winBurdenMatchList) {
@@ -79,31 +79,32 @@ public class RenJiuUtil {
         List<String> openEncourageList = makeUpMap.get("openEncourageList");
         String authorityOpenEncourage = StrUtil.join(",", str);
         //获得中奖的单号
-        int number = encourage(authorityOpenEncourage,openEncourageList);
-        return number*multiple*firstPrizeBonus;
+        int number = encourage(authorityOpenEncourage, openEncourageList);
+        return number * multiple * firstPrizeBonus;
     }
+
     /**
      * 获得中奖的单号
-     * */
-    public static int encourage(String target,List<String> rlist){
+     */
+    public static int encourage(String target, List<String> rlist) {
         List<String> targetLsit = Arrays.asList(target.split(","));
         Map map = new HashMap();
-        for(int i=0;i<targetLsit.size();i++){
-            map.put(i,targetLsit.get(i));
+        for (int i = 0; i < targetLsit.size(); i++) {
+            map.put(i, targetLsit.get(i));
         }
 
         List arrayList = new ArrayList();
 
-        for(String str : rlist){
+        for (String str : rlist) {
             //开奖单计算器
             int x = 0;
             //订单匹配号码计算器
             int y = 0;
             String[] split = str.split(",");
-            for (String string : split){
-                if(string.equals(map.get(x))){
+            for (String string : split) {
+                if (string.equals(map.get(x))) {
                     y = y + 1;
-                    if(y == 9){
+                    if (y == 9) {
                         arrayList.add(str);
                         continue;
                     }
@@ -261,7 +262,7 @@ public class RenJiuUtil {
                                                     for (Map<String, Object> twelve : twelveList) {
                                                         for (Map<String, Object> thirteen : thirteenList) {
                                                             for (Map<String, Object> fourteen : fourteenList) {
-                                                                String makeUp = one.get("describe") + "(" + one.get("odds") + ")" + "," + two.get("describe") + "(" + two.get("odds") + ")" + "," + three.get("describe") + "(" + three.get("odds") + ")" + "," + four.get("describe") + "(" + four.get("odds") + ")" + "," + five.get("describe") + "(" + five.get("odds") + ")" + "," + six.get("describe") + "(" + six.get("odds") + ")" + "," + seven.get("describe") + "(" + seven.get("odds") + ")" + "," + eight.get("describe") + "(" + eight.get("odds") + ")" + "," + nine.get("describe") + "(" + nine.get("odds") + ")" + "," + ten.get("describe") + "(" + ten.get("odds") + ")" + "," + eleven.get("describe") + "(" + eleven.get("odds") + ")" + "," + twelve.get("describe") + "(" + twelve.get("odds") + ")" + "," + thirteen.get("describe") + "(" + thirteen.get("odds") + ")" + "," + fourteen.get("describe") + "(" + fourteen.get("odds") + ")";
+                                                                String makeUp = one.get("describe") + "," + two.get("describe") + "," + three.get("describe") + "," + four.get("describe") + "," + five.get("describe") + "," + six.get("describe") + "," + seven.get("describe") + "," + eight.get("describe") + "," + nine.get("describe") + "," + ten.get("describe") + "," + eleven.get("describe") + "," + twelve.get("describe") + "," + thirteen.get("describe") + "," + fourteen.get("describe");
                                                                 makeUpList.add(makeUp);
                                                                 String openEncourage = one.get("describe") + "," + two.get("describe") + "," + three.get("describe") + "," + four.get("describe") + "," + five.get("describe") + "," + six.get("describe") + "," + seven.get("describe") + "," + eight.get("describe") + "," + nine.get("describe") + "," + ten.get("describe") + "," + eleven.get("describe") + "," + twelve.get("describe") + "," + thirteen.get("describe") + "," + fourteen.get("describe");
                                                                 openEncourageList.add(openEncourage);

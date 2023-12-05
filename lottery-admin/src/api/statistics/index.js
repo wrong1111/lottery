@@ -6,3 +6,19 @@ export let reqStatisticsData = function () {
     method: "get",
   });
 };
+
+export let reqDayStatisticsData = function (data) {
+  return request({
+    url: "/admin/statistics/day",
+    method: "POST",
+    data:data
+  });
+};
+
+export let reqMonthStatisticsData = function (data) {
+  return request({
+    url: "/admin/statistics/month",
+    method: "POST",
+    data:data
+  });
+};

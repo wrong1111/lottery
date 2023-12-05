@@ -1,6 +1,9 @@
 package com.qihang.service.statistics;
 
+import com.qihang.controller.statistics.vo.ReportVO;
 import com.qihang.controller.statistics.vo.StatisticsVO;
+
+import java.util.Map;
 
 /**
  * @author: bright
@@ -15,4 +18,13 @@ public interface IStatisticsService {
      * @return
      */
     StatisticsVO calculation();
+
+    /**
+     * 统计
+     *
+     * @return
+     */
+    Map<String, Object> daGet(String start, String end);
+
+
 }

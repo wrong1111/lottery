@@ -75,16 +75,29 @@ public class SpiderRunner {
     }
 
     /*
-     比赛 赛事
+     竞猜篮球，足球前一天
+     */
+    public void footballNext() {
+        String preDay = DateUtil.format(DateUtils.addDays(new Date(), -1), "yyyy-MM-dd");
+        Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
+                        CrawlingAddressConstant.URL4 + "&date=" + preDay //篮球前一天
+                        , CrawlingAddressConstant.URL1 + "&date=" + preDay
+                ).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000)))
+                .addPipeline(lotteryPipeline).runAsync();
+    }
+
+    /*
+     比赛 赛事https://trade.500.com/jczq/index.php?playid=312&g=2&date=2023-12-03
+
      */
     public void runHour() {
         Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
                         CrawlingAddressConstant.URL1 //足彩比赛
-                        , CrawlingAddressConstant.URL4 // 篮彩比赛
+                       ,  CrawlingAddressConstant.URL4 // 篮彩比赛
                         , CrawlingAddressConstant.URL8 //北京单场
                         , CrawlingAddressConstant.URL9 //北京单场 进球
                         , CrawlingAddressConstant.URL10 //北京单场 上下单双
-                         ,CrawlingAddressConstant.URL11 //北京单场 比分
+                        , CrawlingAddressConstant.URL11 //北京单场 比分
                         , CrawlingAddressConstant.URL12 //北京单场 半全场进球
                         , CrawlingAddressConstant.URL18 //胜负彩比赛
                         , CrawlingAddressConstant.URL3 //足彩对局分析
@@ -92,10 +105,9 @@ public class SpiderRunner {
                         , CrawlingAddressConstant.URL15 //北单分析
                         , CrawlingAddressConstant.URL_BD_SFGG //北单 胜负过关
                 ).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000)))
-                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
-                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
                 .addPipeline(lotteryPipeline).runAsync();
         sfcNext();
+        footballNext();
     }
 
     /*
@@ -103,16 +115,6 @@ public class SpiderRunner {
         us.codecraft.webmagic.downloader.selenium
         */
     public void runOmit() {
-//        Spider.create(new LotteryProcessor()).addUrl(
-//                        CrawlingAddressConstant.URL21 //数字彩 遗漏排列3
-//                        , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
-//                        , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
-//                        , CrawlingAddressConstant.URL24 //数字彩 遗漏大乐透
-//                )
-//                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
-//                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
-//                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
-
         Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL21 //数字彩 遗漏排列3
                 , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
                 , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
@@ -136,10 +138,13 @@ public class SpiderRunner {
     }
 
 
+    /*
+     * 足球，篮球，北单 前一天开奖
+     * */
     public void runpre() {
         String preday = DateUtil.format(DateUtils.addDays(new Date(), -1), "yyyy-MM-dd");
         Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL6 + "?d=" + preday //足球开奖
-                , CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
+                // , CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
                 , CrawlingAddressConstant.URL13 + "?d=" + preday //北单开奖
                 , CrawlingAddressConstant.URL14 + "&date=" + preday //篮球大小分查询
         ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
@@ -148,50 +153,17 @@ public class SpiderRunner {
 
     /*
      比赛 赛果
+     篮球开奖有问题，获取不到。
+      //, CrawlingAddressConstant.URL7 //篮球开奖
      */
     public void run() {
         Spider.create(new LotteryProcessor()).addUrl(
                 CrawlingAddressConstant.URL6 //足球开奖
-                , CrawlingAddressConstant.URL7 //篮球开奖
                 , CrawlingAddressConstant.URL19 //胜负彩开奖
                 , CrawlingAddressConstant.URL13 //北单开奖
                 , CrawlingAddressConstant.URL14 //篮球大小分查询
-                ,CrawlingAddressConstant.URL_BD_SFGG_AWARD //北单 胜负过关开奖
+                , CrawlingAddressConstant.URL_BD_SFGG_AWARD //北单 胜负过关开奖
         ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
-
         runpre();
-//        Spider.create(new LotteryProcessor()).addUrl(
-////                        CrawlingAddressConstant.URL1 //足彩比赛
-////                        , CrawlingAddressConstant.URL2 //排列三出奖
-//                        CrawlingAddressConstant.URL3 //足彩对局分析
-////                        , CrawlingAddressConstant.URL4 // 篮彩比赛
-//                        , CrawlingAddressConstant.URL5 //篮球对局分析
-//                        , CrawlingAddressConstant.URL6 //足球开奖
-//                        , CrawlingAddressConstant.URL7 //篮球开奖
-////                        , CrawlingAddressConstant.URL8 //北京单场
-////                        , CrawlingAddressConstant.URL9 //北京单场 进球
-////                        , CrawlingAddressConstant.URL10 //北京单场 上下单双
-////                        , CrawlingAddressConstant.URL11 //北京单场 比分
-////                        , CrawlingAddressConstant.URL12 //北京单场 半全场进球
-////                        , CrawlingAddressConstant.URL13 //北单开奖
-//                        , CrawlingAddressConstant.URL14 //篮球单关查询
-//                        , CrawlingAddressConstant.URL15 //北单分析
-////                        , CrawlingAddressConstant.URL16 //排列5开奖
-////                        , CrawlingAddressConstant.URL17 //七星彩开奖
-////                        , CrawlingAddressConstant.URL18 //胜负彩比赛
-//                        , CrawlingAddressConstant.URL19 //胜负彩开奖
-////                        , CrawlingAddressConstant.URL20 //大乐透开奖
-////                        , CrawlingAddressConstant.URL21 //数字彩 遗漏排列3
-////                        , CrawlingAddressConstant.URL22 //数字彩 遗漏排列5
-////                        , CrawlingAddressConstant.URL23 //数字彩 遗漏七星彩
-////                        , CrawlingAddressConstant.URL24 //数字彩 遗漏大乐透
-////                        , CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
-////                        ,CrawlingAddressConstant.URL_SSQ // 双色球 开奖
-////                        , CrawlingAddressConstant.URL_KL8 // 快乐8 开奖
-////                        , CrawlingAddressConstant.URL_QLC // 七乐彩 开奖
-//                )
-//                //自定义下载规则，主要是来处理爬取动态的网站,如果只是爬取静态的这个可以用默认的就行
-//                // http://chromedriver.storage.googleapis.com/index.html 版本一定会要与浏览器对应
-//                .setDownloader(downloader).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).run();
     }
 }

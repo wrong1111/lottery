@@ -9,7 +9,7 @@ public class CrawlingAddressConstant {
     /**
      * 足彩比赛
      */
-    public static final String URL1 = "https://trade.500.com/jczq/index.php?playid=312";
+    public static final String URL1 = "https://trade.500.com/jczq/index.php?playid=312&g=2";
 
 
     /**

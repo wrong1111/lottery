@@ -264,7 +264,7 @@ export const constantRoutes = [{
           title: "转单设置"
         },
       },
-    {
+      {
         path: "transfeoutorder",
         name: "transfeoutorder",
         component: () => import("@/views/transfer/outOrder.vue"),
@@ -272,6 +272,27 @@ export const constantRoutes = [{
           title: "转单记录"
         },
       },
+    ],
+  },
+  {
+    path: "/report",
+    component: Layout,
+    redirect: "/report/list",
+    alwaysShow: true,
+    meta: {
+      title: "报表管理",
+      icon: "el-icon-collection",
+      affix: true
+    },
+    children: [{
+        path: "report",
+        name: "reportIndex",
+        component: () => import("@/views/report/index.vue"),
+        meta: {
+          title: "报表查询"
+        },
+      },
+
     ],
   },
   // 404 page must be placed at the end !!!

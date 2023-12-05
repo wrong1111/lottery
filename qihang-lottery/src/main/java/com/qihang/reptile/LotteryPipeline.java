@@ -80,7 +80,7 @@ public class LotteryPipeline implements Pipeline {
     @Override
     public void process(ResultItems resultItems, Task task) {
         String url = resultItems.getRequest().getUrl();
-        if (ObjectUtil.equal(url, CrawlingAddressConstant.URL1)) {
+        if (ObjectUtil.equal(url, CrawlingAddressConstant.URL1) || url.startsWith(CrawlingAddressConstant.URL1)) {
             //存储爬取到的足球的比赛数据
             List<FootballMatchDO> footballMatchList = resultItems.get("footballGoalList");
             if (CollectionUtils.isEmpty(footballMatchList)) {
@@ -143,7 +143,7 @@ public class LotteryPipeline implements Pipeline {
                     footballMatchService.updateById(footballMatch);
                 }
             }
-        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL4)) {
+        } else if (ObjectUtil.equal(url, CrawlingAddressConstant.URL4) || url.startsWith(CrawlingAddressConstant.URL4)) {
             //存储爬取到的篮球的比赛数据
             List<BasketballMatchDO> basketballMatchList = resultItems.get("basketballMatchList");
             if (CollectionUtils.isEmpty(basketballMatchList)) {

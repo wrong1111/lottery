@@ -153,7 +153,7 @@
 
 <script>
 import { mapGetters } from "vuex";
-import StatisticsItem from "./components/StatisticsItem";
+import StatisticsItem from "./components/StatisticsItem.vue";
 import { reqStatisticsData } from "@/api/statistics";
 
 export default {

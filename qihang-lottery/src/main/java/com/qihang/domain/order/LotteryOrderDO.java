@@ -124,4 +124,8 @@ public class LotteryOrderDO implements Serializable {
      1 奖金优化
      */
     Integer betType;
+
+    Integer tickingState;
+
+    BigDecimal revokePrice;
 }
