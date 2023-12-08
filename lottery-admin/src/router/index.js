@@ -151,6 +151,15 @@ export const constantRoutes = [{
           title: "订单列表"
         },
       },
+      {
+        path: "ticket",
+        name: "OrderTicket",
+        hidden:true,
+        component: () => import("@/views/order/ticket.vue"),
+        meta: {
+          title: "票据列表"
+        },
+      }
     ],
   },
 

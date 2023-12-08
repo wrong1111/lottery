@@ -1,9 +1,7 @@
 package com.qihang.common.vo;
 
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.List;
 
@@ -15,6 +13,8 @@ import java.util.List;
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = false)
+@AllArgsConstructor
+@NoArgsConstructor
 public class CommonListVO<T> extends BaseVO {
     private static final long serialVersionUID = 1L;
 

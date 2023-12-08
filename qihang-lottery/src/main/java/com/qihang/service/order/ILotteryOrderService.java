@@ -10,6 +10,7 @@ import com.qihang.controller.order.app.lottery.dto.LotteryOrderDTO;
 import com.qihang.controller.order.app.lottery.vo.LotteryOrderVO;
 import com.qihang.controller.order.app.lottery.vo.YesterdayCentreOrderVO;
 import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.order.LotteryTicketDO;
 
 /**
  * @author bright
@@ -104,4 +105,10 @@ public interface ILotteryOrderService extends IService<LotteryOrderDO> {
      * @return
      */
     BaseVO clearFlow(OrderFlowWaterDTO orderFlowWater, String user);
+
+    BaseVO retreatTicket(Integer ticketId);
+
+    BaseVO editMultiTicket(Integer ticketId, Integer multi);
+
+    CommonListVO<LotteryTicketDO> ticketByOrderId(String orderId);
 }

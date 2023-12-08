@@ -79,3 +79,24 @@ export function orderSumData(data) {
     data: data
   })
 }
+//调整票的倍数
+export function editTicketMulti(ticketId,multi) {
+  return request({
+    url: '/admin/lottery/order/editTicket/'+ticketId+"/"+multi,
+    method: 'post'
+  })
+}
+
+//全部退票
+export function retreatTicket(ticketId) {
+  return request({
+    url: '/admin/lottery/order/retreatTicket/'+ticketId,
+    method: 'post'
+  })
+}
+export function listTicket(ticketId) {
+  return request({
+    url: '/admin/lottery/order/ticket/'+ticketId,
+    method: 'get'
+  })
+}

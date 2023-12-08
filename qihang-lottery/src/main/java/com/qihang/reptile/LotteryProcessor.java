@@ -65,11 +65,11 @@ public class LotteryProcessor implements PageProcessor {
                         }
                         index += 2;
                         FootballMatchDO footballMatch = new FootballMatchDO();
-                        String score = tr.get(j).css(".team-bf a", "text").toString().trim();
+                        String score = tr.get(j).css(".team-bf a", "text").toString();
                         boolean isEndFlag = false;
                         if (StringUtils.isNotBlank(score)) {
                             isEndFlag = true;
-                            footballMatch.setHalfFullCourt(score);
+                            footballMatch.setHalfFullCourt(score.trim());
                         }
                         footballMatch.setStartTime(selectableDate.css(".bet-date", "text").get().trim());
                         footballMatch.setNumber(number.trim());

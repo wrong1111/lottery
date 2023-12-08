@@ -22,6 +22,7 @@ import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.domain.order.PayOrderDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.permutation.PermutationDO;
@@ -42,6 +43,7 @@ import com.qihang.mapper.beidan.BeiDanMatchMapper;
 import com.qihang.mapper.beidan.BeiDanSfggMatchMapper;
 import com.qihang.mapper.football.FootballMatchMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
+import com.qihang.mapper.order.LotteryTicketMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.permutation.PermutationAwardMapper;
 import com.qihang.mapper.permutation.PermutationMapper;
@@ -117,6 +119,9 @@ public class ITransferOutServiceImpl implements ITransferOutService {
     @Resource
     BeiDanSfggMatchMapper beiDanSfggMatchMapper;
 
+    @Resource
+    LotteryTicketMapper lotteryTicketMapper;
+
     @TenantIgnore
     @Override
     public BaseVO listLottery(String key) {
@@ -177,7 +182,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         ChangeOrderDTO changeOrderDTO = JSONUtil.toBean(data, ChangeOrderDTO.class);
         ITransferOutService transferOutService = SpringContextUtils.getBean(ITransferOutService.class);
         if (isSports(changeOrderDTO.getLotteryId())) {
-            baseVO = transferOutService.createSportOrder(changeOrderDTO.getOrderDO(), changeOrderDTO.getRacingBallDOList(), key);
+            baseVO = transferOutService.createSportOrder(changeOrderDTO.getOrderDO(), changeOrderDTO.getRacingBallDOList(), changeOrderDTO.getTicketDOList(), key);
         } else {
             baseVO = transferOutService.createDigitOrder(changeOrderDTO.getOrderDO(), changeOrderDTO.getPermutationDOList(), key);
         }
@@ -189,7 +194,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
     @Transactional(rollbackFor = Exception.class)
     @TenantIgnore
     @Override
-    public BaseDataVO createSportOrder(LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, String key) {
+    public BaseDataVO createSportOrder(LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, List<LotteryTicketDO> ticketDOList, String key) {
         Integer lotteryId = Integer.valueOf(lotteryOrderDO.getType());
         //判断此账户开通接单 与否
         ShopTransferDO shopTransferDO = TransferServiceImpl.SHOP_TRANSFER_MAP.get(ShopTransferServiceImpl.getShopTransferKey(key));
@@ -204,6 +209,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
             return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("账号异常，请联系商家").build();
         }
 
+        String oldOrderId = lotteryOrderDO.getOrderId();
         //判断此单是否已经下过单
         String orderNo = key + lotteryOrderDO.getOrderId();
         lotteryOrderDO.setOrderId(orderNo);
@@ -236,6 +242,10 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         //判断此账户对应的余额是否足够支付
         List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(lotteryOrderDO.getSchemeDetails(), SportSchemeDetailsListVO.class);
         BigDecimal money = listVOList.stream().map(sportSchemeDetailsListVO -> BigDecimal.valueOf(Integer.valueOf(sportSchemeDetailsListVO.getNotes()))).reduce(BigDecimal::add).get().multiply(new BigDecimal(2));
+        //当奖金优化时需要 不需要再乘倍数
+        if (0 == lotteryOrderDO.getBetType()) {
+            money = money.multiply(BigDecimal.valueOf(lotteryOrderDO.getTimes()));
+        }
         if (money.compareTo(lotteryOrderDO.getPrice()) != 0) {
             return BaseDataVO.builder().success(false).errorCode("-1").errorMsg("投注金额【" + lotteryOrderDO.getPrice().toPlainString() + "】与实际不符【" + money.toPlainString() + "】").build();
         }
@@ -344,6 +354,18 @@ public class ITransferOutServiceImpl implements ITransferOutService {
         for (RacingBallDO racingBallDO : racingBallDOList) {
             racingBallDO.setId(null);
             racingBallMapper.insert(racingBallDO);
+        }
+        for (LotteryTicketDO ticketDO : ticketDOList) {
+            ticketDO.setId(null);
+            ticketDO.setTicketState(0);
+            ticketDO.setTicketingTime(null);
+            ticketDO.setBill(null);
+            ticketDO.setState(0);
+            ticketDO.setRevokePrice(BigDecimal.ZERO);
+            ticketDO.setRevokeTime(null);
+            ticketDO.setCreateTime(new Date());
+            ticketDO.setOrderId(orderNo);
+            lotteryTicketMapper.insert(ticketDO);
         }
         lotteryOrderDO.setTargetIds(StringUtils.join(racingBallDOList.stream().map(racingBallDO -> racingBallDO.getId()).collect(Collectors.toList()), ","));
         //入库，写记录
@@ -562,7 +584,7 @@ public class ITransferOutServiceImpl implements ITransferOutService {
 
     public static boolean isSports(Integer lotteryId) {
         return (lotteryId == 0 || lotteryId == 2 || lotteryId == 1 ||
-                lotteryId == 6 || lotteryId == 7||lotteryId==25) ? true : false;
+                lotteryId == 6 || lotteryId == 7 || lotteryId == 25) ? true : false;
 
     }
 }

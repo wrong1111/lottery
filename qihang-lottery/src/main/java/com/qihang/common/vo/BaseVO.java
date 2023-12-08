@@ -19,6 +19,7 @@ public class BaseVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Builder.Default
     private Boolean success = true;
 
     private String errorCode;

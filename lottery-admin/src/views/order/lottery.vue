@@ -36,7 +36,7 @@
       </el-form-item>
     </el-form>
     <el-row :gutter="10" class="mb8">
-   <!--   <el-col :span="1.5">
+      <!--   <el-col :span="1.5">
         <span>订单数量： {{sumData.counts}}</span><span> 订单金额： ￥{{sumData.price}}</span>
       </el-col> -->
       <el-col :span="1.5">
@@ -89,7 +89,7 @@
                 <el-col :span="8">
                   <el-form-item label="订单号：">
                     <span>{{ scope.row.orderId }}</span>
-                     <el-tag type="danger" size="mini" class="ml5" v-if="scope.row.betType==1">奖金优化</el-tag>
+                    <el-tag type="danger" size="mini" class="ml5" v-if="scope.row.betType==1">奖金优化</el-tag>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
@@ -112,6 +112,7 @@
                 <el-col :span="8">
                   <el-form-item label="下注金额：">
                     <span>{{ scope.row.price }}</span>
+                    {{ (scope.row.revokePrice==null||scope.row.revokePrice==0)?'':'已退'+scope.row.revokePrice }}
                     <el-tag type="danger" size="mini" class="ml5" v-if="scope.row.betType==1">奖金优化</el-tag>
                   </el-form-item>
                 </el-col>
@@ -180,9 +181,9 @@
                         </template>
                       </el-table-column>
                       <el-table-column prop="deadline" label="比赛时间" align="center">
-                          <template slot-scope="inner">
-                            {{parseTime(inner.row.deadline)}}
-                          </template>
+                        <template slot-scope="inner">
+                          {{parseTime(inner.row.deadline)}}
+                        </template>
                       </el-table-column>
                       <el-table-column label="下注内容" align="center">
                         <template slot-scope="inner">
@@ -249,7 +250,12 @@
         </template>
       </el-table-column>
       <el-table-column label="下注金额" align="center" prop="price" width="100">
-        </el-table-column>
+      </el-table-column>
+      <el-table-column label="退票金额" align="center" prop="revokePrice" width="100">
+        <template slot-scope="scope">
+          <span>{{ (scope.row.revokePrice==null||scope.row.revokePrice==0) ?'':scope.row.revokePrice}}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="预测金额" align="center" prop="forecast" width="100" :show-overflow-tooltip="true" />
       <el-table-column label="订单状态" align="center" width="80" :show-overflow-tooltip="true">
         <template slot-scope="scope">
@@ -282,8 +288,6 @@
             :class="0 == scope.row.transferType?'red1':(1==scope.row.transferType?'blue1':'')">{{ getTransferType(scope.row) }}</span>
         </template>
       </el-table-column>
-      <!-- <el-table-column label="转单时间" align="center" prop="transferTime" show-overflow-tooltip>
-      </el-table-column> -->
     </el-table>
     <el-drawer :title="title" :visible.sync="drawer" :with-header="true" :show-close="true"
       :style="{ height: '1400px' }" style="overflow-y: auto;">
@@ -325,7 +329,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="types" width="100" align="center" label="玩法" />
-           <el-table-column prop="note" width="100" align="center" label="倍数" />
+          <el-table-column prop="note" width="100" align="center" label="倍数" />
           <el-table-column prop="ballCombinationList" width="380" align="center" label="投注内容">
             <template slot-scope="scope">
               <span v-for="(item,index) in scope.row.ballCombinationList">
@@ -355,7 +359,7 @@
     orderActual,
     orderChange,
     orderChangeState,
-        orderSumData,
+    orderSumData,
   } from "@/api/order";
   import {
     removeUser
@@ -368,11 +372,14 @@
   export default {
     name: "OrderLottery",
     components: {
-      ImageUpload
+      ImageUpload,
     },
     props: {},
     data() {
       return {
+        showCard:false,
+        activeName: 'first',
+        ticketCard:'',
         sumData: {
           "waitPrintCounts": 0,
           "back_money": 0,
@@ -546,10 +553,13 @@
       this.getList()
     },
     methods: {
+      handleClick(r, e) {
+        console.log(r, e)
+      },
       //获取订单统计数据
       getOrderSum() {
         orderSumData(this.queryParams).then((res) => {
-          console.log("======", res.data)
+          //console.log("======", res.data)
           if (res.data != null) {
             this.sumData = res.data
           }
@@ -635,6 +645,15 @@
         let that = this
         that.itemInfo = []
         that.sportItemInfo = []
+        if(row.type ==0 ||row.type ==1 ||row.type ==25||row.type ==2){
+            this.$router.push({
+            'name':'OrderTicket',
+            'query':{'id':row.orderId}
+          })
+          //this.showCard = true
+         // this.ticketCard = row.ticketDOList
+           return
+        }
 
         that.lotId = row.type
         that.title = row.orderId + '  方案详情'
@@ -650,7 +669,7 @@
             const o = {
               id: idx++,
               types: items[i]['type'],
-              note: items[i]['notes'] * (row.betType ==0?row.multi:1),
+              note: items[i]['notes'] * (row.betType == 0 ? row.multi : 1),
               reawardx: (typeof(items[i]['award']) == 'undefined' || !items[i]['award']) ? false : true,
               awardx: typeof(items[i]['award']) == 'undefined' ? false : items[i]['award'],
               moneyx: typeof(items[i]['money']) == 'undefined' ? '0' : items[i]['money'],
@@ -696,6 +715,9 @@
           if (!response.errorCode) {
             this.total = response.total;
             const volist = response.voList;
+            if (volist.length > 0) {
+              this.activeName = volist[0].orderId
+            }
             for (let index = 0; index < volist.length; index++) {
               const outter = volist[index];
               //数字彩的内容。
@@ -832,11 +854,11 @@
         } else {
           const content = row.content;
           //胜负过关
-          if(content.sfggOdds && content.sfggOdds.length){
+          if (content.sfggOdds && content.sfggOdds.length) {
             let oddsList = [];
             for (let index = 0; index < content.sfggOdds.length; index++) {
               const element = content.sfggOdds[index];
-              const result =   element.describe + "(" + element.odds + ")";
+              const result = element.describe + "(" + element.odds + ")";
               oddsList.push(result);
             }
             result = result + oddsList.join(",");

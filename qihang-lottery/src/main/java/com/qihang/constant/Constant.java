@@ -1,5 +1,7 @@
 package com.qihang.constant;
 
+import java.math.BigDecimal;
+
 /**
  * @author: bright
  * @description:
@@ -64,4 +66,11 @@ public class Constant {
                 return false;
         }
     }
+
+    /**
+     * 单票 50倍。
+     */
+    public static int MAX_TICKET_MULTI = 50;
+
+    public static final BigDecimal TICKET_MONEY_PER = BigDecimal.valueOf(2);
 }

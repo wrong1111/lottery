@@ -2,6 +2,7 @@ package com.qihang.controller.order.admin.lottery.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.qihang.common.dto.PageDTO;
+import com.qihang.domain.order.LotteryTicketDO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -65,6 +66,8 @@ public class LotteryOrderQueryVO extends PageDTO {
     @ApiModelProperty(value = "下注列表")
     List<RacingBallVO> racingBallList;
 
+    @ApiModelProperty(value = "票拆分列表")
+    List<LotteryTicketDO> ticketDOList;
     @ApiModelProperty(value = "详情")
     String schemeDetails;
 
@@ -83,8 +86,13 @@ public class LotteryOrderQueryVO extends PageDTO {
     @ApiModelProperty(value = "转单日期")
     Date transferTime;
 
+    @ApiModelProperty(value = "0 复式 1 奖金优化")
     Integer betType;
+
+    @ApiModelProperty(value = "倍数")
     Integer multi;
 
+    @ApiModelProperty(value = "退票金额")
+    BigDecimal revokePrice;
 
 }

@@ -25,6 +25,7 @@ import com.qihang.controller.transferIn.admin.vo.ShopOutVO;
 import com.qihang.controller.transferOut.app.dto.ChangeOrderDTO;
 import com.qihang.domain.ballgame.BallGameDO;
 import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.domain.permutation.PermutationDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.transfer.LotteryTransferDO;
@@ -34,6 +35,7 @@ import com.qihang.enumeration.order.lottery.LotteryOrderStateEnum;
 import com.qihang.enumeration.order.lottery.LotteryOrderTypeEnum;
 import com.qihang.mapper.ballgame.BallGameMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
+import com.qihang.mapper.order.LotteryTicketMapper;
 import com.qihang.mapper.permutation.PermutationMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.transfer.LotteryTransferMapper;
@@ -94,6 +96,9 @@ public class ChangeServiceImpl implements IChangeService {
 
     @Resource
     OrderTransferLogMapper orderTransferLogMapper;
+
+    @Resource
+    LotteryTicketMapper lotteryTicketMapper;
 
 
     @TenantIgnore
@@ -292,12 +297,17 @@ public class ChangeServiceImpl implements IChangeService {
             permutationDOList = permutationMapper.selectBatchIds(new ArrayList<>(Arrays.asList(orderDO.getTargetIds().split(","))));
         }
 
+        List<LotteryTicketDO> lotteryTicketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, orderDO.getOrderId()));
+        if (CollectionUtil.isEmpty(lotteryTicketDOS)) {
+            lotteryTicketDOS = CollectionUtil.newArrayList();
+        }
         //底层网络交互
-        BaseDataVO baseVO = sendOrder(shopTransferDO, orderDO, racingBallDOList, permutationDOList);
+        BaseDataVO baseVO = sendOrder(shopTransferDO, orderDO, racingBallDOList, permutationDOList, lotteryTicketDOS);
         Map<String, Object> dataMap = new HashMap<>();
         dataMap.put("order", orderDO);
         dataMap.put("racing", racingBallDOList);
         dataMap.put("permuta", permutationDOList);
+        dataMap.put("ticket", lotteryTicketDOS);
         OrderTransferLogDO logDO = OrderTransferLogDO.builder().shopId(shopId).orderId(orderDO.getOrderId())
                 .type("" + TransferEnum.TransferOut.code).content(JSON.toJSONString(dataMap)).createTime(new Date()).receveMsg(JSON.toJSONString(baseVO)).build();
         orderTransferLogMapper.insert(logDO);
@@ -458,7 +468,7 @@ public class ChangeServiceImpl implements IChangeService {
         return BaseVO.builder().success(true).errorMsg("成功").build();
     }
 
-    public BaseDataVO sendOrder(ShopTransferDO shopTransferDO, LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, List<PermutationDO> permutationDOS) {
+    public BaseDataVO sendOrder(ShopTransferDO shopTransferDO, LotteryOrderDO lotteryOrderDO, List<RacingBallDO> racingBallDOList, List<PermutationDO> permutationDOS, List<LotteryTicketDO> ticketDOList) {
         ChangeOrderDTO dto = new ChangeOrderDTO();
         dto.setOrderDO(lotteryOrderDO);
         dto.setOrderMoney(lotteryOrderDO.getPrice());
@@ -468,6 +478,7 @@ public class ChangeServiceImpl implements IChangeService {
         } else {
             dto.setPermutationDOList(permutationDOS);
         }
+        dto.setTicketDOList(ticketDOList);
         String data = JSON.toJSONString(dto);
         String result = buildPostQuery("createOrder", shopTransferDO, data);
         log.info(" orderId:{},result: {}", lotteryOrderDO.getOrderId(), result);

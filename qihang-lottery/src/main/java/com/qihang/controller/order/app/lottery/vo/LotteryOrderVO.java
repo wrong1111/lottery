@@ -3,6 +3,7 @@ package com.qihang.controller.order.app.lottery.vo;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.controller.permutation.app.vo.PermutationRecordVO;
+import com.qihang.domain.order.LotteryTicketDO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -97,4 +98,6 @@ public class LotteryOrderVO extends BaseVO {
     Integer winCounts;
 
     Integer betType;
+
+    List<LotteryTicketDO> ticketList;
 }

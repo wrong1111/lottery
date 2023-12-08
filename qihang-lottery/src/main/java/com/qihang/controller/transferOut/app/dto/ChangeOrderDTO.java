@@ -1,6 +1,7 @@
 package com.qihang.controller.transferOut.app.dto;
 
 import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.domain.permutation.PermutationDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import lombok.Data;
@@ -24,4 +25,6 @@ public class ChangeOrderDTO implements Serializable {
 
     //数据彩数据选项
     List<PermutationDO> permutationDOList;
+
+    List<LotteryTicketDO> ticketDOList;
 }

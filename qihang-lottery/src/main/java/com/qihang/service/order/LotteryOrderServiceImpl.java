@@ -20,6 +20,7 @@ import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
+import com.qihang.constant.Constant;
 import com.qihang.constant.TransferEnum;
 import com.qihang.controller.basketball.dto.BasketballMatchDTO;
 import com.qihang.controller.beidan.dto.BeiDanMatchDTO;
@@ -43,6 +44,7 @@ import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.log.LogDO;
 import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.domain.order.PayOrderDO;
 import com.qihang.domain.permutation.PermutationAwardDO;
 import com.qihang.domain.permutation.PermutationDO;
@@ -68,6 +70,7 @@ import com.qihang.mapper.documentary.DocumentaryUserMapper;
 import com.qihang.mapper.football.FootballMatchMapper;
 import com.qihang.mapper.log.LogMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
+import com.qihang.mapper.order.LotteryTicketMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.permutation.PermutationAwardMapper;
 import com.qihang.mapper.permutation.PermutationMapper;
@@ -163,6 +166,9 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
 
     @Resource
     BeiDanSfggMatchMapper beidansfggMapper;
+
+    @Resource
+    LotteryTicketMapper lotteryTicketMapper;
 
     @Override
     public CommonListVO<LotteryOrderVO> getLotteryOrderPage(LotteryOrderDTO lotteryOrder, Integer userId) {
@@ -424,6 +430,16 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                 }
             }
             lotteryOrderVO.setBallInfoList(ballInfoList);
+            lotteryOrderVO.setTicketList(CollectionUtil.newArrayList());
+            if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FOOTBALL.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())
+                    || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SINGLE.getKey())) {
+                List<LotteryTicketDO> ticketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, lotteryOrder.getOrderId()).orderByAsc(LotteryTicketDO::getTicketNo));
+                if (CollectionUtil.isNotEmpty(ticketDOS)) {
+                    lotteryOrderVO.setTicketList(ticketDOS);
+                }
+            }
         }
         return lotteryOrderVO;
     }
@@ -677,7 +693,7 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                     }
                 } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
                     if (!CollectionUtils.isEmpty(matchIdsList)) {
-                        List<BeiDanSFGGMatchDO> basketballMatchDOS =  beidansfggMapper.selectBatchIds(matchIdsList);
+                        List<BeiDanSFGGMatchDO> basketballMatchDOS = beidansfggMapper.selectBatchIds(matchIdsList);
                         if (!CollectionUtils.isEmpty(basketballMatchDOS)) {
                             basketballMatchDOS.stream().forEach(p -> {
                                 String key = getKeys(lotteryOrder.getType(), p.getId());
@@ -697,7 +713,7 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                         }
                         racingBallVOList.add(racingBall);
                     }
-                }else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey())) {
+                } else if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey()) || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.REN_JIU.getKey())) {
                     if (!CollectionUtils.isEmpty(matchIdsList)) {
                         List<WinBurdenMatchDO> basketballMatchDOS = winBurdenMatchMapper.selectBatchIds(matchIdsList);
                         if (!CollectionUtils.isEmpty(basketballMatchDOS)) {
@@ -721,7 +737,16 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                     }
                 }
                 lotteryOrderQueryVO.setRacingBallList(racingBallVOList);
+
+                List<LotteryTicketDO> ticketDOList = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, lotteryOrder.getOrderId()));
+                if (CollectionUtils.isEmpty(ticketDOList)) {
+                    lotteryOrderQueryVO.setTicketDOList(Collections.EMPTY_LIST);
+                } else {
+                    lotteryOrderQueryVO.setTicketDOList(ticketDOList);
+                }
+
             }
+
             lotteryOrderQueryList.add(lotteryOrderQueryVO);
         }
         commonList.setVoList(lotteryOrderQueryList);
@@ -777,8 +802,19 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                 //根据未出票的条件一键改为出票
                 lotteryOrderMapper.updateById(lotteryOrderDO);
 
-                if (0 == lotteryOrderDO.getTransferType()) {
-                    redisService.set(lotteryOrderDO.getTransferOrderNo(), StringUtils.isBlank(lotteryOrderDO.getBill()) ? "已出" : lotteryOrderDO.getBill(), 864000L);
+                if (null != lotteryOrderDO.getTransferType() && 0 == lotteryOrderDO.getTransferType()) {
+                    String json = "已出|" + DateUtil.formatDateTime(lotteryOrderDO.getTicketingTime()) + "|" + (StringUtils.isBlank(lotteryOrderDO.getBill()) ? "" : lotteryOrderDO.getBill());
+                    redisService.set(lotteryOrderDO.getOrderId(), json, 864000L);
+                }
+                //同步更新票号处理
+                List<LotteryTicketDO> ticketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, lotteryOrderDO.getOrderId()).eq(LotteryTicketDO::getTicketState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()));
+                if (!CollectionUtils.isEmpty(ticketDOS)) {
+                    for (LotteryTicketDO ticketDO : ticketDOS) {
+                        ticketDO.setTicketState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
+                        ticketDO.setTicketingTime(new Date());
+                        ticketDO.setState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
+                        lotteryTicketMapper.updateById(ticketDO);
+                    }
                 }
             }
         } else {
@@ -813,9 +849,20 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             lotteryOrderDO.setTicketingTime(new Date());
             lotteryOrderMapper.updateById(lotteryOrderDO);
 
-            if (0 == lotteryOrderDO.getTransferType()) {
+            // //同步更新票号处理
+            if (null != lotteryOrderDO.getTransferType() && 0 == lotteryOrderDO.getTransferType()) {
                 String json = "已出|" + DateUtil.formatDateTime(lotteryOrderDO.getTicketingTime()) + "|" + (StringUtils.isBlank(lotteryOrderDO.getBill()) ? "" : lotteryOrderDO.getBill());
-                redisService.set(lotteryOrderDO.getTransferOrderNo(), json, 864000L);
+                redisService.set(lotteryOrderDO.getOrderId(), json, 864000L);
+            }
+            //同步更新票号处理
+            List<LotteryTicketDO> ticketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, lotteryOrderDO.getOrderId()).eq(LotteryTicketDO::getTicketState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()));
+            if (!CollectionUtils.isEmpty(ticketDOS)) {
+                for (LotteryTicketDO ticketDO : ticketDOS) {
+                    ticketDO.setTicketState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
+                    ticketDO.setTicketingTime(new Date());
+                    ticketDO.setState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
+                    lotteryTicketMapper.updateById(ticketDO);
+                }
             }
         }
         return new BaseVO();
@@ -910,7 +957,7 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         addPayRecord(lotteryOrder);
 
         //如果是收单，需要给缓存加上结果，让对方查询
-        if (0 == lotteryOrder.getTransferType()) {
+        if (null != lotteryOrder.getTransferType() && 0 == lotteryOrder.getTransferType()) {
             redisService.set(lotteryOrder.getTransferOrderNo(), "退票|" + DateUtil.formatDate(new Date()), 864000L);
         }
         return new BaseVO();
@@ -931,7 +978,7 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         }
         order.setBill(actualVoteDTO.getBill());
         lotteryOrderMapper.updateById(order);
-        if (order.getTransferType() == TransferEnum.TransferIn.code) {
+        if (null != order.getTransferType() && order.getTransferType() == TransferEnum.TransferIn.code) {
             String json = "已出|" + DateUtil.formatDateTime(order.getTicketingTime()) + "|" + (StringUtils.isBlank(order.getBill()) ? "" : order.getBill());
             redisService.set(order.getOrderId(), json, 864000L);
         }
@@ -1017,9 +1064,111 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         return new BaseVO();
     }
 
+    @Transactional
+    @Override
+    public BaseVO retreatTicket(Integer ticketId) {
+        LotteryTicketDO ticketDO = lotteryTicketMapper.selectById(ticketId);
+        if (null == ticketDO || ticketDO.getState().equals(LotteryOrderStateEnum.REFUND.getKey()) || "2".equals(ticketDO.getTicketState())) {
+            return BaseVO.builder().success(false).errorMsg("此票已退").build();
+        }
+        ticketDO.setRevokeTime(new Date());
+        ticketDO.setTicketState(2);
+        ticketDO.setState(6);
+        ticketDO.setRevokePrice(ticketDO.getPrice());
+        BigDecimal money = ticketDO.getPrice();
+        //退票，修改金额，退钱
+        List<LotteryOrderDO> orderDOList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getOrderId, ticketDO.getOrderId()));
+        if (!CollectionUtils.isEmpty(orderDOList)) {
+            lotteryTicketMapper.updateById(ticketDO);
+
+            LotteryOrderDO orderDO = orderDOList.get(0);
+            orderDO.setPrice(orderDO.getPrice().subtract(money));
+            orderDO.setRevokePrice(orderDO.getRevokePrice() == null ? money : orderDO.getRevokePrice().add(money));
+            if (orderDO.getPrice().compareTo(money) <= 0) {
+                orderDO.setState("6");
+                orderDO.setTickingState(2);
+                orderDO.setUpdateTime(new Date());
+            }
+            lotteryOrderMapper.updateById(orderDO);
+
+            LotteryOrderDO orderDO1 = new LotteryOrderDO();
+            orderDO1.setType(orderDO.getType());
+            orderDO1.setPrice(money);
+            orderDO1.setUserId(orderDO.getUserId());
+            orderDO1.setOrderId(orderDO.getOrderId());
+            addPayRecord(orderDO1);
+        }
+        return BaseVO.builder().success(true).errorMsg("成功").build();
+    }
+
+
+    @Override
+    public BaseVO editMultiTicket(Integer ticketId, Integer multi) {
+        LotteryTicketDO ticketDO = lotteryTicketMapper.selectById(ticketId);
+        if (null == ticketDO || ticketDO.getState().equals(LotteryOrderStateEnum.REFUND.getKey()) || "2".equals(ticketDO.getTicketState())) {
+            return BaseVO.builder().success(false).errorMsg("此票已退").build();
+        }
+        if (multi <= 0) {
+            return BaseVO.builder().success(false).errorMsg("倍数不能小于0").build();
+        }
+        BigDecimal money = BigDecimal.valueOf(ticketDO.getBets()).multiply(Constant.TICKET_MONEY_PER).multiply(BigDecimal.valueOf(multi));
+        if (multi > ticketDO.getTimes() || money.compareTo(ticketDO.getPrice()) > 0) {
+            return BaseVO.builder().success(false).errorMsg("超过最大倍数").build();
+        }
+        if (money.compareTo(ticketDO.getPrice()) < 0) {
+            ticketDO.setPrice(ticketDO.getPrice().subtract(money));
+            ticketDO.setRevokePrice(ticketDO.getRevokePrice().add(money));
+            ticketDO.setRevokeTime(new Date());
+            ticketDO.setTimes(ticketDO.getTimes() - multi);
+        } else {
+            ticketDO.setPrice(BigDecimal.ZERO);
+            ticketDO.setState(6);
+            ticketDO.setTicketState(2);
+            ticketDO.setRevokeTime(new Date());
+            ticketDO.setRevokePrice(ticketDO.getRevokePrice().add(money));
+        }
+        //退票，修改金额，退钱
+        List<LotteryOrderDO> orderDOList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getOrderId, ticketDO.getOrderId()));
+        if (!CollectionUtils.isEmpty(orderDOList)) {
+            lotteryTicketMapper.updateById(ticketDO);
+
+            LotteryOrderDO orderDO = orderDOList.get(0);
+            orderDO.setPrice(orderDO.getPrice().subtract(money));
+            orderDO.setRevokePrice(orderDO.getRevokePrice() == null ? money : orderDO.getRevokePrice().add(money));
+            if (orderDO.getPrice().compareTo(orderDO.getRevokePrice()) <= 0) {
+                orderDO.setState("6");
+                orderDO.setTickingState(2);
+                orderDO.setUpdateTime(new Date());
+            }
+            lotteryOrderMapper.updateById(orderDO);
+
+            LotteryOrderDO orderDO1 = new LotteryOrderDO();
+            orderDO1.setType(orderDO.getType());
+            orderDO1.setPrice(money);
+            orderDO1.setUserId(orderDO.getUserId());
+            orderDO1.setOrderId(orderDO.getOrderId());
+            addPayRecord(orderDO1);
+        }
+        return BaseVO.builder().build();
+    }
+
+    @Override
+    public CommonListVO<LotteryTicketDO> ticketByOrderId(String orderId) {
+        CommonListVO commonListVO = new CommonListVO();
+        List<LotteryTicketDO> ticketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, orderId).orderByAsc(LotteryTicketDO::getId));
+        if (CollectionUtils.isEmpty(ticketDOS)) {
+            commonListVO.setSuccess(true);
+            commonListVO.setVoList(Collections.emptyList());
+            return commonListVO;
+        }
+        commonListVO.setSuccess(true);
+        commonListVO.setVoList(ticketDOS);
+        return commonListVO;
+    }
+
     private void addRecord(LotteryOrderDO lotteryOrder) {
         PayOrderDO payOrder = new PayOrderDO();
-        payOrder.setOrderId(OrderNumberGenerationUtil.getOrderId());
+        payOrder.setOrderId(lotteryOrder.getOrderId());
         String type = "";
         if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FOOTBALL.getKey())) {
             type = PayOrderTypeEnum.FOOTBALL_AWARD.getKey();
@@ -1055,7 +1204,7 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
 
     private void addPayRecord(LotteryOrderDO lotteryOrder) {
         PayOrderDO payOrder = new PayOrderDO();
-        payOrder.setOrderId(OrderNumberGenerationUtil.getOrderId());
+        payOrder.setOrderId(lotteryOrder.getOrderId());
         String type = "";
         if (StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.FOOTBALL.getKey())) {
             type = PayOrderTypeEnum.FOOTBALL_REFUND.getKey();

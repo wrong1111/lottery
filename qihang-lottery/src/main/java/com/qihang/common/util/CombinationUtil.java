@@ -87,6 +87,45 @@ public class CombinationUtil {
         System.out.println(JSON.toJSONString(combinations));
     }
 
+    /**
+     * 二维组合, 每行选一个进行组合
+     *
+     * @param contents 内容
+     * @param len      长度 表示取几行
+     * @param <T>      类型
+     * @return
+     */
+    public static <T> ArrayList<ArrayList<T>> permTowDimensionIsOrder(List<ArrayList<T>> contents, int len) {
+        ArrayList<ArrayList<T>> results = new ArrayList<ArrayList<T>>();
+        allMatchPlayerComb(0, contents, new ArrayList<T>(), results, len);
+        return results;
+    }
+
+    /**
+     * @param begRow    0
+     * @param contents  二维数组
+     * @param result    当前取的内容
+     * @param allResult
+     * @param len       长度
+     */
+    private static <T> void allMatchPlayerComb(int begRow, List<ArrayList<T>> contents, ArrayList<T> result, List<ArrayList<T>> allResult, int len) {
+        if (result.size() == len) {
+            allResult.add(result);
+            return;
+        }
+
+        for (int r = begRow; r < contents.size(); r++) {   //2 row  迭代行
+            ArrayList<T> curRowContent = contents.get(r);
+
+            for (int c = 0; c < curRowContent.size(); c++) {    //迭代列    从当前行中取
+                ArrayList<T> temp = new ArrayList<T>();
+                temp.addAll(result);
+                temp.add(curRowContent.get(c));
+                allMatchPlayerComb(r + 1, contents, temp, allResult, len);
+            }
+        }
+    }
+
     public static void main(String[] args) {
         //combine();
 //        List<String> list = new ArrayList<>(Arrays.asList(new String[]{"2", "1", "3"}));
@@ -98,6 +137,13 @@ public class CombinationUtil {
 //        System.out.println(blist);
 //        System.out.println(" union 并集 " + CollectionUtil.union(blist, alist));
 //        System.out.println(" union 交集 " + CollectionUtil.intersection(blist, alist));
-
+        ArrayList<String> a = new ArrayList<>(Arrays.asList(new String[]{"a", "b"}));
+        ArrayList<String> b = new ArrayList<>(Arrays.asList(new String[]{"c", "d"}));
+        ArrayList<String> c = new ArrayList<>(Arrays.asList(new String[]{"e", "f"}));
+        ArrayList<ArrayList<String>> lists = new ArrayList<>();
+        lists.add(a);
+        lists.add(b);
+        lists.add(c);
+        System.out.println(CombinationUtil.permTowDimensionIsOrder(lists, 3));
     }
 }

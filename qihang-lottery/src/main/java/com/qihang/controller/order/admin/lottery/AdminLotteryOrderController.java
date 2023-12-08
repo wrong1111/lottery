@@ -6,10 +6,12 @@ import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.order.admin.lottery.dto.*;
 import com.qihang.controller.order.admin.lottery.vo.LotteryOrderQueryVO;
+import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.service.order.ILotteryOrderService;
 import com.qihang.service.transfer.IChangeService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.checkerframework.framework.qual.HasQualifierParameter;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -99,5 +101,25 @@ public class AdminLotteryOrderController {
     @ApiOperation("同步转单出票状态 接口")
     public BaseVO changeState(@RequestBody LotteryOrderQueryVO orderQueryVO) {
         return changeService.chageState(orderQueryVO.getId());
+    }
+
+    @Log(title = "退某张票")
+    @PostMapping("/retreatTicket/{ticketId}")
+    @ApiOperation("退某张票 接口")
+    public BaseVO retreatTicket(@PathVariable("ticketId") Integer ticketId) {
+        return lotteryOrderService.retreatTicket(ticketId);
+    }
+
+    @Log(title = "调整倍数")
+    @PostMapping("/editTicket/{ticketId}/{multi}")
+    @ApiOperation("退某张票 接口")
+    public BaseVO editMultiTicket(@PathVariable("multi") Integer multi, @PathVariable("ticketId") Integer ticketId) {
+        return lotteryOrderService.editMultiTicket(ticketId, multi);
+    }
+
+    @GetMapping("/ticket/{orderId}")
+    @ApiOperation("票据列表 接口")
+    public CommonListVO<LotteryTicketDO> ticketByOrderId(@PathVariable String orderId) {
+        return lotteryOrderService.ticketByOrderId(orderId);
     }
 }

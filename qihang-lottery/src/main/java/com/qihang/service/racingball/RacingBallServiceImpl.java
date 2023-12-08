@@ -5,6 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
+import com.qihang.common.util.reward.BasketballUtil;
+import com.qihang.common.util.reward.BeiDanUtil;
+import com.qihang.common.util.reward.BeidanSfggUtil;
+import com.qihang.common.util.reward.FootballUtil;
 import com.qihang.common.vo.BaseVO;
 import com.qihang.controller.basketball.dto.BasketballMatchDTO;
 import com.qihang.controller.beidan.dto.BeiDanMatchDTO;
@@ -17,6 +21,7 @@ import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.domain.order.PayOrderDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.user.UserDO;
@@ -30,6 +35,7 @@ import com.qihang.mapper.beidan.BeiDanMatchMapper;
 import com.qihang.mapper.beidan.BeiDanSfggMatchMapper;
 import com.qihang.mapper.football.FootballMatchMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
+import com.qihang.mapper.order.LotteryTicketMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
@@ -73,13 +79,18 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
     @Resource
     BeiDanSfggMatchMapper beiDanSfggMatchMapper;
 
+    @Resource
+    LotteryTicketMapper lotteryTicketMapper;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseVO createOrder(BallCalculationDTO ballCalculation, Integer userId) {
         String issueNo = ballCalculation.getIssueNo();
         Date date = new Date();
         Date minDeadline = null;
+        String orderNo = OrderNumberGenerationUtil.getOrderId();
         Map<Integer, Date> deadlineMap = new HashMap<>();
+        List<LotteryTicketDO> lotteryTicketDOS = new ArrayList<>();
         if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.FOOTBALL.getKey())) {
             List<FootballMatchDTO> footballMatchList = ballCalculation.getFootballMatchList();
             for (FootballMatchDTO footballMatchDTO : footballMatchList) {
@@ -93,6 +104,11 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 if (null == minDeadline || footballMatchDO.getDeadline().before(minDeadline)) {
                     minDeadline = footballMatchDO.getDeadline();
                 }
+            }
+            if (0 == ballCalculation.getBetType()) {
+                lotteryTicketDOS = FootballUtil.getJCTicketVO(ballCalculation.getFootballMatchList(), ballCalculation.getPssTypeList(), orderNo, ballCalculation.getMultiple());
+            } else if (1 == ballCalculation.getBetType()) {
+                lotteryTicketDOS = FootballUtil.getJCTicketVOBySechme(ballCalculation.getSchemeDetails(), ballCalculation.getFootballMatchList(), orderNo, ballCalculation.getModel());
             }
         } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey())) {
             List<BasketballMatchDTO> basketballMatchList = ballCalculation.getBasketballMatchList();
@@ -108,6 +124,11 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                     minDeadline = basketballMatchDO.getDeadline();
                 }
             }
+            if (0 == ballCalculation.getBetType()) {
+                lotteryTicketDOS = BasketballUtil.getBasketTicketVO(ballCalculation.getBasketballMatchList(), ballCalculation.getPssTypeList(), orderNo, ballCalculation.getMultiple());
+            } else if (1 == ballCalculation.getBetType()) {
+                lotteryTicketDOS = BasketballUtil.getBasketTicketVOBySechme(ballCalculation.getSchemeDetails(), ballCalculation.getBasketballMatchList(), orderNo, ballCalculation.getModel());
+            }
         } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.SINGLE.getKey())) {
             List<BeiDanMatchDTO> beiDanMatchList = ballCalculation.getBeiDanMatchList();
             for (BeiDanMatchDTO beiDanMatchDTO : beiDanMatchList) {
@@ -118,6 +139,11 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 issueNo = beiDanMatchDO.getIssueNo();
             }
             //胜负过关
+            if (0 == ballCalculation.getBetType()) {
+                lotteryTicketDOS = BeiDanUtil.getBeidanTicketVO(ballCalculation.getBeiDanMatchList(), ballCalculation.getPssTypeList(), orderNo, ballCalculation.getMultiple());
+            } else if (1 == ballCalculation.getBetType()) {
+                lotteryTicketDOS = BeiDanUtil.getBeidanTicketVOBySechme(ballCalculation.getSchemeDetails(), ballCalculation.getBeiDanMatchList(), orderNo, ballCalculation.getModel());
+            }
         } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
             List<BeiDanMatchDTO> beiDanMatchList = ballCalculation.getBeiDanMatchList();
             for (BeiDanMatchDTO beiDanMatchDTO : beiDanMatchList) {
@@ -126,6 +152,11 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                     return new BaseVO(false, ErrorCodeEnum.E084.getKey(), ErrorCodeEnum.E084.getValue());
                 }
                 issueNo = beiDanMatchDO.getIssueNo();
+            }
+            if (0 == ballCalculation.getBetType()) {
+                lotteryTicketDOS = BeidanSfggUtil.getBeidanSfggTicketVO(ballCalculation.getBeiDanMatchList(), ballCalculation.getPssTypeList(), orderNo, ballCalculation.getMultiple());
+            } else if (1 == ballCalculation.getBetType()) {
+                lotteryTicketDOS = BeidanSfggUtil.getBeidanSfggTicketVOBySechme(ballCalculation.getSchemeDetails(), ballCalculation.getBeiDanMatchList(), orderNo, ballCalculation.getModel());
             }
         }
         RacingBallOrderVO racingBallOrder = new RacingBallOrderVO();
@@ -170,6 +201,10 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 racingBallMapper.insert(racingBall);
                 ids.add(racingBall.getId());
             }
+            for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
+                lotteryTicketDO.setType(Integer.valueOf(ballCalculation.getType()));
+                lotteryTicketMapper.insert(lotteryTicketDO);
+            }
             payOrder.setType(PayOrderTypeEnum.FOOTBALL.getKey());
             //篮球
         } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey())) {
@@ -187,6 +222,10 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 racingBallMapper.insert(racingBall);
                 ids.add(racingBall.getId());
             }
+            for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
+                lotteryTicketDO.setType(Integer.valueOf(ballCalculation.getType()));
+                lotteryTicketMapper.insert(lotteryTicketDO);
+            }
             payOrder.setType(PayOrderTypeEnum.BASKETBALL.getKey());
             //北单
         } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.SINGLE.getKey()) || StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
@@ -203,6 +242,10 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
                 racingBall.setGameNo(issueNo + fillZero(beiDanMatch.getNumber(), 4));
                 racingBallMapper.insert(racingBall);
                 ids.add(racingBall.getId());
+            }
+            for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
+                lotteryTicketDO.setType(Integer.valueOf(ballCalculation.getType()));
+                lotteryTicketMapper.insert(lotteryTicketDO);
             }
             payOrder.setType(PayOrderTypeEnum.SINGLE.getKey());
         } else if (StrUtil.equals(ballCalculation.getType(), LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey())) {
@@ -239,7 +282,7 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
             payOrder.setType(PayOrderTypeEnum.REN_JIU.getKey());
         }
         //添加钱包消费记录
-        payOrder.setOrderId(OrderNumberGenerationUtil.getOrderId());
+        payOrder.setOrderId(orderNo);
         payOrder.setState(PayOrderStateEnum.PAID.getKey());
         payOrder.setCreateTime(new Date());
         payOrder.setUpdateTime(new Date());
@@ -250,7 +293,7 @@ public class RacingBallServiceImpl extends ServiceImpl<RacingBallMapper, RacingB
 
         //创建订单
         LotteryOrderDO order = new LotteryOrderDO();
-        order.setOrderId(OrderNumberGenerationUtil.getOrderId());
+        order.setOrderId(orderNo);
         order.setUserId(userId);
         order.setPrice(price);
         order.setSchemeDetails(ballCalculation.getSchemeDetails());

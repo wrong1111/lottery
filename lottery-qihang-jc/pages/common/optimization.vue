@@ -233,7 +233,7 @@
 				} else if (type == 1) {
 					this.$set(this.heatOptimizationList[index], "isShow", !item.isShow)
 				} else if (type == 2) {
-					this.$set(this.coldOptimizationList[index], "isShow", !item.isShow)
+					this.$set(this.coldOptimizationList[index], "isShow", !item.isShow) 
 				}
 			},
 			subsectionChange(index) {
@@ -247,6 +247,10 @@
 					this.min = Math.min.apply(null, this.averageOptimizationList.map(function(item) {
 						return item.forecastBonus
 					}))
+					const notes = this.averageOptimizationList.reduce((sum, item) => sum + item.notes, 0);
+					this.calculationParam.notes = notes
+					
+					this.calculationParam.forecast= this.max
 				} else if (this.current == 1) {
 					// 最大值
 					this.max = Math.max.apply(null, this.heatOptimizationList.map(function(item) {
@@ -256,6 +260,10 @@
 					this.min = Math.min.apply(null, this.heatOptimizationList.map(function(item) {
 						return item.forecastBonus
 					}))
+					const notes = this.heatOptimizationList.reduce((sum, item) => sum + item.notes, 0);
+					this.calculationParam.notes = notes
+					
+					this.calculationParam.forecast= this.max
 				} else if (this.current == 2) {
 					// 最大值
 					this.max = Math.max.apply(null, this.coldOptimizationList.map(function(item) {
@@ -265,6 +273,10 @@
 					this.min = Math.min.apply(null, this.coldOptimizationList.map(function(item) {
 						return item.forecastBonus
 					}))
+					const notes = this.coldOptimizationList.reduce((sum, item) => sum + item.notes, 0);
+					this.calculationParam.notes = notes
+					
+					this.calculationParam.forecast= this.max
 				}
 			},
 			valChange(e, item, index, type) {
@@ -274,7 +286,9 @@
 					odds = odds * str
 				})
 				if (type == 0) {
-					this.$set(this.averageOptimizationList[index], "forecastBonus", (odds * 2 * e.value).toFixed(2))
+					//this.$set(this.averageOptimizationList[index], "forecastBonus", (odds * 2 * e.value).toFixed(2))
+					this.averageOptimizationList[index].forecastBonus = (odds * 2 * e.value).toFixed(2)
+					this.averageOptimizationList[index].notes = e.value
 					// 最大值
 					this.max = Math.max.apply(null, this.averageOptimizationList.map(function(item) {
 						return item.forecastBonus
@@ -283,8 +297,16 @@
 					this.min = Math.min.apply(null, this.averageOptimizationList.map(function(item) {
 						return item.forecastBonus
 					}))
+					
+					 
+					const notes = this.averageOptimizationList.reduce((sum, item) => sum + item.notes, 0);
+					this.calculationParam.notes = notes
+					
+					this.calculationParam.forecast= this.max
 				} else if (type == 1) {
-					this.$set(this.heatOptimizationList[index], "forecastBonus", (odds * 2 * e.value).toFixed(2))
+					// this.$set(this.heatOptimizationList[index], "forecastBonus", (odds * 2 * e.value).toFixed(2))
+					this.heatOptimizationList[index].forecastBonus = (odds * 2 * e.value).toFixed(2)
+					this.heatOptimizationList[index].notes = e.value
 					// 最大值
 					this.max = Math.max.apply(null, this.heatOptimizationList.map(function(item) {
 						return item.forecastBonus
@@ -293,8 +315,15 @@
 					this.min = Math.min.apply(null, this.heatOptimizationList.map(function(item) {
 						return item.forecastBonus
 					}))
+					
+					let notes  = this.heatOptimizationList.reduce((sum, item) => sum + item.notes, 0);
+					this.calculationParam.notes = notes
+					
+					this.calculationParam.forecast= this.max
 				} else if (type == 2) {
-					this.$set(this.coldOptimizationList[index], "forecastBonus", (odds * 2 * e.value).toFixed(2))
+					// this.$set(this.coldOptimizationList[index], "forecastBonus", (odds * 2 * e.value).toFixed(2))
+					this.coldOptimizationList[index].forecastBonus = (odds * 2 * e.value).toFixed(2)
+					this.coldOptimizationList[index].notes = e.value
 					// 最大值
 					this.max = Math.max.apply(null, this.coldOptimizationList.map(function(item) {
 						return item.forecastBonus
@@ -303,12 +332,18 @@
 					this.min = Math.min.apply(null, this.coldOptimizationList.map(function(item) {
 						return item.forecastBonus
 					}))
+					
+					let notes  = this.coldOptimizationList.reduce((sum, item) => sum + item.notes, 0);
+					this.calculationParam.notes = notes
+					
+					this.calculationParam.forecast= this.max
 				}
 			}
 		},
 		onLoad(option) {
 			this.calculationParam = JSON.parse(decodeURIComponent(option.calculationParam));
 			let obj = JSON.parse(decodeURIComponent(option.obj));
+			//console.log(' optionzation ',this.calculationParam,obj)
 			this.averageOptimizationList = obj.averageOptimizationList
 			// 最大值
 			this.max = Math.max.apply(null, this.averageOptimizationList.map(function(item) {
@@ -320,6 +355,14 @@
 			}))
 			this.heatOptimizationList = obj.heatOptimizationList
 			this.coldOptimizationList = obj.coldOptimizationList
+			
+			//重置 倍数与注数
+			this.calculationParam.notes = this.averageOptimizationList.reduce((sum,item)=>sum+item.notes,0)
+			this.calculationParam.multiple =1
+			
+			//重赋值
+			this.calculationParam.forecast= this.max
+			//console.log(' optionzation',this.calculationParam)
 		}
 	}
 </script>

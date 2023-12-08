@@ -1,16 +1,25 @@
 package com.qihang.common.util.reward;
 
 import cn.hutool.core.util.NumberUtil;
+import com.alibaba.fastjson.JSON;
+import com.qihang.annotation.TenantIgnore;
+import com.qihang.common.util.CombinationUtil;
+import com.qihang.constant.Constant;
 import com.qihang.controller.football.dto.FootballMatchDTO;
 import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsListVO;
 import com.qihang.controller.order.admin.lottery.vo.SportSchemeDetailsVO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.controller.racingball.app.vo.BallCombinationVO;
 import com.qihang.controller.racingball.app.vo.BallOptimizationVO;
+import com.qihang.domain.order.LotteryTicketDO;
+import com.qihang.domain.order.vo.TicketContentVO;
+import com.qihang.domain.order.vo.TicketVO;
+import com.qihang.service.racingball.RacingBallServiceImpl;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -18,6 +27,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.util.NumberUtil.isInteger;
+import static cn.hutool.core.util.NumberUtil.max;
+import static com.qihang.service.racingball.RacingBallServiceImpl.fillZero;
 
 /**
  * @author: bright
@@ -303,7 +314,7 @@ public class FootballUtil {
             BallOptimizationVO vo = new BallOptimizationVO();
             vo.setBallCombinationList(p);
             vo.setType(p.size() + "串1");
-            vo.setNotes(multiple);
+            vo.setNotes(1);// 这里调整，会影响详情展示，与后台的展示
             BigDecimal forest = foreast(vo.getBallCombinationList()).multiply(BigDecimal.valueOf(multiple));
             vo.setForecastBonus(forest.setScale(2, RoundingMode.HALF_UP));
             if (idx == 0) {
@@ -763,21 +774,21 @@ public class FootballUtil {
 
                     //投注 胜（2.0）
                     String[] betContents = getBetContentAndOddFromContent(content);
-                   // for (int i = 0; i < allfootconse.length; i++) {
-                        //官方返回的是少了让字。
-                        if (allfootconse[1].length() == 1) {
-                            allfootconse[1] = "让" + allfootconse[1];
-                        }
-                        String[] bif = allfootconse[4].split(":");
-                        if (Integer.valueOf(bif[0]) + Integer.valueOf(bif[1]) > 7 || Integer.valueOf(bif[0]) > 5 || Integer.valueOf(bif[1]) > 5) {
-                            if (Integer.valueOf(bif[0]) > Integer.valueOf(bif[1]))
-                                allfootconse[4] = "胜其他";
-                            else if (Integer.valueOf(bif[0]) == Integer.valueOf(bif[1]))
-                                allfootconse[4] = "平其他";
-                            else if (Integer.valueOf(bif[0]) < Integer.valueOf(bif[1]))
-                                allfootconse[4] = "负其他";
-                        }
-                   // }
+                    // for (int i = 0; i < allfootconse.length; i++) {
+                    //官方返回的是少了让字。
+                    if (allfootconse[1].length() == 1) {
+                        allfootconse[1] = "让" + allfootconse[1];
+                    }
+                    String[] bif = allfootconse[4].split(":");
+                    if (Integer.valueOf(bif[0]) + Integer.valueOf(bif[1]) > 7 || Integer.valueOf(bif[0]) > 5 || Integer.valueOf(bif[1]) > 5) {
+                        if (Integer.valueOf(bif[0]) > Integer.valueOf(bif[1]))
+                            allfootconse[4] = "胜其他";
+                        else if (Integer.valueOf(bif[0]) == Integer.valueOf(bif[1]))
+                            allfootconse[4] = "平其他";
+                        else if (Integer.valueOf(bif[0]) < Integer.valueOf(bif[1]))
+                            allfootconse[4] = "负其他";
+                    }
+                    // }
                     String odd = getOddByResult(betContents, allfootconse);
                     if (StringUtils.isNotBlank(odd)) {
                         resultOddsList.add(odd);
@@ -818,5 +829,265 @@ public class FootballUtil {
             all = all.multiply(new BigDecimal(Double.valueOf(strings.get(i))));
         }
         return all.multiply(BigDecimal.valueOf(2));
+    }
+
+    public static List<LotteryTicketDO> getJCTicketVOBySechme(String schedetail, List<FootballMatchDTO> footballMatchDTOS, String orderNo, String mode) {
+        List<SportSchemeDetailsListVO> sportsDetails = JSON.parseArray(schedetail, SportSchemeDetailsListVO.class);
+        Map<String, FootballMatchDTO> matchMap = footballMatchDTOS.stream().collect(Collectors.toMap(FootballMatchDTO::getNumber, a -> a));
+        List<LotteryTicketDO> lotteryTicketDOList = new ArrayList<>(sportsDetails.size());
+        int idx = 1;
+        for (SportSchemeDetailsListVO detailsVO : sportsDetails) {
+            String notes = detailsVO.getNotes();
+            List<SportSchemeDetailsVO> ballSelectedList = detailsVO.getBallCombinationList();
+            //生成票数据
+            LotteryTicketDO lotteryTicketDO = replaceTicketVOBySechmeBallList(ballSelectedList, matchMap, orderNo, Integer.valueOf(notes), idx, mode);
+            lotteryTicketDOList.add(lotteryTicketDO);
+            idx++;
+        }
+        return lotteryTicketDOList;
+    }
+
+    public static LotteryTicketDO replaceTicketVOBySechmeBallList(List<SportSchemeDetailsVO> detailsVOS, Map<String, FootballMatchDTO> footballMatchDTOMap, String orderNo, Integer times, Integer idx, String mode) {
+        LotteryTicketDO lotteryTicketDO = new LotteryTicketDO();
+        List<TicketVO> ticketVOList = new ArrayList<>();
+        BigDecimal foreast = BigDecimal.ONE;
+        List<String> matchList = new ArrayList<>();
+        for (SportSchemeDetailsVO detailsVO : detailsVOS) {
+            FootballMatchDTO footballMatchDTO = footballMatchDTOMap.get(detailsVO.getNumber());
+            matchList.add(footballMatchDTO.getNumber());
+            TicketVO ticketVO = new TicketVO();
+            ticketVO.setMode(mode);
+            ticketVO.setLetBall(footballMatchDTO.getLetBall());
+            ticketVO.setMatch(footballMatchDTO.getMatch());
+            ticketVO.setNumber(footballMatchDTO.getNumber());
+            ticketVO.setHomeTeam(footballMatchDTO.getHomeTeam());
+            ticketVO.setVisitingTeam(footballMatchDTO.getVisitingTeam());
+            TicketContentVO ticketContentVO = new TicketContentVO();
+            String[] content = parseSelectedOdds(detailsVO.getContent());
+            ticketContentVO.setDescribe(content[0]);
+            ticketContentVO.setShoted(false);
+            ticketContentVO.setIndex(0);
+            ticketContentVO.setActive(true);
+            ticketContentVO.setOdds(content[1]);
+            ticketContentVO.setMode(mode);
+
+            foreast = foreast.multiply(BigDecimal.valueOf(Double.valueOf(content[1])));
+            List<TicketContentVO> ticketContentVOList = new ArrayList<>();
+            ticketContentVOList.add(ticketContentVO);
+            ticketVO.setTicketContentVOList(ticketContentVOList);
+            ticketVOList.add(ticketVO);
+        }
+        Collections.sort(matchList);
+        lotteryTicketDO.setOrderId(orderNo);
+        lotteryTicketDO.setTimes(Integer.valueOf(times));
+        lotteryTicketDO.setTicketState(0);
+        lotteryTicketDO.setTicketNo("" + idx);
+        lotteryTicketDO.setRevokePrice(BigDecimal.ZERO);
+        lotteryTicketDO.setPrice(BigDecimal.valueOf(2).multiply(BigDecimal.valueOf(lotteryTicketDO.getTimes())));
+        lotteryTicketDO.setForecast(foreast.multiply(BigDecimal.valueOf(2)).multiply(BigDecimal.valueOf(lotteryTicketDO.getTimes())));
+        lotteryTicketDO.setBetType("" + detailsVOS.size());
+        lotteryTicketDO.setMatchs(StringUtils.join(matchList, ","));
+        lotteryTicketDO.setTicketContent(JSON.toJSONString(ticketVOList));
+        return lotteryTicketDO;
+    }
+
+    private static String[] parseSelectedOdds(String result) {
+        // 胜[0-22](2.3)
+        int idx = result.indexOf("(");
+        int lastIdx = result.lastIndexOf(")");
+        return new String[]{result.substring(0, idx), result.substring(idx + 1, lastIdx)};
+    }
+
+    /**
+     * 串关 拆分票据
+     */
+    public static List<LotteryTicketDO> getJCTicketVO(List<FootballMatchDTO> footballMatchDTOS, List<Integer> playType, String orderNo, Integer times) {
+        List<LotteryTicketDO> lotteryTicketDOS = new ArrayList<>(footballMatchDTOS.size() * playType.size());
+        //串一过关
+        String[] matchArrays = new String[footballMatchDTOS.size()];
+        int idx = 0;
+        Map<String, ArrayList<TicketVO>> ticketMap = new HashMap<>(footballMatchDTOS.size());
+        for (FootballMatchDTO dto : footballMatchDTOS) {
+            ArrayList<TicketVO> ticketVOS = buildTicketVO(dto);
+            matchArrays[idx] = dto.getNumber();
+            ticketMap.put(dto.getNumber(), ticketVOS);
+            idx++;
+        }
+        for (Integer play : playType) {
+            List<List<String>> lists = CombinationUtil.getCombinations(matchArrays, play);
+            lotteryTicketDOS.addAll(replaceTicketVO(lists, ticketMap, orderNo, play, times));
+        }
+        lotteryTicketDOS.forEach(p -> {
+            p.setTicketState(0);
+            p.setCreateTime(new Date());
+            p.setRevokePrice(BigDecimal.ZERO);
+            p.setState(0);
+        });
+        return lotteryTicketDOS;
+    }
+
+
+    /**
+     * 此处都按串一处理。
+     *
+     * @param combines
+     * @param ticketVOMap
+     * @param play
+     * @return
+     */
+    private static List<LotteryTicketDO> replaceTicketVO(List<List<String>> combines, Map<String, ArrayList<TicketVO>> ticketVOMap, String orderId, Integer play, Integer times) {
+        List<LotteryTicketDO> lotteryTicketDOS = new ArrayList<>();
+        int multiPer = times % Constant.MAX_TICKET_MULTI == 0 ? times / Constant.MAX_TICKET_MULTI : times / Constant.MAX_TICKET_MULTI + 1;
+        int idx = 0;
+        for (List<String> lists : combines) {
+
+            List<ArrayList<TicketVO>> ticketVOList = new ArrayList<>(lists.size());
+            for (String number : lists) {
+                ArrayList<TicketVO> ticketVOS = ticketVOMap.get(number);
+                ticketVOList.add(ticketVOS);
+            }
+            //组成串，不同的玩法组一个
+            ArrayList<ArrayList<TicketVO>> ticketVOList2 = CombinationUtil.permTowDimensionIsOrder(ticketVOList, play);
+
+            for (ArrayList<TicketVO> ticketVOS : ticketVOList2) {
+                List<TicketVO> ordersTicketList = new ArrayList<>();
+                //一张票
+                List<BigDecimal> maxOddsList = new ArrayList<>();
+                int bets = 1;
+                for (TicketVO ticketVO : ticketVOS) {
+                    List<TicketContentVO> ticketContentVOList = ticketVO.getTicketContentVOList();
+                    String maxOdd = ticketContentVOList.stream().max((o1, o2) -> Double.valueOf(o1.getOdds()).compareTo(Double.valueOf(o2.getOdds()))).get().getOdds();
+                    maxOddsList.add(new BigDecimal(maxOdd));
+                    bets = bets * ticketContentVOList.size();
+                    ordersTicketList.add(ticketVO);
+                }
+
+                for (int i = 0; i < multiPer; i++) {
+                    int mult = Constant.MAX_TICKET_MULTI;
+                    if (i == multiPer - 1) {
+                        //最后一票倍数
+                        mult = times % Constant.MAX_TICKET_MULTI;
+                    }
+                    LotteryTicketDO lotteryTicketDO = new LotteryTicketDO();
+                    lotteryTicketDO.setTicketNo(String.valueOf(++idx));
+                    lotteryTicketDO.setForecast(maxOddsList.stream().reduce(BigDecimal.ONE, BigDecimal::multiply).multiply(BigDecimal.valueOf(2)).multiply(BigDecimal.valueOf(mult)));
+                    lotteryTicketDO.setBets(bets);
+                    lotteryTicketDO.setBetType("" + play);
+                    lotteryTicketDO.setTimes(mult);
+                    lotteryTicketDO.setOrderId(orderId);
+                    lotteryTicketDO.setPrice(BigDecimal.valueOf(bets).multiply(BigDecimal.valueOf(2)).multiply(BigDecimal.valueOf(mult)));
+                    lists.sort((a, b) -> a.compareTo(b));
+                    lotteryTicketDO.setMatchs(StringUtils.join(lists, ","));
+                    lotteryTicketDO.setTicketContent(JSON.toJSONString(ordersTicketList));
+                    lotteryTicketDOS.add(lotteryTicketDO);
+                }
+            }
+
+
+        }
+
+
+        return lotteryTicketDOS;
+    }
+
+    private static ArrayList<TicketVO> buildTicketVO(FootballMatchDTO dto) {
+        ArrayList<TicketVO> ticketVOList = new ArrayList<>(100);
+        TicketVO ticketVO = new TicketVO();
+        ticketVO.setMatch(dto.getMatch());
+        ticketVO.setLetBall(dto.getLetBall());
+        ticketVO.setNumber(dto.getNumber());
+        ticketVO.setHomeTeam(dto.getHomeTeam());
+        ticketVO.setVisitingTeam(dto.getVisitingTeam());
+
+        List<TicketContentVO> ticketContentVOList = new ArrayList<>(100);
+        if (!CollectionUtils.isEmpty(dto.getLetOddsList())) {
+            ticketContentVOList = new ArrayList<>(100);
+            ticketVO.setMode("0");
+            for (Map<String, Object> list : dto.getLetOddsList()) {
+                TicketContentVO ticketContentVO = JSON.parseObject(JSON.toJSONString(list), TicketContentVO.class);
+                ticketContentVO.setMode("0");
+                ticketContentVO.setDescribe("让" + ticketContentVO.getDescribe());
+                ticketContentVOList.add(ticketContentVO);
+            }
+            TicketVO newTicket = new TicketVO();
+            BeanUtils.copyProperties(ticketVO, newTicket);
+            newTicket.setTicketContentVOList(ticketContentVOList);
+            ticketVOList.add(newTicket);
+        }
+        if (!CollectionUtils.isEmpty(dto.getNotLetOddsList())) {
+            ticketContentVOList = new ArrayList<>(100);
+            ticketVO.setMode("1");
+            for (Map<String, Object> list : dto.getNotLetOddsList()) {
+                TicketContentVO ticketContentVO = JSON.parseObject(JSON.toJSONString(list), TicketContentVO.class);
+                ticketContentVO.setMode("1");
+                ticketContentVOList.add(ticketContentVO);
+            }
+            TicketVO newTicket = new TicketVO();
+            BeanUtils.copyProperties(ticketVO, newTicket);
+            newTicket.setTicketContentVOList(ticketContentVOList);
+            ticketVOList.add(newTicket);
+        }
+        if (!CollectionUtils.isEmpty(dto.getGoalOddsList())) {
+            ticketContentVOList = new ArrayList<>(100);
+            ticketVO.setMode("2");
+            for (Map<String, Object> list : dto.getGoalOddsList()) {
+                TicketContentVO ticketContentVO = JSON.parseObject(JSON.toJSONString(list), TicketContentVO.class);
+                ticketContentVO.setMode("2");
+                ticketContentVOList.add(ticketContentVO);
+            }
+            TicketVO newTicket = new TicketVO();
+            BeanUtils.copyProperties(ticketVO, newTicket);
+            newTicket.setTicketContentVOList(ticketContentVOList);
+            ticketVOList.add(newTicket);
+        }
+        if (!CollectionUtils.isEmpty(dto.getHalfWholeOddsList())) {
+            ticketContentVOList = new ArrayList<>(100);
+            ticketVO.setMode("3");
+            for (Map<String, Object> list : dto.getHalfWholeOddsList()) {
+                TicketContentVO ticketContentVO = JSON.parseObject(JSON.toJSONString(list), TicketContentVO.class);
+                ticketContentVO.setMode("3");
+                ticketContentVOList.add(ticketContentVO);
+            }
+            TicketVO newTicket = new TicketVO();
+            BeanUtils.copyProperties(ticketVO, newTicket);
+            newTicket.setTicketContentVOList(ticketContentVOList);
+            ticketVOList.add(newTicket);
+        }
+        if (!CollectionUtils.isEmpty(dto.getScoreOddsList())) {
+            ticketContentVOList = new ArrayList<>(100);
+            ticketVO.setMode("4");
+            for (Map<String, Object> list : dto.getScoreOddsList()) {
+                TicketContentVO ticketContentVO = JSON.parseObject(JSON.toJSONString(list), TicketContentVO.class);
+                ticketContentVO.setMode("4");
+                ticketContentVOList.add(ticketContentVO);
+            }
+            TicketVO newTicket = new TicketVO();
+            BeanUtils.copyProperties(ticketVO, newTicket);
+            newTicket.setTicketContentVOList(ticketContentVOList);
+            ticketVOList.add(newTicket);
+        }
+        return ticketVOList;
+    }
+
+    public static void main(String[] args) {
+        List<TicketContentVO> ticketContentVOList = new ArrayList<>();
+        TicketContentVO contentVO = new TicketContentVO();
+        contentVO.setOdds("15.0");
+        ticketContentVOList.add(contentVO);
+
+        TicketContentVO contentVO1 = new TicketContentVO();
+        contentVO1.setOdds("2.0");
+        ticketContentVOList.add(contentVO1);
+
+        TicketContentVO contentVO2 = new TicketContentVO();
+        contentVO2.setOdds("1.0");
+        ticketContentVOList.add(contentVO2);
+        String maxOdd = ticketContentVOList.stream().max((o1, o2) -> Double.valueOf(o1.getOdds()).compareTo(Double.valueOf(o2.getOdds()))).get().getOdds();
+        System.out.println(maxOdd);
+        List<BigDecimal> maxOddsList = new ArrayList<>();
+        maxOddsList.add(new BigDecimal("15.0"));
+        maxOddsList.add(new BigDecimal("2.0"));
+        maxOddsList.add(new BigDecimal("3.0"));
+        System.out.println(maxOddsList.stream().reduce(BigDecimal.ONE, BigDecimal::multiply));
     }
 }

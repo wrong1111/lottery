@@ -21,7 +21,7 @@
 				</view>
 			</view>
 			<view style="padding-top: 15px;"
-				v-if="lotteryOrder.type=='0'||lotteryOrder.type=='1'||lotteryOrder.type=='2'">
+				v-if="lotteryOrder.type=='0'||lotteryOrder.type=='1'||lotteryOrder.type=='2'||lotteryOrder.type==25">
 				<u-button size="normal" shape="circle" customStyle="color:#000;width:92%;height:35px" color="#fff">
 					预测奖金：<span style="color:#FF3F43">￥{{lotteryOrder.forecast}}</span>
 				</u-button>
@@ -562,10 +562,64 @@
 					</uni-tr>
 				</uni-table>
 			</uni-card>
-
+			<!-- 竞赛方案详情，展示 ticketList-->
+			<uni-card class="phone"
+				v-if="lotteryOrder.ticketList!=null&&lotteryOrder.ticketList!=undefined&&lotteryOrder.ticketList!=''&&isShowTicket(lotteryOrder.type)">
+				<p>
+					<view class="title">方案详情</view>
+					<uni-table border stripe emptyText="暂无更多数据" class="make">
+						<!-- 表头行 -->
+						<uni-tr>
+							<uni-th width="40px" align="center">过关</uni-th>
+							<uni-th align="center" width="100px">组合</uni-th>
+							<uni-th align="center" width="30px">倍数</uni-th>
+							<uni-th align="center" width="80px">预测奖金</uni-th>
+						</uni-tr>
+						<!-- 表格数据行 -->
+						<tbody v-for="(item,index) in lotteryOrder.ticketList" :key="index">
+							<uni-tr>
+								<uni-td align="center">{{item.betType+'串一'}}</uni-td>
+								<uni-td align="center">
+									<view @click="openTicket(index,item)"
+										style="display: flex;justify-content: center;align-items: center;flex-direction: column;font-size: 12px;">
+										<!-- <span v-for="(ball,idx) in item.ticketContent" :key="idx">
+											{{ball.homeTeam}}<span v-for="(it,i) in ball.ticketContentVOList"> {{it.describe +'('+it.odds+') | '}}</span><br>
+										</span> -->
+										<span>
+											{{'第'+(item.ticketNo.substr(item.ticketNo.length-4,item.ticketNo.length)*1)+'票'}} </br>{{item.bets +'注'}} {{item.price +'元'}}
+										</span>
+										<u-icon name="arrow-down"></u-icon>
+									</view>
+								</uni-td>
+								<uni-td align="center">
+									{{item.times}}
+								</uni-td>
+								<uni-td align="center">	{{item.forecast}}</uni-td>
+							</uni-tr>
+							
+							<uni-tr v-if="item.isShow" style="background: #FAF9DE">
+								<uni-th width="10px" align="center">场次</uni-th>
+								<uni-th align="center" width="85px">队伍</uni-th>
+								<uni-th align="center" width="80px" colspan="2">投注内容</uni-th>
+							</uni-tr>
+							<uni-tr v-for="(data,idx) in item.ticketContent" :key="idx" v-if="item.isShow" 	style="background: #FAF9DE">
+								<uni-td align="center">{{data.number}}</uni-td>
+								<uni-td align="center">{{data.homeTeam}} 
+								<span :style="data.letBall.indexOf('-')==-1?'color:red;font-size: 16px;margin-left:5px':'color:blue;font-size: 16px;margin-left:5px'" 
+								v-if="data.letBall!=null">
+								</br>({{data.letBall}})</span>
+									</br>
+								{{data.visitingTeam}}	
+								</uni-td>
+								<uni-td align="center" colspan="2"><span v-for="(it,i) in data.ticketContentVOList" style="margin-left:5px"> {{it.describe +'('+it.odds+')'}}</span></uni-td>
+							</uni-tr>
+						</tbody>
+					</uni-table>
+				</p>
+			</uni-card>
 			<!-- 竞赛方案详情，展示 schemeDetails-->
 			<uni-card class="phone"
-				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&isSportType(lotteryOrder.type)">
+				v-if="lotteryOrder.schemeDetails!=null&&lotteryOrder.schemeDetails!=undefined&&lotteryOrder.schemeDetails!=''&&isSportType(lotteryOrder.type) && !isShowTicket(lotteryOrder.type)">
 				<p>
 					<view class="title">方案详情</view>
 					<uni-table border stripe emptyText="暂无更多数据" class="make">
@@ -590,7 +644,7 @@
 									</view>
 								</uni-td>
 								<uni-td align="center">
-									{{item.notes * (lotteryOrder.betType ==0? lotteryOrder.times:1)}}
+									{{item.notes}}
 								</uni-td>
 								<uni-td align="center"
 									v-if="lotteryOrder.type!=6 && lotteryOrder.type!=7">{{item.forecastBonus}}</uni-td>
@@ -808,6 +862,9 @@
 			open(index, item) {
 				this.$set(this.lotteryOrder.schemeDetails[index], "isShow", !item.isShow)
 			},
+			openTicket(index, item) {
+				this.$set(this.lotteryOrder.ticketList[index], "isShow", !item.isShow)
+			},
 			imgListPreview(url) {
 				var urlList = []
 				urlList.push(url) //push中的参数为 :src="item.img_url" 中的图片地址
@@ -829,6 +886,12 @@
 					uni.navigateBack();
 				}
 			},
+			isShowTicket(type){
+				if(type ==0 || type ==1||type ==2||type ==25){
+					return true
+				}
+				return false
+			},
 			isSportType(type) {
 				if (type == "3" || type == "21" || type == 4 || type == 5 ||
 					type == 8 || type == 24 || type == 22 || type == 23) {
@@ -849,6 +912,12 @@
 						.schemeDetails != "") {
 						this.lotteryOrder.schemeDetails = JSON.parse(res.schemeDetails)
 					}
+					if(res.ticketList!=null){
+						res.ticketList.map((item,index)=>{
+							item.ticketContent = JSON.parse(item.ticketContent)
+						})
+					}
+					console.log(this.lotteryOrder)
 					//将字符串转对象
 					if (this.lotteryOrder.ballInfoList != null) {
 						this.lotteryOrder.ballInfoList.map((item, idx) => {
