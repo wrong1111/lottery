@@ -632,7 +632,6 @@
 				} else {
 					beidanList().then(res => {
 						this.beidanList = res.voList
-						console.log('beidan',res.voList)
 						if (res.voList && res.voList.length > 0) {
 							this.issueNo = res.voList[0].beiDanMatchList[0].issueNo
 						}
