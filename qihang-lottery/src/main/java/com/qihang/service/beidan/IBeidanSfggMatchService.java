@@ -1,6 +1,7 @@
 package com.qihang.service.beidan;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.beidan.vo.BeiDanSfggVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
@@ -24,4 +25,6 @@ public interface IBeidanSfggMatchService extends IService<BeiDanSFGGMatchDO> {
      * @return
      */
     BallCalculationVO calculation(BallCalculationDTO ballCalculation);
+
+    BaseVO award();
 }

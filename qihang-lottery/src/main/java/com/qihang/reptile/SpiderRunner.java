@@ -92,22 +92,22 @@ public class SpiderRunner {
      */
     public void runHour() {
         Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
-                        CrawlingAddressConstant.URL1 //足彩比赛
-                        , CrawlingAddressConstant.URL4 // 篮彩比赛
-                        , CrawlingAddressConstant.URL8 //北京单场
-                        , CrawlingAddressConstant.URL9 //北京单场 进球
-                        , CrawlingAddressConstant.URL10 //北京单场 上下单双
-                        , CrawlingAddressConstant.URL11 //北京单场 比分
-                        , CrawlingAddressConstant.URL12 //北京单场 半全场进球
-                        , CrawlingAddressConstant.URL18 //胜负彩比赛
-                        , CrawlingAddressConstant.URL3 //足彩对局分析
-                        , CrawlingAddressConstant.URL5 //篮球对局分析
-                        , CrawlingAddressConstant.URL15 //北单分析
-                        , CrawlingAddressConstant.URL_BD_SFGG //北单 胜负过关
+//                        CrawlingAddressConstant.URL1 //足彩比赛
+//                        , CrawlingAddressConstant.URL4 // 篮彩比赛
+//                        , CrawlingAddressConstant.URL8 //北京单场
+//                        , CrawlingAddressConstant.URL9 //北京单场 进球
+//                        , CrawlingAddressConstant.URL10 //北京单场 上下单双
+//                        , CrawlingAddressConstant.URL11 //北京单场 比分
+//                        , CrawlingAddressConstant.URL12 //北京单场 半全场进球
+//                        , CrawlingAddressConstant.URL18 //胜负彩比赛
+//                        , CrawlingAddressConstant.URL3 //足彩对局分析
+//                        , CrawlingAddressConstant.URL5 //篮球对局分析
+//                        , CrawlingAddressConstant.URL15 //北单分析
+                         CrawlingAddressConstant.URL_BD_SFGG //北单 胜负过关
                 ).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000)))
                 .addPipeline(lotteryPipeline).runAsync();
-        sfcNext();
-        footballNext();
+//        sfcNext();
+//        footballNext();
     }
 
     /*

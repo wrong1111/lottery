@@ -29,9 +29,7 @@ import us.codecraft.webmagic.selector.Html;
 import us.codecraft.webmagic.selector.Selectable;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author: bright
@@ -42,6 +40,22 @@ import java.util.List;
 @Slf4j
 @Component
 public class LotteryProcessor implements PageProcessor {
+    public static Map<String, String> ARRAYS_MAP = new HashMap<>();
+
+    static {
+        ARRAYS_MAP.put("01", "主胜1-5");
+        ARRAYS_MAP.put("02", "主胜6-10");
+        ARRAYS_MAP.put("03", "主胜11-15");
+        ARRAYS_MAP.put("04", "主胜16-20");
+        ARRAYS_MAP.put("05", "主胜21-25");
+        ARRAYS_MAP.put("06", "主胜26+");
+        ARRAYS_MAP.put("11", "客胜1-5");
+        ARRAYS_MAP.put("12", "客胜6-10");
+        ARRAYS_MAP.put("13", "客胜11-15");
+        ARRAYS_MAP.put("14", "客胜16-20");
+        ARRAYS_MAP.put("15", "客胜21-25");
+        ARRAYS_MAP.put("16", "客胜26+");
+    }
 
     private Site site = Site.me().setRetryTimes(1).setSleepTime(300);
 
@@ -280,9 +294,7 @@ public class LotteryProcessor implements PageProcessor {
                             }
                             String sfx = tr.get(j + 1).css(".bet-more-tb .sbetbtn-ok").xpath("//p/@data-value").get();
                             if (StringUtils.isNotBlank(sfx)) {
-                                String[] ARRAYS = new String[]{"", "主胜1-5", "主胜6-10", "主胜11-15", "主胜16-20", "主胜21-25", "主胜26+",
-                                        "客胜1-5", "客胜6-10", "客胜11-15", "客胜16-20", "客胜21-25", "客胜26+"};
-                                sfx = ARRAYS[Integer.valueOf(sfx)];
+                                sfx = ARRAYS_MAP.get(sfx);
                             }
                             String result = sf + "," + rqspf + "," + sfx + "," + dxf;
                             basketballMatch.setAward(result);
@@ -872,12 +884,15 @@ public class LotteryProcessor implements PageProcessor {
                         String bg = tdNodes.get(2).xpath("//span/@style").get().replaceAll("background:", "").trim();
                         //主队
                         List<Selectable> teamNodes = tdNodes.get(4).xpath("//span[@class='odds_item']").nodes();
+                        if ("155".equals(mid)) {
+                            System.out.println(mid);
+                        }
                         String homeOdds = teamNodes.get(0).xpath("//span/@data-sp-ori").get();
                         String homeTeam = teamNodes.get(0).xpath("//span[@class='gray']/text()").get().trim() + teamNodes.get(0).xpath("//span[@class='item_left']/text()").get().trim();
 
                         String homeWinOdds = teamNodes.get(0).xpath("//span[@class='odds_bingo']/text()").get();
 
-                        String vistiOdds = teamNodes.get(1).xpath("//span/@data-sp-ori").get().trim();
+                        String vistiOdds = teamNodes.get(1).xpath("//span/@data-sp-ori").get();
                         String visitTeam = teamNodes.get(1).xpath("//span/text()").get().trim() + teamNodes.get(1).xpath("//span[@class='gray']/text()").get().trim();
                         //visitTeam 需要处理下 1.57  佩特罗鲁 [6]
                         String visitWinOdds = teamNodes.get(1).xpath("//span[@class='odds_bingo']/text()").get();

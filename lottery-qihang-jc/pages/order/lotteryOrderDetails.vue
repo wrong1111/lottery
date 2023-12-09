@@ -577,7 +577,7 @@
 						</uni-tr>
 						<!-- 表格数据行 -->
 						<tbody v-for="(item,index) in lotteryOrder.ticketList" :key="index">
-							<uni-tr>
+							<uni-tr :class="item.ticketState==1?'revoke':''">
 								<uni-td align="center">{{item.betType+'串一'}}</uni-td>
 								<uni-td align="center">
 									<view @click="openTicket(index,item)"
@@ -586,7 +586,7 @@
 											{{ball.homeTeam}}<span v-for="(it,i) in ball.ticketContentVOList"> {{it.describe +'('+it.odds+') | '}}</span><br>
 										</span> -->
 										<span>
-											{{'第'+(item.ticketNo.substr(item.ticketNo.length-4,item.ticketNo.length)*1)+'票'}} </br>{{item.bets +'注'}} {{item.price +'元'}}
+											{{'第'+(item.ticketNo*1)+'票'}} </br>{{item.bets +'注'}} {{item.price +'元'}}
 										</span>
 										<u-icon name="arrow-down"></u-icon>
 									</view>
@@ -611,7 +611,10 @@
 									</br>
 								{{data.visitingTeam}}	
 								</uni-td>
-								<uni-td align="center" colspan="2"><span v-for="(it,i) in data.ticketContentVOList" style="margin-left:5px"> {{it.describe +'('+it.odds+')'}}</span></uni-td>
+								<uni-td align="center" colspan="2"><span v-for="(it,i) in data.ticketContentVOList" style="margin-left:5px">
+								<span v-if="item.type ==1 && it.mode==3">{{it.describe +'['+it.letball+']'+'('+it.odds+')'}}</span>
+								<span v-else>{{it.describe +'('+it.odds+')'}}</span>
+								</span></uni-td>
 							</uni-tr>
 						</tbody>
 					</uni-table>
@@ -999,6 +1002,12 @@
 </script>
 
 <style scoped lang="scss">
+	.green {
+		color: #1afa29;
+	}
+	.revoke{
+		color: #909399;
+	}
 	.paiban2 {
 		display: flex;
 		align-items: center;

@@ -23,6 +23,7 @@ import com.qihang.domain.documentary.DocumentaryDO;
 import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.football.FootballMatchDO;
 import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.domain.order.PayOrderDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.user.UserDO;
@@ -36,6 +37,7 @@ import com.qihang.mapper.documentary.DocumentaryMapper;
 import com.qihang.mapper.documentary.DocumentaryUserMapper;
 import com.qihang.mapper.football.FootballMatchMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
+import com.qihang.mapper.order.LotteryTicketMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
@@ -82,6 +84,9 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
 
     @Resource
     DocumentaryCommissionHelper documentaryCommissionHelper;
+
+    @Resource
+    LotteryTicketMapper lotteryTicketMapper;
 
     @Override
     public CommonListVO<FootballVO> footballMatchList() {
@@ -278,7 +283,6 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
             //用戶下注列表
             List<FootballMatchDTO> footballMatchList = new ArrayList<>();
             //每场比赛出奖比赛列表
-            List<String> list = new ArrayList<>();
             Map<String, String> resultMatch = new HashMap<>();
             Boolean flag = true;
             for (RacingBallDO racingBallDO : racingBallList) {
@@ -303,8 +307,8 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                     flag = false;
                     break;
                 }
-                list.add(footballMatch.getAward());
-                resultMatch.put(footballMatch.getNumber(), footballMatch.getAward());
+                String award = buildResult(footballMatch.getHalfFullCourt(), footballMatch.getAward());
+                resultMatch.put(footballMatch.getNumber(), award);
             }
             if (flag) {
                 //对schemeDetails兑奖
@@ -312,12 +316,17 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                     log.error("============订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
                     continue;
                 }
-                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
-                FootballUtil.awardSchemeDetails(listVOList, resultMatch);
-                //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
-                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
-                //反向保存一下数据
-                order.setSchemeDetails(JSON.toJSONString(listVOList));
+//                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
+//                FootballUtil.awardSchemeDetails(listVOList, resultMatch);
+//                //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
+//                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
+//                //反向保存一下数据
+//                order.setSchemeDetails(JSON.toJSONString(listVOList));
+                List<LotteryTicketDO> lotteryTicketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
+                double price = FootballUtil.award(lotteryTicketDOS, resultMatch);
+                for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
+                    lotteryTicketMapper.updateById(lotteryTicketDO);
+                }
                 //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
                 //等于0相当于没有中奖
                 log.debug("=======>[竞猜足球][待开奖]  订单 :[{}]  中奖【{}】  ", order.getOrderId(), price);
@@ -335,6 +344,40 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
 
         }
         return new BaseVO();
+    }
+
+    /***
+     * 负,胜,7,负-负,负其它
+     * @param score
+     * @param award
+     * @return
+     */
+    private String buildResult(String score, String award) {
+        if ("延期".equals(score)) {
+            return score;
+        }
+        String[] bif = StringUtils.split(score, ":");
+        String[] awards = StringUtils.split(award, ",");
+        if (Integer.valueOf(bif[0]) + Integer.valueOf(bif[1]) > 7 || Integer.valueOf(bif[0]) > 5 || Integer.valueOf(bif[1]) > 5) {
+            if (Integer.valueOf(bif[0]) > Integer.valueOf(bif[1]))
+                awards[4] = "胜其他";
+            else if (Integer.valueOf(bif[0]) == Integer.valueOf(bif[1]))
+                awards[4] = "平其他";
+            else if (Integer.valueOf(bif[0]) < Integer.valueOf(bif[1]))
+                awards[4] = "负其他";
+        }
+        if (awards[1].length() == 1) {
+            awards[1] = "让" + awards[1];
+        }
+//        int offset = Integer.valueOf(letball.trim());
+//        if (offset + Integer.valueOf(bif[0]) > Integer.valueOf(bif[1])) {
+//            awards[1] = "胜";
+//        } else if (offset + Integer.valueOf(bif[0]) < Integer.valueOf(bif[1])) {
+//            awards[1] = "负";
+//        } else if (offset + Integer.valueOf(bif[0]) == Integer.valueOf(bif[1])) {
+//            awards[1] = "平";
+//        }
+        return StringUtils.join(awards, ",");
     }
 
     private void addRecord(LotteryOrderDO lotteryOrder) {

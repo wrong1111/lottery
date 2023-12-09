@@ -25,6 +25,7 @@ import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.documentary.DocumentaryDO;
 import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.domain.order.PayOrderDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.user.UserDO;
@@ -38,6 +39,7 @@ import com.qihang.mapper.basketball.BasketballMatchMapper;
 import com.qihang.mapper.documentary.DocumentaryMapper;
 import com.qihang.mapper.documentary.DocumentaryUserMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
+import com.qihang.mapper.order.LotteryTicketMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
@@ -83,6 +85,9 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
 
     @Resource
     DocumentaryCommissionHelper documentaryCommissionHelper;
+
+    @Resource
+    LotteryTicketMapper lotteryTicketMapper;
 
     @Override
     public CommonListVO<BasketballVO> basketballMatchList() {
@@ -252,10 +257,10 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
             //用戶下注列表
             List<BasketballMatchDTO> basketballMatchList = new ArrayList<>();
             //每场比赛出奖比赛列表
-            List<String> list = new ArrayList<>();
+            // List<String> list = new ArrayList<>();
             Boolean flag = true;
 
-            Map<String, BasketballMatchDO> resultMatch = new HashMap<>();
+            Map<String, String> resultMatch = new HashMap<>();
             for (RacingBallDO racingBallDO : racingBallList) {
                 //下注結果組成list
                 basketballMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), BasketballMatchDTO.class));
@@ -273,8 +278,8 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
                     flag = false;
                     break;
                 }
-                list.add(basketballMatch.getAward() + "," + basketballMatch.getHalfFullCourt());
-                resultMatch.put(basketballMatch.getNumber(), basketballMatch);
+                //list.add(basketballMatch.getAward() + "," + basketballMatch.getHalfFullCourt());
+                resultMatch.put(basketballMatch.getNumber(), basketballMatch.getHalfFullCourt());
             }
             if (flag) {
                 //对schemeDetails兑奖
@@ -282,12 +287,17 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
                     log.error("============订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
                     continue;
                 }
-                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
-                BasketballUtil.awardSchemeDetails(listVOList, resultMatch);
-                //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
-                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
-                //反向保存一下数据
-                order.setSchemeDetails(JSON.toJSONString(listVOList));
+//                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
+//                BasketballUtil.awardSchemeDetails(listVOList, resultMatch);
+//                //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
+//                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
+//                //反向保存一下数据
+//                order.setSchemeDetails(JSON.toJSONString(listVOList));
+                List<LotteryTicketDO> lotteryTicketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
+                double price = FootballUtil.award(lotteryTicketDOS, resultMatch);
+                for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
+                    lotteryTicketMapper.updateById(lotteryTicketDO);
+                }
                 //等于0相当于没有中奖
                 log.info("=======>[竞猜篮球] [待开奖]  订单 [{}] 中奖金额 【{}】 ", order.getOrderId(), price);
                 if (price == 0) {

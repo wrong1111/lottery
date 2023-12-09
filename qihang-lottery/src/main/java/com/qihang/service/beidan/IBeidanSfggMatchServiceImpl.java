@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.common.util.reward.BeiDanUtil;
+import com.qihang.common.vo.BaseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.beidan.vo.BeiDanMatchVO;
 import com.qihang.controller.beidan.vo.BeiDanSfggVO;
@@ -89,5 +90,10 @@ public class IBeidanSfggMatchServiceImpl extends ServiceImpl<BeiDanSfggMatchMapp
     @Override
     public BallCalculationVO calculation(BallCalculationDTO ballCalculation) {
         return BeiDanUtil.calculationSfgg(ballCalculation.getBeiDanMatchList(), ballCalculation.getMultiple(), ballCalculation.getPssTypeList());
+    }
+
+    @Override
+    public BaseVO award() {
+        return null;
     }
 }

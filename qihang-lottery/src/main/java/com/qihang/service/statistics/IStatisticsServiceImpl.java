@@ -193,14 +193,14 @@ public class IStatisticsServiceImpl implements IStatisticsService {
     public Map<String, Object> daGet(String start, String end) {
         Map<String, Object> allMap = new HashMap<>();
         //订单 相关的数据项
-        String[] sqlColum = new String[]{"sum(1) orderCounts", "sum(price) orderMoney",
-                "sum(case when revoke_price is not null then revoke_price else 0 end ) revokePrice",
-                "sum(case when transfer_type = 0 then 1 else 0 end ) receiveCounts",
-                "sum(case when transfer_type = 0 then price else 0 end ) receiveMoney",
-                "sum(case when transfer_type = 1 then 1 else 0 end ) changeCounts",
-                "sum(case when transfer_type = 1 then price else 0 end ) changeMoney",
-                "sum(case when state in (3,4) and win_price >0   then 1 else 0 end ) awardCounts",
-                "sum(case when state in (3,4) and win_price >0 then win_price else 0 end ) awardMoney",
+        String[] sqlColum = new String[]{"sum(case when   ticking_state in (0,1) then 1 else 0 end ) orderCounts", "sum(case when  ticking_state in (0,1) then price else 0 end) orderMoney",
+                "sum(case when revoke_price is not null and ticking_state in (0,1) then revoke_price else 0 end ) revokePrice",
+                "sum(case when transfer_type = 0 and ticking_state in (0,1) then 1 else 0 end ) receiveCounts",
+                "sum(case when transfer_type = 0 and ticking_state in (0,1) then price else 0 end ) receiveMoney",
+                "sum(case when transfer_type = 1 and ticking_state in (0,1) then 1 else 0 end ) changeCounts",
+                "sum(case when transfer_type = 1 and ticking_state in (0,1) then price else 0 end ) changeMoney",
+                "sum(case when state in (3,4) and ticking_state in (0,1) and win_price >0   then 1 else 0 end ) awardCounts",
+                "sum(case when state in (3,4) and ticking_state in (0,1)  and win_price >0 then win_price else 0 end ) awardMoney",
         };
         LambdaQueryWrapper<LotteryOrderDO> qw = new QueryWrapper<LotteryOrderDO>()
                 .select(sqlColum).lambda();

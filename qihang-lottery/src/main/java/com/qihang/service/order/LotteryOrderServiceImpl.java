@@ -215,19 +215,19 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             }
         }
         String[] sqlColum = new String[]{"sum(1) counts", "sum(price) price",
-                "sum(case when state=2 then 1 else 0 end) notAwardCounts",
-                "sum(case when state=2 then price else 0 end) notAwardPrice",
-                "sum(case when state=4 then 1 else 0 end) awardCounts",
-                "sum(case when state=4 then win_price else 0 end) awardPrice",
-                "sum(case when state=4 then price else 0 end) awardBetPrice",
-                "sum(case when state=0 then 1 else 0 end) waitPrintCounts",
-                "sum(case when state=0 then price else 0 end) waitPrintPrice",
-                "sum(case when state=1 then 1 else 0 end) waitAwardCounts",
-                "sum(case when state=1 then price else 0 end) waitAwardPrice",
-                "sum(case when state=3 then 1 else 0 end ) waitBounsCounts",
-                "sum(case when state=3 then win_price else 0 end ) waitBounsPrice",
-                "sum(case when state=6 then 1 else 0 end)  backCounts",
-                "sum(case when state=6 then price else 0 end)  back_money"};
+                "sum(case when state=2 and ticking_state in(0,1)  then 1 else 0 end) notAwardCounts",
+                "sum(case when state=2 and ticking_state in(0,1)  then price else 0 end) notAwardPrice",
+                "sum(case when state=4 and ticking_state in(0,1)  then 1 else 0 end) awardCounts",
+                "sum(case when state=4 and ticking_state in(0,1)  then win_price else 0 end) awardPrice",
+                "sum(case when state=4 and ticking_state in(0,1)  then price else 0 end) awardBetPrice",
+                "sum(case when state=0 and ticking_state in(0,1) then 1 else 0 end) waitPrintCounts",
+                "sum(case when state=0 and ticking_state in(0,1) then price else 0 end) waitPrintPrice",
+                "sum(case when state=1 and ticking_state in(0,1)  then 1 else 0 end) waitAwardCounts",
+                "sum(case when state=1 and ticking_state in(0,1)  then price else 0 end) waitAwardPrice",
+                "sum(case when state=3 and ticking_state in(0,1)  then 1 else 0 end ) waitBounsCounts",
+                "sum(case when state=3 and ticking_state in(0,1)  then win_price else 0 end ) waitBounsPrice",
+                "sum(case when state=6 or ticking_state =2 then 1 else 0 end)  backCounts",
+                "sum(case when state=6 or ticking_state =2 then price else 0 end)  back_money"};
         //分页
         LambdaQueryWrapper<LotteryOrderDO> qw = new QueryWrapper<LotteryOrderDO>()
                 .select(sqlColum).lambda();
@@ -435,7 +435,7 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                     || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.BASKETBALL.getKey())
                     || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SIGLE_SFGG.getKey())
                     || StrUtil.equals(lotteryOrder.getType(), LotteryOrderTypeEnum.SINGLE.getKey())) {
-                List<LotteryTicketDO> ticketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, lotteryOrder.getOrderId()).orderByAsc(LotteryTicketDO::getTicketNo));
+                List<LotteryTicketDO> ticketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, lotteryOrder.getOrderId()).orderByAsc(LotteryTicketDO::getId));
                 if (CollectionUtil.isNotEmpty(ticketDOS)) {
                     lotteryOrderVO.setTicketList(ticketDOS);
                 }
@@ -810,10 +810,13 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                 List<LotteryTicketDO> ticketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, lotteryOrderDO.getOrderId()).eq(LotteryTicketDO::getTicketState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()));
                 if (!CollectionUtils.isEmpty(ticketDOS)) {
                     for (LotteryTicketDO ticketDO : ticketDOS) {
-                        ticketDO.setTicketState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
-                        ticketDO.setTicketingTime(new Date());
-                        ticketDO.setState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
-                        lotteryTicketMapper.updateById(ticketDO);
+                        //未退票的可以出票
+                        if (ticketDO.getTicketState() == 0) {
+                            ticketDO.setTicketState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
+                            ticketDO.setTicketingTime(new Date());
+                            ticketDO.setState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
+                            lotteryTicketMapper.updateById(ticketDO);
+                        }
                     }
                 }
             }
@@ -858,10 +861,13 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
             List<LotteryTicketDO> ticketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, lotteryOrderDO.getOrderId()).eq(LotteryTicketDO::getTicketState, LotteryOrderStateEnum.TO_BE_ISSUED.getKey()));
             if (!CollectionUtils.isEmpty(ticketDOS)) {
                 for (LotteryTicketDO ticketDO : ticketDOS) {
-                    ticketDO.setTicketState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
-                    ticketDO.setTicketingTime(new Date());
-                    ticketDO.setState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
-                    lotteryTicketMapper.updateById(ticketDO);
+                    //未退票的可以出票
+                    if (ticketDO.getTicketState() == 0) {
+                        ticketDO.setTicketState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
+                        ticketDO.setTicketingTime(new Date());
+                        ticketDO.setState(Integer.valueOf(LotteryOrderStateEnum.TO_BE_AWARDED.getKey()));
+                        lotteryTicketMapper.updateById(ticketDO);
+                    }
                 }
             }
         }
@@ -981,6 +987,15 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         if (null != order.getTransferType() && order.getTransferType() == TransferEnum.TransferIn.code) {
             String json = "已出|" + DateUtil.formatDateTime(order.getTicketingTime()) + "|" + (StringUtils.isBlank(order.getBill()) ? "" : order.getBill());
             redisService.set(order.getOrderId(), json, 864000L);
+        }
+        List<LotteryTicketDO> lotteryTicketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
+        for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
+            if (0 == lotteryTicketDO.getTicketState() && 0 == lotteryTicketDO.getState()) {
+                lotteryTicketDO.setTicketState(1);
+                lotteryTicketDO.setTicketingTime(new Date());
+                lotteryTicketDO.setState(1);
+                lotteryTicketMapper.updateById(lotteryTicketDO);
+            }
         }
         return new BaseVO();
     }

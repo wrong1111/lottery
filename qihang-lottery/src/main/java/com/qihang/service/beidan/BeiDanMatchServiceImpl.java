@@ -23,6 +23,7 @@ import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
 import com.qihang.domain.documentary.DocumentaryDO;
 import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.order.LotteryOrderDO;
+import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.domain.order.PayOrderDO;
 import com.qihang.domain.racingball.RacingBallDO;
 import com.qihang.domain.user.UserDO;
@@ -37,6 +38,7 @@ import com.qihang.mapper.beidan.BeiDanSfggMatchMapper;
 import com.qihang.mapper.documentary.DocumentaryMapper;
 import com.qihang.mapper.documentary.DocumentaryUserMapper;
 import com.qihang.mapper.order.LotteryOrderMapper;
+import com.qihang.mapper.order.LotteryTicketMapper;
 import com.qihang.mapper.order.PayOrderMapper;
 import com.qihang.mapper.racingball.RacingBallMapper;
 import com.qihang.mapper.user.UserMapper;
@@ -84,6 +86,9 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
 
     @Resource
     BeiDanSfggMatchMapper beiDanSfggMatchMapper;
+
+    @Resource
+    LotteryTicketMapper lotteryTicketMapper;
 
     @Override
     public CommonListVO<BeiDanVO> beiDanMatchList() {
@@ -343,12 +348,19 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
                     log.error("============胜负过关订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
                     continue;
                 }
-                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
-                BeiDanUtil.awardSchemeDetails(listVOList, resultMatch, bonusMap);
-                //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
-                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
-                //反向保存一下数据
-                order.setSchemeDetails(JSON.toJSONString(listVOList));
+//                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
+//                BeiDanUtil.awardSchemeDetails(listVOList, resultMatch, bonusMap);
+//                //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
+//                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
+//                //反向保存一下数据
+//                order.setSchemeDetails(JSON.toJSONString(listVOList));
+
+                List<LotteryTicketDO> lotteryOrderDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
+                double price = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
+                //修改lotteryTicket表中的状态
+                for (LotteryTicketDO ticketDO : lotteryOrderDOS) {
+                    lotteryTicketMapper.updateById(ticketDO);
+                }
                 //等于0相当于没有中奖
                 log.debug("=======>[北单胜负过关][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
                 if (price == 0) {
@@ -412,12 +424,22 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
                     log.error("============订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
                     continue;
                 }
-                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
-                BeiDanUtil.awardSchemeDetails(listVOList, resultMatch, bonusMap);
-                //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
-                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
-                //反向保存一下数据
-                order.setSchemeDetails(JSON.toJSONString(listVOList));
+
+                /***
+                 //改为从lotteryTicket表进行兑奖
+                 //                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
+                 //                BeiDanUtil.awardSchemeDetails(listVOList, resultMatch, bonusMap);
+                 //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
+                 double price = 0d;//listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
+                 //反向保存一下数据
+                 //order.setSchemeDetails(JSON.toJSONString(listVOList));
+                 **/
+                List<LotteryTicketDO> lotteryOrderDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
+                double price = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
+                //修改lotteryTicket表中的状态
+                for (LotteryTicketDO ticketDO : lotteryOrderDOS) {
+                    lotteryTicketMapper.updateById(ticketDO);
+                }
                 //等于0相当于没有中奖
                 log.debug("=======>[北单][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
                 if (price == 0) {

@@ -445,12 +445,21 @@ public class LotteryPipeline implements Pipeline {
                         sfggMatchDO.setHalfFullCourt(sffgg.getHalfFullCourt());
                         sfggMatchDO.setAward(sffgg.getAward());
                         sfggMatchDO.setBonusOdds(sffgg.getBonusOdds());
+                        sfggMatchDO.setHostWinOdds(sffgg.getHostWinOdds());
+                        sfggMatchDO.setVisitWinOdds(sffgg.getVisitWinOdds());
+                        beidanSfggMatchService.updateById(sfggMatchDO);
+                    } else {
+                        sfggMatchDO.setHostWinOdds(sffgg.getHostWinOdds());
+                        sfggMatchDO.setVisitWinOdds(sffgg.getVisitWinOdds());
+                        sffgg.setUpdateTime(new Date());
                         beidanSfggMatchService.updateById(sfggMatchDO);
                     }
+
                 }
             }
             if (update) {
                 //调用兑奖
+                beidanSfggMatchService.award();
             }
         }
     }

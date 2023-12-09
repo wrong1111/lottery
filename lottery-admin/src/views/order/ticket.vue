@@ -18,7 +18,9 @@
                 <span>{{it.visitingTeam}}</span>
               </el-col>
               <el-col :span="12"><span v-for="(it2,idx2) in it.ticketContentVOList">
-                  <span>{{it2.describe+"("+ it2.odds+")"}}</span>
+                  <span
+                    v-if="item.type ==1 && it2.mode==3">{{it2.describe+"["+it2.letball+"]"+"("+ it2.odds+")"}}</span>
+                  <span v-else>{{it2.describe+"("+ it2.odds+")"}}</span>
                 </span></el-col>
             </el-row>
             <el-row
@@ -83,8 +85,8 @@
         listTicket(this.orderId).then((res) => {
           if (res.success) {
             let arys = res.voList
-            arys.map((item)=>{
-                item.ticketContent = JSON.parse(item.ticketContent)
+            arys.map((item) => {
+              item.ticketContent = JSON.parse(item.ticketContent)
             })
             this.ticketCard = arys
           }
@@ -109,7 +111,7 @@
         }
       },
       revoke(data) {
-        console.log('revoke', data)
+        //console.log('revoke', data)
         this.$confirm('此操作将做退票处理, 是否继续?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
@@ -131,20 +133,52 @@
             }
           })
         }).catch(() => {
-          this.$message({
-            type: 'info',
-            message: '已取消'
-          });
+          // this.$message({
+          //   type: 'info',
+          //   message: '已取消'
+          // });
         });
       },
       edit(data) {
         console.log('edit', data)
-      },
-      handleClick(r, e) {
-        console.log(r, e)
-      },
+        this.$prompt('请输入调整的倍数必须小于或等于票面倍数', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            inputPattern: /\d+/,
+            inputErrorMessage: '数据格式不正确'
+          }).then(({
+              value
+            }) => {
+              // this.$message({
+              //   type: 'success',
+              //   message: '你的邮箱是: ' + value
+              // });
+              editTicketMulti(data.id, value).then((res) => {
+                  if (res.success) {
+                    this.$message({
+                      type: 'success',
+                      message: '调整倍数成功!'
+                    });
+                    this.getList()
+                  } else {
+                    this.$message({
+                      type: 'error',
+                      message: res.errorMsg
+                    });
+                    }
+                  })
+              }).catch(() => {
+              // this.$message({
+              //   type: 'info',
+              //   message: '取消输入'
+              // });
+            });
+          },
+          handleClick(r, e) {
+            console.log(r, e)
+          },
+      }
     }
-  }
 </script>
 
 <style scoped lang="scss">
@@ -166,9 +200,11 @@
     width: 560px;
     position: relative;
   }
+
   .revoke {
     background-color: lightgray;
   }
+
   .el-col {
     display: flex;
     justify-content: center;

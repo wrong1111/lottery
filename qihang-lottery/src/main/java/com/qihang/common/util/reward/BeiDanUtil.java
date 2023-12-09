@@ -1,6 +1,7 @@
 package com.qihang.common.util.reward;
 
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.qihang.common.util.CombinationUtil;
 import com.qihang.constant.Constant;
@@ -488,6 +489,77 @@ public class BeiDanUtil {
             setMaxodds(OddsList);
             setMinodds(OddsList);
         }
+    }
+
+    public static Double award(List<LotteryTicketDO> ticketDOList, Map<String, String> resultMap, Map<String, String> bonusMap) {
+        if (CollectionUtils.isEmpty(ticketDOList)) {
+            return 0d;
+        }
+        BigDecimal price = BigDecimal.ZERO;
+        for (LotteryTicketDO ticketDO : ticketDOList) {
+            List<TicketVO> ticketDTOList = JSONUtil.toList(ticketDO.getTicketContent(), TicketVO.class);
+            List<String> oddsList = new ArrayList<>();
+            boolean delayMatch = false;
+            for (TicketVO ticketVO : ticketDTOList) {
+                String awardResult = resultMap.get(ticketVO.getNumber());
+                //球队
+                //赛果 胜,3,3:0,上单,胜-胜
+                if ("延期".equals(awardResult)) {
+                    //此注本金还还。
+                    delayMatch = true;
+                    break;
+                } else {
+                    List<TicketContentVO> ticketContentVOList = ticketVO.getTicketContentVOList();
+                    for (TicketContentVO contentVO : ticketContentVOList) {
+                        getAwardDescript(contentVO, awardResult);
+                        if (contentVO.getShoted()) {
+                            oddsList.add(contentVO.getOdds());
+                        }
+                    }
+                }
+            }
+            //更新
+            ticketDO.setTicketContent(JSONUtil.toJsonStr(ticketDTOList));
+            if (delayMatch) {
+                //延期返本金
+                ticketDO.setWinPrice(ticketDO.getPrice());
+                if (ticketDO.getTicketState() != 2) {
+                    ticketDO.setState(3);
+                    price = price.add(ticketDO.getPrice());
+                }
+            } else if (ticketDTOList.size() == oddsList.size()) {
+                price = FootballUtil.sumItem(oddsList).multiply(BigDecimal.valueOf(1.3d));//不乘倍数，考虑倍数有减少行为，导致倍数为0
+                ticketDO.setWinPrice(price.setScale(2, RoundingMode.HALF_UP));
+                if (ticketDO.getTicketState() != 2) {
+                    ticketDO.setState(3);
+                    ticketDO.setWinPrice(price.multiply(BigDecimal.valueOf(ticketDO.getTimes())).setScale(2, RoundingMode.HALF_UP));
+                    price = price.add(ticketDO.getPrice());
+                }
+            } else {
+                ticketDO.setState(2);
+            }
+        }
+        return price.doubleValue();
+    }
+
+    private static String getAwardDescript(TicketContentVO contentVO, String award) {
+        ////赛果 胜,3,3:0,上单,胜-胜
+        //北单 0 让球胜平负，1 总进球 2比分 3上下单双 4 半全场  5 胜负过关
+        //只能返回一个中奖结果
+        String[] resultArys = StringUtils.split(award, ",");
+        for (String a : resultArys) {
+            //返本金
+            if ("-".equals(a)) {
+                return "1";
+            }
+            if ("7".equals(a)) {
+                a = "7+";
+            }
+            if (a.equals(contentVO.getDescribe())) {
+                contentVO.setShoted(true);
+            }
+        }
+        return "";
     }
 
     /**

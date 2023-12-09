@@ -1,6 +1,7 @@
 package com.qihang.common.util.reward;
 
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.qihang.common.util.CombinationUtil;
 import com.qihang.constant.Constant;
@@ -15,6 +16,7 @@ import com.qihang.domain.basketball.BasketballMatchDO;
 import com.qihang.domain.order.LotteryTicketDO;
 import com.qihang.domain.order.vo.TicketContentVO;
 import com.qihang.domain.order.vo.TicketVO;
+import com.qihang.reptile.LotteryProcessor;
 import com.qihang.service.racingball.RacingBallServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -1096,4 +1098,124 @@ public class BasketballUtil {
         return new String[]{idx2 > 0 ? result.substring(0, idx2) : result.substring(0, idx), result.substring(idx + 1, lastIdx), (idx2 > 0) ?
                 result.substring(idx2 + 1, lastIdx2) : ""};
     }
+
+    /**
+     * 按票 开奖
+     * 传比分进来
+     * 篮球比分，，主队在后 ，客队在前。
+     * 主队分+让球
+     */
+
+    public static double award(List<LotteryTicketDO> ticketDOList, Map<String, String> resultMap) {
+        if (CollectionUtils.isEmpty(ticketDOList)) {
+            return 0d;
+        }
+        BigDecimal price = BigDecimal.ZERO;
+        for (LotteryTicketDO ticketDO : ticketDOList) {
+            List<TicketVO> ticketDTOList = JSONUtil.toList(ticketDO.getTicketContent(), TicketVO.class);
+            List<String> oddsList = new ArrayList<>();
+            boolean delayMatch = false;
+            for (TicketVO ticketVO : ticketDTOList) {
+                String awardResult = resultMap.get(ticketVO.getNumber());
+                //球队
+                //赛果 负,胜,7,负-负,负其它
+                if ("延期".equals(awardResult)) {
+                    //此注本金还还。
+                    delayMatch = true;
+                    break;
+                } else {
+                    List<TicketContentVO> ticketContentVOList = ticketVO.getTicketContentVOList();
+                    for (TicketContentVO contentVO : ticketContentVOList) {
+                        getAwardDescript(contentVO, awardResult);
+                        if (contentVO.getShoted()) {
+                            oddsList.add(contentVO.getOdds());
+                        }
+                    }
+                }
+            }
+            //更新
+            ticketDO.setTicketContent(JSONUtil.toJsonStr(ticketDTOList));
+            if (delayMatch) {
+                //延期返本金
+                ticketDO.setWinPrice(ticketDO.getPrice());
+                if (ticketDO.getTicketState() != 2) {
+                    ticketDO.setState(3);
+                    price = price.add(ticketDO.getPrice());
+                }
+            } else if (ticketDTOList.size() == oddsList.size()) {
+                price = FootballUtil.sumItem(oddsList).multiply(BigDecimal.valueOf(2d));//不乘倍数，考虑倍数有减少行为，导致倍数为0
+                ticketDO.setWinPrice(price.setScale(2, RoundingMode.HALF_UP));
+                if (ticketDO.getTicketState() != 2) {
+                    ticketDO.setState(3);
+                    ticketDO.setWinPrice(price.multiply(BigDecimal.valueOf(ticketDO.getTimes())).setScale(2, RoundingMode.HALF_UP));
+                    price = price.add(ticketDO.getPrice());
+                }
+            } else {
+                ticketDO.setState(2);
+            }
+        }
+        return price.doubleValue();
+    }
+
+
+    /**
+     * 竞蓝  0 胜负 1 让分胜负 2 胜分差 3 大小分
+     * 主负,主负,客胜26+,1
+     *
+     * @param contentVO
+     * @param awardResult
+     * @return
+     */
+    private static String getAwardDescript(TicketContentVO contentVO, String awardResult) {
+        String[] resultArys = StringUtils.split(awardResult, ":");
+        Integer home = Integer.valueOf(resultArys[1]);
+        Integer vist = Integer.valueOf(resultArys[0]);
+        String r = "";
+        switch (contentVO.getMode()) {
+            case "0":
+                r = home > vist ? "主胜" : (home < vist ? "主负" : "主平");
+                if (contentVO.getDescribe().equals(r)) {
+                    contentVO.setShoted(true);
+                }
+                break;
+            case "1":
+                if (home + Double.valueOf(contentVO.getLetball()) > vist) {
+                    r = "让主胜";
+                } else if (home + Double.valueOf(contentVO.getLetball()) < vist) {
+                    r = "让主负";
+                } else {
+                    r = "让主平";
+                }
+                if (r.equals(contentVO.getDescribe())) {
+                    contentVO.setShoted(true);
+                }
+                break;
+            case "2":
+                int cha = Math.abs(home - vist);
+                if (home > vist) {
+                    //主胜
+                    r = "0" + ((cha % 5) + 1);
+                } else if (home < vist) {
+                    //客胜
+                    r = "1" + ((cha % 5) + 1);
+                }
+                r = LotteryProcessor.ARRAYS_MAP.get(r);
+                if (r.equals(contentVO.getDescribe())) {
+                    contentVO.setShoted(true);
+                }
+                break;
+            case "3":
+                if (home + vist > Double.valueOf(contentVO.getLetball())) {
+                    r = "大";
+                } else if (home + vist < Double.valueOf(contentVO.getLetball())) {
+                    r = "小";
+                }
+                if (r.equals(contentVO.getDescribe())) {
+                    contentVO.setShoted(true);
+                }
+                break;
+        }
+        return "";
+    }
+
 }

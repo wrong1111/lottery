@@ -267,6 +267,10 @@ public class ChangeServiceImpl implements IChangeService {
         if (StringUtils.isNotBlank(orderDO.getTransferOrderNo())) {
             return BaseVO.builder().errorMsg("订单已转出,单号:" + orderDO.getTransferOrderNo()).build();
         }
+        if (orderDO.getState().equals(LotteryOrderStateEnum.REFUND.getKey()) || orderDO.getState().equals(LotteryOrderStateEnum.REFUSE.getKey())
+                || orderDO.getTickingState() == 2) {
+            return BaseVO.builder().errorMsg("订单已经退票").success(false).build();
+        }
         String lotteryId = orderDO.getType();
         //北单胜负过关 特殊处理。
         if (LotteryOrderTypeEnum.SIGLE_SFGG.getKey().equals(lotteryId)) {
