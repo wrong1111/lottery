@@ -616,33 +616,38 @@
 			},
 			// 获取竞彩北单数据
 			fecthSoccerData() {
-				console.log(this.changeBall)
 				uni.showLoading();
 				if (this.changeBall == 0) {
 					beidansfggList().then(res => {
 						uni.hideLoading();
 						this.beidanList = res.voList
-						if (this.beidanList && this.beidanList.length > 0) {
-							this.issueNo = this.beidanList[0].beiDanMatchList[0].issueNo
+						if (res.voList && res.voList.length > 0) {
+							this.issueNo = res.voList[0].beiDanMatchList[0].issueNo
 						}
+						setTimeout(function() {
+							uni.hideLoading();
+						}, 0);
 					})
 					return
+				} else {
+					beidanList().then(res => {
+						this.beidanList = res.voList
+						console.log('beidan',res.voList)
+						if (res.voList && res.voList.length > 0) {
+							this.issueNo = res.voList[0].beiDanMatchList[0].issueNo
+						}
+						setTimeout(function() {
+							uni.hideLoading();
+						}, 0);
+					})
 				}
-				beidanList().then(res => {
-					this.beidanList = res.voList
-					if (this.beidanList && this.beidanList.length > 0) {
-						this.issueNo = this.beidanList[0].beiDanMatchList[0].issueNo
-					}
-					setTimeout(function() {
-						uni.hideLoading();
-					}, 0);
-				})
 			},
 			// 不同玩法对应投注
 			changeSelectBall(item) {
 				this.changeBall = item.index
 				this.selectItem = [];
 				this.count = "";
+				this.beidanList=[]
 				this.fecthSoccerData();
 			},
 			rightText() {
