@@ -337,6 +337,115 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
         return new BaseVO();
     }
 
+    @Override
+    public BaseVO openAwardRj(LotteryOrderDO order) {
+        //查询下注的列表
+        List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
+        //用戶下注列表
+        List<WinBurdenMatchDTO> winBurdenMatchList = new ArrayList<>();
+        //每场比赛出奖比赛列表
+        List<String> list = new ArrayList<>();
+        Boolean flag = true;
+        String moneyAward = "";
+        //期号
+        String issueNo = "";
+        for (RacingBallDO racingBallDO : racingBallList) {
+            //下注結果組成list
+            winBurdenMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), WinBurdenMatchDTO.class));
+            //只需要查询一次。
+            if (StringUtils.isBlank(issueNo)) {
+                WinBurdenMatchDO winBurdenMatch = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
+                issueNo = winBurdenMatch.getIssueNo();
+            }
+        }
+        //根据期号查询14场比赛赛果
+        List<WinBurdenMatchDO> winBurdenMatchDOList = winBurdenMatchMapper.selectList(new QueryWrapper<WinBurdenMatchDO>().lambda().eq(WinBurdenMatchDO::getIssueNo, issueNo));
+        for (WinBurdenMatchDO winBurdenMatchDO : winBurdenMatchDOList) {
+            moneyAward = winBurdenMatchDO.getMoneyAward();
+            //如果比赛还没有出结果直接跳出
+            if (StrUtil.isBlank(winBurdenMatchDO.getAward()) || StrUtil.isBlank(winBurdenMatchDO.getMoneyAward())) {
+                log.debug("======>[任九][待开奖] 订单:[{}] ,期号{},赛事[{}] 未开奖或奖金", order.getOrderId(), winBurdenMatchDO.getIssueNo(), winBurdenMatchDO.getNumber());
+                flag = false;
+                break;
+            }
+            list.add(winBurdenMatchDO.getAward());
+        }
+        double price = 0d;
+        if (flag) {
+            //倍数
+            Integer multiple = racingBallList.get(0).getTimes();
+            //1 2 等奖每注奖金
+            List<Double> moneyAwardList = Convert.toList(Double.class, moneyAward);
+            //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
+            price = RenJiuUtil.award(winBurdenMatchList, multiple, list, moneyAwardList.get(2));
+            //等于0相当于没有中奖
+            log.debug("======>[任九][待开奖] 订单[{}],中奖金额[{}]", order.getOrderId(), price);
+            if (price == 0) {
+                log.debug("======>[任九][未中奖] 订单[{}],未中奖 ", order.getOrderId());
+                order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
+            } else {
+                log.debug("======>[任九][已中奖] 订单[{}],已中奖 {} ", order.getOrderId(), price);
+                //已经中奖
+                documentaryCommissionHelper.processCommiss("任九", order, price);
+            }
+            order.setUpdateTime(new Date());
+            lotteryOrderMapper.updateById(order);
+        } else {
+            price = -1;
+        }
+        return BaseVO.builder().success(true).errorMsg("奖金[" + price + "]").build();
+    }
+
+    @Override
+    public BaseVO openAward(LotteryOrderDO order) {
+        //查询下注的列表
+        List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
+        //用戶下注列表
+        List<WinBurdenMatchDTO> winBurdenMatchList = new ArrayList<>();
+        //每场比赛出奖比赛列表
+        List<String> list = new ArrayList<>();
+
+        Boolean flag = true;
+        String moneyAward = "";
+        for (RacingBallDO racingBallDO : racingBallList) {
+            //下注結果組成list
+            winBurdenMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), WinBurdenMatchDTO.class));
+            //查询下注对应的比赛赛果
+            WinBurdenMatchDO winBurdenMatch = winBurdenMatchMapper.selectById(racingBallDO.getTargetId());
+            moneyAward = winBurdenMatch.getMoneyAward();
+            //如果比赛还没有出结果直接跳出
+            if (StrUtil.isBlank(winBurdenMatch.getAward()) || StrUtil.isBlank(winBurdenMatch.getMoneyAward())) {
+                log.error("======>[胜负彩][待开奖] 订单[{}] 期号[{}]  赛事[{}] 未出赛果或奖金 ", order.getOrderId(), winBurdenMatch.getIssueNo(), winBurdenMatch.getNumber());
+                flag = false;
+                break;
+            }
+            list.add(winBurdenMatch.getAward());
+        }
+        double price = 0d;
+        if (flag) {
+            //倍数
+            Integer multiple = racingBallList.get(0).getTimes();
+            //1 2 等奖每注奖金
+            List<Double> moneyAwardList = Convert.toList(Double.class, moneyAward);
+            //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
+            price = WinBurdenUtil.award(winBurdenMatchList, multiple, list, moneyAwardList.get(0), moneyAwardList.get(1));
+            //等于0相当于没有中奖
+            log.error("======>[胜负彩][待开奖] 订单[{}] 中奖金额[{}] ", order.getOrderId(), price);
+            if (price == 0) {
+                log.error("======>[胜负彩][待开奖] 订单[{}] 未中奖 ", order.getOrderId(), price);
+                order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
+            } else {
+                log.error("======>[胜负彩][已中奖] 订单[{}]   ", order.getOrderId());
+                documentaryCommissionHelper.processCommiss("胜负彩", order, price);
+            }
+            order.setUpdateTime(new Date());
+            lotteryOrderMapper.updateById(order);
+        } else {
+            price = -1;
+        }
+        return BaseVO.builder().success(true).errorMsg("奖金[" + price + "]").build();
+    }
+
     private void addRecord(LotteryOrderDO lotteryOrder) {
         PayOrderDO payOrder = new PayOrderDO();
         payOrder.setOrderId(OrderNumberGenerationUtil.getOrderId());

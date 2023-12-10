@@ -390,7 +390,6 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
             }
 
         }
-
         return new BaseVO();
 
     }
@@ -414,10 +413,22 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
                 break;
             }
             calculation(permutationAwardDO);
-
         }
         return new BaseVO();
     }
+
+    @TenantIgnore
+    @Override
+    public BaseVO calculation(LotteryOrderDO order) {
+        Integer issueNo = order.getStageNumber();
+        PermutationAwardDO permutationAwardDO = permutationAwardMapper.selectOne(new QueryWrapper<PermutationAwardDO>().lambda().eq(PermutationAwardDO::getType, order.getType()).eq(PermutationAwardDO::getStageNumber, issueNo).orderByDesc(PermutationAwardDO::getCreateTime));
+        if (null == permutationAwardDO) {
+            log.error(" 开奖 彩种[{}],name:[{}] 期号[{}] 没有开奖数据", order.getType(), LotteryOrderTypeEnum.valueOFS(order.getType()).getValue(), issueNo);
+            return BaseVO.builder().success(false).errorMsg("没有开奖数据").build();
+        }
+        return calculation(permutationAwardDO);
+    }
+
 
     @TenantIgnore
     @Override

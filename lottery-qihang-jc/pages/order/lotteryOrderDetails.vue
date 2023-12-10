@@ -577,7 +577,7 @@
 						</uni-tr>
 						<!-- 表格数据行 -->
 						<tbody v-for="(item,index) in lotteryOrder.ticketList" :key="index">
-							<uni-tr :class="item.ticketState==1?'revoke':''">
+							<uni-tr :class="item.ticketState==2?'revoke':''">
 								<uni-td align="center">{{item.betType+'串一'}}</uni-td>
 								<uni-td align="center">
 									<view @click="openTicket(index,item)"
@@ -1006,7 +1006,7 @@
 		color: #1afa29;
 	}
 	.revoke{
-		color: #909399;
+		background-color: #909399;
 	}
 	.paiban2 {
 		display: flex;

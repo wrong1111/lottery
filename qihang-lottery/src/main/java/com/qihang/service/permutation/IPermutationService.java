@@ -26,7 +26,7 @@ public interface IPermutationService extends IService<PermutationDO> {
      * @param type
      * @return
      */
-    BaseVO placeOrder(List<PlaceOrderDTO> placeList, Integer userId, String type,String issueNo);
+    BaseVO placeOrder(List<PlaceOrderDTO> placeList, Integer userId, String type, String issueNo);
 
 
     /**
@@ -55,6 +55,8 @@ public interface IPermutationService extends IService<PermutationDO> {
      * @return
      */
     BaseVO calculation(String type);
+
+    BaseVO calculation(LotteryOrderDO orderDO);
 
     /**
      * 计算用户中奖结果

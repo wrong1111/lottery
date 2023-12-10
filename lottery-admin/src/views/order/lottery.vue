@@ -220,18 +220,18 @@
                 </el-col>
                 <el-col :span="24">
                   <el-form-item>
-                    <template v-if="scope.row.state === '0'">
-                      <el-button size="mini" type="success" @click="ticketSigle(scope.row)">出票</el-button>
+                    <template v-if="scope.row.tickingState === '0'">
+                      <el-button size="mini" type="success" @click="ticketSigle(scope.row)" >出票</el-button>
                       <!-- <el-button size="mini" type="warning" @click="refuseSigle(scope.row)">拒绝</el-button> -->
                     </template>
-                    <el-button size="mini" type="danger" @click="retreatSigle(scope.row)">退票</el-button>
+                    <el-button size="mini" type="danger" @click="retreatSigle(scope.row)" v-if="scope.row.tickingState!=2">退票</el-button>
                     <el-button size="mini" type="primary" @click="showInfo(scope.row)">详情</el-button>
-                    <el-button size="mini" type="success" @click="upload(scope.row)">上传票据</el-button>
+                    <el-button size="mini" type="success" @click="upload(scope.row)" v-if="scope.row.tickingState!=2">上传票据</el-button>
                     <template v-if="scope.row.transferType==null">
-                      <el-button size="mini" type="primary" @click="changeSigle(scope.row.id)">转单</el-button>
+                      <el-button size="mini" type="primary" @click="changeSigle(scope.row.id)" v-if="scope.row.tickingState!=2">转单</el-button>
                     </template>
                     <template v-if="scope.row.transferType==1">
-                      <el-button size="mini" type="success" @click="syncChangeState(scope.row.id)">同步转单状态</el-button>
+                      <el-button size="mini" type="success" @click="syncChangeState(scope.row.id)" v-if="scope.row.tickingState!=2">同步转单状态</el-button>
                     </template>
                   </el-form-item>
                 </el-col>

@@ -14,6 +14,7 @@ import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.domain.beidan.BeiDanMatchDO;
 import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
+import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.enumeration.ball.BettingStateEnum;
 import com.qihang.mapper.beidan.BeiDanSfggMatchMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -94,6 +95,11 @@ public class IBeidanSfggMatchServiceImpl extends ServiceImpl<BeiDanSfggMatchMapp
 
     @Override
     public BaseVO award() {
+        return null;
+    }
+
+    @Override
+    public BaseVO openAward(LotteryOrderDO orderDO) {
         return null;
     }
 }

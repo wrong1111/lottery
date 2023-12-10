@@ -111,4 +111,6 @@ public interface ILotteryOrderService extends IService<LotteryOrderDO> {
     BaseVO editMultiTicket(Integer ticketId, Integer multi);
 
     CommonListVO<LotteryTicketDO> ticketByOrderId(String orderId);
+
+    BaseVO openAward(Integer id);
 }

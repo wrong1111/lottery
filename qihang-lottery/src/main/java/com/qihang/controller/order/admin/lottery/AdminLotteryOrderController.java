@@ -122,4 +122,19 @@ public class AdminLotteryOrderController {
     public CommonListVO<LotteryTicketDO> ticketByOrderId(@PathVariable String orderId) {
         return lotteryOrderService.ticketByOrderId(orderId);
     }
+
+    @Log(title = "开奖")
+    @PostMapping("/award/{id}")
+    @ApiOperation("单个开奖 接口")
+    public BaseVO award(@PathVariable("id") Integer id) {
+        return lotteryOrderService.openAward(id);
+    }
+
+    @Log(title = "开奖")
+    @PostMapping("/award/batch")
+    @ApiOperation("开奖 接口")
+    public BaseVO awardBatch() {
+        return lotteryOrderService.openAward(null);
+    }
+
 }

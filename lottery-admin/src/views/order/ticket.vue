@@ -3,7 +3,7 @@
     <el-card :class="item.ticketState==2?'box-card revoke':'box-card'" v-for="(item,index) in ticketCard">
       <template slot-scope="scope">
         <div class="clearfix">
-          <span>第<span class="red" style="font-size:2em;">{{index+1}}</span>票 注数：{{item.bets}} 倍数: <span class="blue"
+          <span>第<span class="red" style="font-size:2em;">{{item.ticketNo}}</span>票 注数：{{item.bets}} 倍数: <span class="blue"
               style="font-size:1em;">{{item.times}}</span> 金额:
             <span class="red" style="font-size: 18px;font-weight: bold;">{{item.price}}</span>
             <span style="margin-left: 40px;">共{{ticketCard.length}}票</span>
@@ -42,7 +42,7 @@
               </el-col>
               <el-col :span="12">
                 <el-button type="success" icon="el-icon-takeaway-box" size="mini" plain
-                  v-if="!(item.ticketState ==2||item.state==5)" @click="edit(item)">调整倍数</el-button>
+                  v-if="!(item.ticketState ==2||item.state==5) && item.times>1" @click="edit(item)">调整倍数</el-button>
               </el-col>
 
             </el-row>

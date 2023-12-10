@@ -343,9 +343,9 @@ public class LotteryProcessor implements PageProcessor {
                     //footballMatch.setVisitingTeam((nodes.get(i).css(".text_l a", "text").toString()).replace(" ", ""));
                     String str = nodes.get(i).css("td:nth-child(7)", "text").toString();
                     String result = nodes.get(i).css("td:nth-child(18)", "text").toString();
-                    result = result.substring(0, 1) + "-" + result.substring(1, 2);
-                    footballMatch.setAward(nodes.get(i).css("td:nth-child(12)", "text").toString() + "," + nodes.get(i).css("td:nth-child(9)", "text").toString() + "," + nodes.get(i).css("td:nth-child(15)", "text").toString() + "," + result + "," + str.substring(str.lastIndexOf(")") + 1).trim());
-                    footballMatch.setHalfFullCourt(StrUtil.join(",", str.split(" ")));
+                    String r = result.substring(0, 1) + "-" + result.substring(1, 2);
+                    footballMatch.setAward((nodes.get(i).css("td:nth-child(12)", "text").toString() + "," + nodes.get(i).css("td:nth-child(9)", "text").toString() + "," + nodes.get(i).css("td:nth-child(15)", "text").toString() + "," + r + "," + str.substring(str.lastIndexOf(")") + 1)).replaceAll(" ",""));
+                    footballMatch.setHalfFullCourt(str.split(" ")[1]);
                     footballMatchList.add(footballMatch);
                 }
             } catch (Exception e) {

@@ -92,22 +92,22 @@ public class SpiderRunner {
      */
     public void runHour() {
         Spider.create(new LotteryProcessor()).setDownloader(downloaderA()).addUrl(
-//                        CrawlingAddressConstant.URL1 //足彩比赛
-//                        , CrawlingAddressConstant.URL4 // 篮彩比赛
-//                        , CrawlingAddressConstant.URL8 //北京单场
-//                        , CrawlingAddressConstant.URL9 //北京单场 进球
-//                        , CrawlingAddressConstant.URL10 //北京单场 上下单双
-//                        , CrawlingAddressConstant.URL11 //北京单场 比分
-//                        , CrawlingAddressConstant.URL12 //北京单场 半全场进球
-//                        , CrawlingAddressConstant.URL18 //胜负彩比赛
-//                        , CrawlingAddressConstant.URL3 //足彩对局分析
-//                        , CrawlingAddressConstant.URL5 //篮球对局分析
-//                        , CrawlingAddressConstant.URL15 //北单分析
-                         CrawlingAddressConstant.URL_BD_SFGG //北单 胜负过关
+                        CrawlingAddressConstant.URL1 //足彩比赛
+                        , CrawlingAddressConstant.URL4 // 篮彩比赛
+                        , CrawlingAddressConstant.URL8 //北京单场
+                        , CrawlingAddressConstant.URL9 //北京单场 进球
+                        , CrawlingAddressConstant.URL10 //北京单场 上下单双
+                        , CrawlingAddressConstant.URL11 //北京单场 比分
+                        , CrawlingAddressConstant.URL12 //北京单场 半全场进球
+                        , CrawlingAddressConstant.URL18 //胜负彩比赛
+                        , CrawlingAddressConstant.URL3 //足彩对局分析
+                        , CrawlingAddressConstant.URL5 //篮球对局分析
+                        , CrawlingAddressConstant.URL15 //北单分析
+                        , CrawlingAddressConstant.URL_BD_SFGG //北单 胜负过关
                 ).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000)))
                 .addPipeline(lotteryPipeline).runAsync();
-//        sfcNext();
-//        footballNext();
+        sfcNext();
+        footballNext();
     }
 
     /*
@@ -145,7 +145,8 @@ public class SpiderRunner {
     public void runpre() {
         String preday = DateUtil.format(DateUtils.addDays(new Date(), -1), "yyyy-MM-dd");
         Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL6 + "?d=" + preday //足球开奖
-                // , CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
+                //, CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
+                , CrawlingAddressConstant.URL4 // 篮彩比赛
                 , CrawlingAddressConstant.URL13 + "?d=" + preday //北单开奖
                 , CrawlingAddressConstant.URL14 + "&date=" + preday //篮球大小分查询
         ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
@@ -160,6 +161,8 @@ public class SpiderRunner {
     public void run() {
         Spider.create(new LotteryProcessor()).addUrl(
                 CrawlingAddressConstant.URL6 //足球开奖
+                //, CrawlingAddressConstant.URL7
+                , CrawlingAddressConstant.URL4 // 篮彩比赛中获取
                 , CrawlingAddressConstant.URL19 //胜负彩开奖
                 , CrawlingAddressConstant.URL13 //北单开奖
                 , CrawlingAddressConstant.URL14 //篮球大小分查询

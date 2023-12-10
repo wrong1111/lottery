@@ -7,6 +7,7 @@ import com.qihang.controller.basketball.vo.BasketballVO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.domain.basketball.BasketballMatchDO;
+import com.qihang.domain.order.LotteryOrderDO;
 
 
 /**
@@ -23,7 +24,6 @@ public interface IBasketballMatchService extends IService<BasketballMatchDO> {
     CommonListVO<BasketballVO> basketballMatchList();
 
 
-
     /**
      * 计算 组 注 预测金额
      *
@@ -38,4 +38,6 @@ public interface IBasketballMatchService extends IService<BasketballMatchDO> {
      * @return
      */
     BaseVO award();
+
+    BaseVO openAward(LotteryOrderDO orderDO);
 }

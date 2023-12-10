@@ -6,6 +6,7 @@ import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.controller.winburden.vo.WinBurdenVO;
+import com.qihang.domain.order.LotteryOrderDO;
 import com.qihang.domain.winburden.WinBurdenMatchDO;
 
 /**
@@ -42,4 +43,8 @@ public interface IWinBurdenMatchService extends IService<WinBurdenMatchDO> {
      * @return
      */
     BaseVO renJiuAward();
+
+    BaseVO openAwardRj(LotteryOrderDO orderDO);
+
+    BaseVO openAward(LotteryOrderDO orderDO);
 }

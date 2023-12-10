@@ -7,6 +7,7 @@ import com.qihang.controller.beidan.vo.BeiDanSfggVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.domain.beidan.BeiDanSFGGMatchDO;
+import com.qihang.domain.order.LotteryOrderDO;
 
 public interface IBeidanSfggMatchService extends IService<BeiDanSFGGMatchDO> {
 
@@ -27,4 +28,6 @@ public interface IBeidanSfggMatchService extends IService<BeiDanSFGGMatchDO> {
     BallCalculationVO calculation(BallCalculationDTO ballCalculation);
 
     BaseVO award();
+
+    BaseVO openAward(LotteryOrderDO orderDO);
 }

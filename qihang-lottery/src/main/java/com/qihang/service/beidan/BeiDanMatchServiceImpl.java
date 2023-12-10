@@ -302,6 +302,146 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
         return new BaseVO();
     }
 
+    @Override
+    public BaseVO openAward(LotteryOrderDO order) {
+        //查询下注的列表
+        List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
+        //用戶下注列表
+        List<BeiDanMatchDTO> beiDanMatchList = new ArrayList<>();
+        //每场比赛出奖比赛列表
+        List<String> list = new ArrayList<>();
+        //出奖赔率
+        List<String> bonusOddsList = new ArrayList<>();
+        Boolean flag = true;
+        Map<String, String> resultMatch = new HashMap<>();
+        Map<String, String> bonusMap = new HashMap<>();
+        for (RacingBallDO racingBallDO : racingBallList) {
+            //下注結果組成list
+            beiDanMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), BeiDanMatchDTO.class));
+            //查询下注对应的比赛赛果
+            BeiDanMatchDO beiDanMatch = beiDanMatchMapper.selectById(racingBallDO.getTargetId());
+            //如果比赛和赔率还没有出结果直接跳出 由于赔率不是同时出的，所有也需要做如下判断处理
+            if (StrUtil.isBlank(beiDanMatch.getAward()) || beiDanMatch.getBonusOdds().indexOf("-") != -1) {
+                log.debug("=======>[北单][待开奖] 订单 [{}] 赛事[{}]未出赛果 或赔率 ", order.getOrderId(), beiDanMatch.getNumber());
+                flag = false;
+                break;
+            }
+            list.add(beiDanMatch.getAward());
+            bonusOddsList.add(beiDanMatch.getBonusOdds());
+            resultMatch.put(beiDanMatch.getNumber(), beiDanMatch.getAward());
+            bonusMap.put(beiDanMatch.getNumber(), beiDanMatch.getBonusOdds());
+        }
+        double price = 0d;
+        if (flag) {
+            //对schemeDetails兑奖
+//            if (StringUtils.isBlank(order.getSchemeDetails())) {
+//                log.error("============订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
+//                continue;
+//            }
+
+            /***
+             //改为从lotteryTicket表进行兑奖
+             //                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
+             //                BeiDanUtil.awardSchemeDetails(listVOList, resultMatch, bonusMap);
+             //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
+             double price = 0d;//listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
+             //反向保存一下数据
+             //order.setSchemeDetails(JSON.toJSONString(listVOList));
+             **/
+            List<LotteryTicketDO> lotteryOrderDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
+            price = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
+            //修改lotteryTicket表中的状态
+            for (LotteryTicketDO ticketDO : lotteryOrderDOS) {
+                lotteryTicketMapper.updateById(ticketDO);
+            }
+            //等于0相当于没有中奖
+            log.debug("=======>[北单][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
+            if (price == 0) {
+                log.debug("=======>[北单][未中奖] 订单[{}] 未中奖  ", order.getOrderId());
+                order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
+            } else {
+                //已经中奖
+                //给订单分佣处理。
+                documentaryCommissionHelper.processCommiss("北单", order, price);
+            }
+            order.setUpdateTime(new Date());
+            lotteryOrderMapper.updateById(order);
+            log.debug("=======>[北单]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), price);
+        } else {
+            price = -1;
+
+        }
+        return BaseVO.builder().success(true).errorMsg("奖金[" + price + "]").build();
+    }
+
+    @Override
+    public BaseVO openAwardSfgg(LotteryOrderDO order) {
+        //查询下注的列表
+        List<RacingBallDO> racingBallList = racingBallMapper.selectBatchIds(Convert.toList(Integer.class, order.getTargetIds()));
+        //用戶下注列表
+        List<BeiDanMatchDTO> beiDanMatchList = new ArrayList<>();
+        //每场比赛出奖比赛列表
+        List<String> list = new ArrayList<>();
+        //出奖赔率
+        List<String> bonusOddsList = new ArrayList<>();
+        Boolean flag = true;
+        Map<String, String> resultMatch = new HashMap<>();
+        Map<String, String> bonusMap = new HashMap<>();
+        for (RacingBallDO racingBallDO : racingBallList) {
+            //下注結果組成list
+            beiDanMatchList.add(JSONUtil.toBean(racingBallDO.getContent(), BeiDanMatchDTO.class));
+            //查询下注对应的比赛赛果
+            BeiDanSFGGMatchDO beiDanMatch = beiDanSfggMatchMapper.selectById(racingBallDO.getTargetId());
+            //如果比赛和赔率还没有出结果直接跳出 由于赔率不是同时出的，所有也需要做如下判断处理
+            if (StrUtil.isBlank(beiDanMatch.getAward()) || beiDanMatch.getBonusOdds().indexOf("-") != -1) {
+                log.debug("=======>[北单胜负过关][待开奖] 订单 [{}] 赛事[{}]未出赛果 或赔率 ", order.getOrderId(), beiDanMatch.getNumber());
+                flag = false;
+                break;
+            }
+            list.add(beiDanMatch.getAward());
+            bonusOddsList.add(beiDanMatch.getBonusOdds());
+            resultMatch.put(beiDanMatch.getNumber(), beiDanMatch.getAward());
+            bonusMap.put(beiDanMatch.getNumber(), beiDanMatch.getBonusOdds());
+        }
+        double price = 0d;
+        if (flag) {
+            //对schemeDetails兑奖
+//            if (StringUtils.isBlank(order.getSchemeDetails())) {
+//                log.error("============胜负过关订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
+//                continue;
+//            }
+//                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
+//                BeiDanUtil.awardSchemeDetails(listVOList, resultMatch, bonusMap);
+//                //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
+//                double price = listVOList.stream().filter(item -> item.isAward()).mapToDouble(item -> Double.valueOf(item.getMoney())).sum();
+//                //反向保存一下数据
+//                order.setSchemeDetails(JSON.toJSONString(listVOList));
+
+            List<LotteryTicketDO> lotteryOrderDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
+            price = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
+            //修改lotteryTicket表中的状态
+            for (LotteryTicketDO ticketDO : lotteryOrderDOS) {
+                lotteryTicketMapper.updateById(ticketDO);
+            }
+            //等于0相当于没有中奖
+            log.debug("=======>[北单胜负过关][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
+            if (price == 0) {
+                log.debug("=======>[北单胜负过关][未中奖] 订单[{}] 未中奖  ", order.getOrderId());
+                order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
+            } else {
+                //已经中奖
+                //给订单分佣处理。
+                documentaryCommissionHelper.processCommiss("北单胜负过关", order, price);
+            }
+            order.setUpdateTime(new Date());
+            lotteryOrderMapper.updateById(order);
+            log.debug("=======>[北单胜负过关]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), price);
+        } else {
+            price = -1;
+        }
+        return BaseVO.builder().success(true).errorMsg("奖金[" + price + "]").build();
+    }
+
     private void awardBeidanSfgg() {
         //查询北单已经下注的订单列表
         List<LotteryOrderDO> orderList = lotteryOrderMapper.selectList(new QueryWrapper<LotteryOrderDO>().lambda().eq(LotteryOrderDO::getState, LotteryOrderStateEnum.TO_BE_AWARDED.getKey()).eq(LotteryOrderDO::getType, LotteryOrderTypeEnum.SIGLE_SFGG.getKey()));

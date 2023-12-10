@@ -7,6 +7,7 @@ import com.qihang.controller.football.vo.FootballVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
 import com.qihang.domain.football.FootballMatchDO;
+import com.qihang.domain.order.LotteryOrderDO;
 
 
 /**
@@ -38,5 +39,7 @@ public interface IFootballMatchService extends IService<FootballMatchDO> {
      * @return
      */
     BaseVO award();
+
+    BaseVO openAward(LotteryOrderDO orderDO);
 
 }

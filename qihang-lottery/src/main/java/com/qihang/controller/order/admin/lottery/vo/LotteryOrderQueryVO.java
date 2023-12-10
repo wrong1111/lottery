@@ -95,4 +95,6 @@ public class LotteryOrderQueryVO extends PageDTO {
     @ApiModelProperty(value = "退票金额")
     BigDecimal revokePrice;
 
+    @ApiModelProperty(value = "0 待出 1 已出 2 退票")
+    Integer tickingState;
 }

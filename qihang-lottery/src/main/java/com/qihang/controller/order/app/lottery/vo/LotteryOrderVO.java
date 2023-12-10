@@ -97,7 +97,9 @@ public class LotteryOrderVO extends BaseVO {
 
     Integer winCounts;
 
+    @ApiModelProperty("0 复式，1 奖金优化")
     Integer betType;
-
+    @ApiModelProperty("出票状态 0 待出 1 已出 2 退票")
+    Integer tickingState;
     List<LotteryTicketDO> ticketList;
 }
