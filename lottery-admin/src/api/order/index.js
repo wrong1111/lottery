@@ -100,3 +100,16 @@ export function listTicket(ticketId) {
     method: 'get'
   })
 }
+
+export function awardSigle(ticketId) {
+  return request({
+    url: '/admin/lottery/order/award/'+ticketId,
+    method: 'post'
+  })
+}
+export function awardBatch() {
+  return request({
+    url: '/admin/lottery/order/award/batch',
+    method: 'post'
+  })
+}

@@ -144,9 +144,10 @@ public class SpiderRunner {
      * */
     public void runpre() {
         String preday = DateUtil.format(DateUtils.addDays(new Date(), -1), "yyyy-MM-dd");
-        Spider.create(new LotteryProcessor()).addUrl(CrawlingAddressConstant.URL6 + "?d=" + preday //足球开奖
-                //, CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
-                , CrawlingAddressConstant.URL4 // 篮彩比赛
+        Spider.create(new LotteryProcessor()).addUrl(
+                CrawlingAddressConstant.URL6 + "?d=" + preday //足球开奖
+                // , CrawlingAddressConstant.URL7 + "?d=" + preday//篮球开奖
+                , CrawlingAddressConstant.URL4 + "&date=" + preday // 篮彩比赛
                 , CrawlingAddressConstant.URL13 + "?d=" + preday //北单开奖
                 , CrawlingAddressConstant.URL14 + "&date=" + preday //篮球大小分查询
         ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).thread(5).addPipeline(lotteryPipeline).runAsync();
@@ -161,7 +162,6 @@ public class SpiderRunner {
     public void run() {
         Spider.create(new LotteryProcessor()).addUrl(
                 CrawlingAddressConstant.URL6 //足球开奖
-                //, CrawlingAddressConstant.URL7
                 , CrawlingAddressConstant.URL4 // 篮彩比赛中获取
                 , CrawlingAddressConstant.URL19 //胜负彩开奖
                 , CrawlingAddressConstant.URL13 //北单开奖

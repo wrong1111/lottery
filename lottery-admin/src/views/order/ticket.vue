@@ -18,9 +18,9 @@
                 <span>{{it.visitingTeam}}</span>
               </el-col>
               <el-col :span="12"><span v-for="(it2,idx2) in it.ticketContentVOList">
-                  <span
-                    v-if="item.type ==1 && it2.mode==3">{{it2.describe+"["+it2.letball+"]"+"("+ it2.odds+")"}}</span>
-                  <span v-else>{{it2.describe+"("+ it2.odds+")"}}</span>
+                  <span :class="it2.shoted?'red':''"
+                    v-if="item.type ==1 && it2.mode==3" >{{it2.describe+"["+it2.letball+"]"+"("+ it2.odds+")"}}</span>
+                  <span v-else :class="it2.shoted?'red':''">{{it2.describe+"("+ it2.odds+")"}}</span>
                 </span></el-col>
             </el-row>
             <el-row
@@ -42,7 +42,7 @@
               </el-col>
               <el-col :span="12">
                 <el-button type="success" icon="el-icon-takeaway-box" size="mini" plain
-                  v-if="!(item.ticketState ==2||item.state==5) && item.times>1" @click="edit(item)">调整倍数</el-button>
+                  v-if="(item.state==0||item.state==1) && item.times>1" @click="edit(item)">调整倍数</el-button>
               </el-col>
 
             </el-row>

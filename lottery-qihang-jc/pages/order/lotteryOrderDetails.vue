@@ -254,7 +254,7 @@
 							<uni-th width="10" align="center">场次</uni-th>
 							<uni-th width="100" align="center">主队/客队</uni-th>
 							<uni-th width="65" align="center">投注内容</uni-th>
-							<uni-th width="50" align="center">赛果<br>(全/半)</uni-th>
+							<uni-th width="50" align="center">赛果</uni-th>
 						</uni-tr>
 						<!-- 表格数据行 -->
 						<uni-tr v-for="(record,index) in lotteryOrder.ballInfoList" :key="index">
@@ -271,8 +271,8 @@
 									{{notLet.describe}}({{notLet.odds}})<br>
 								</span>
 
-								<span :style="record.halfFullCourt!=undefined&&lets.describe==(Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)>Number(record.halfFullCourt.split(',')[1].split(':')[1])?'胜'
-								:Number(record.halfFullCourt.split(',')[1].split(':')[0])+Number(record.letBall)<Number(record.halfFullCourt.split(',')[1].split(':')[1])?'负'
+								<span :style="record.halfFullCourt!=undefined&&lets.describe==(Number(record.halfFullCourt.split(':')[0])+Number(record.letBall)>Number(record.halfFullCourt.split(':')[1])?'胜'
+								:Number(record.halfFullCourt.split(':')[0])+Number(record.letBall)<Number(record.halfFullCourt.split(':')[1])?'负'
 								:'平')?'color:#FF3F43':''" v-for="(lets,index) in record.content.letOddsList" v-if="lets.active">
 									让{{lets.describe}}({{lets.odds}})<br>
 								</span>
@@ -291,7 +291,7 @@
 							</uni-td>
 							<uni-td align="center">
 								<span v-if="record.halfFullCourt!=undefined">
-									{{record.halfFullCourt.split(',')[1]}}<br>半{{record.halfFullCourt.split(',')[0]}}
+									{{record.halfFullCourt}}
 								</span>
 							</uni-td>
 						</uni-tr>
@@ -594,7 +594,10 @@
 								<uni-td align="center">
 									{{item.times}}
 								</uni-td>
-								<uni-td align="center">	{{item.forecast}}</uni-td>
+								<uni-td align="center">
+									<span v-if="item.ticketState ==1 && item.winPrice!=null && item.winPrice>0" class="red">{{item.winPrice}}</span>
+									<span v-else>{{item.forecast}}</span>
+									</uni-td>
 							</uni-tr>
 							
 							<uni-tr v-if="item.isShow" style="background: #FAF9DE">
@@ -612,8 +615,8 @@
 								{{data.visitingTeam}}	
 								</uni-td>
 								<uni-td align="center" colspan="2"><span v-for="(it,i) in data.ticketContentVOList" style="margin-left:5px">
-								<span v-if="item.type ==1 && it.mode==3">{{it.describe +'['+it.letball+']'+'('+it.odds+')'}}</span>
-								<span v-else>{{it.describe +'('+it.odds+')'}}</span>
+								<span v-if="item.type ==1 && it.mode==3" :class="(typeof(it.shoted)!=undefined && it.shoted)?'red':''">{{it.describe +'['+it.letball+']'+'('+it.odds+')'}}</span>
+								<span v-else :class="(typeof(it.shoted)!=undefined && it.shoted)?'red':''">{{it.describe +'('+it.odds+')'}}</span>
 								</span></uni-td>
 							</uni-tr>
 						</tbody>
@@ -920,7 +923,7 @@
 							item.ticketContent = JSON.parse(item.ticketContent)
 						})
 					}
-					console.log(this.lotteryOrder)
+					//console.log(this.lotteryOrder)
 					//将字符串转对象
 					if (this.lotteryOrder.ballInfoList != null) {
 						this.lotteryOrder.ballInfoList.map((item, idx) => {
@@ -937,14 +940,14 @@
 									var moren = ["", "", "", "", "",""]
 									this.$set(this.lotteryOrder.ballInfoList[idx], "award", moren)
 								}
-								if (item.bonusOdds != null) {
-									var moren = ["", "", "", "", "",item.bonusOdds]
-									this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
-								} else {
+								//if (item.bonusOdds != null) {
+								//	var moren = ["", "", "", "", "",item.bonusOdds]
+								//	this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
+								//} else {
 									//考虑比赛结果还没有出的话设置一个默认值，防止报错
-									var moren = ["", "", "", "", "",""]
-									this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
-								}
+								//	var moren = ["", "", "", "", "",""]
+								//	this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
+								//}
 							}else{
 								
 								if (item.award != null) {
@@ -955,14 +958,14 @@
 									var moren = ["", "", "", "", "",""]
 									this.$set(this.lotteryOrder.ballInfoList[idx], "award", moren)
 								}
-								if (item.bonusOdds != null) {
-									var   moren = [...item.bonusOdds.split(','),""]
-									this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
-								} else {
+								//if (item.bonusOdds != null) {
+								//	var   moren = [...item.bonusOdds.split(','),""]
+								//	this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
+								//} else {
 									//考虑比赛结果还没有出的话设置一个默认值，防止报错
-									var moren = ["", "", "", "", "","",""]
-									this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
-								}
+								//	var moren = ["", "", "", "", "","",""]
+								//	this.$set(this.lotteryOrder.ballInfoList[idx], "bonusOdds", moren)
+								//}
 							}
 							
 						})
@@ -1002,6 +1005,9 @@
 </script>
 
 <style scoped lang="scss">
+	.red{
+		color:#FF3F43;
+	}
 	.green {
 		color: #1afa29;
 	}

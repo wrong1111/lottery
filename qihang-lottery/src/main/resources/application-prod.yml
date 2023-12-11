@@ -226,6 +226,8 @@ mro:
       - t_lottery_transfer
       - t_beidan_sfgg_match
       - t_lottery_ticket
+      - t_documentary
+      - t_documentary_user
 server:
   port: 48081
 

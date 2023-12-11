@@ -4,6 +4,7 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
+import com.qihang.common.vo.BonuseVO;
 import com.qihang.domain.documentary.DocumentaryDO;
 import com.qihang.domain.documentary.DocumentaryUserDO;
 import com.qihang.domain.order.LotteryOrderDO;
@@ -43,7 +44,7 @@ public class DocumentaryCommissionHelper {
     DocumentaryUserMapper documentaryUserMapper;
 
 
-    public void processCommiss(String name, LotteryOrderDO order, Double price) {
+    public void processCommiss(String name, LotteryOrderDO order, BonuseVO bonuseVO) {
 
         //查询订单是不是发单订单
         DocumentaryDO documentary = documentaryMapper.selectOne(new QueryWrapper<DocumentaryDO>().lambda().eq(DocumentaryDO::getLotteryOrderId, order.getId()));
@@ -51,22 +52,22 @@ public class DocumentaryCommissionHelper {
         DocumentaryUserDO documentaryUser = documentaryUserMapper.selectOne(new QueryWrapper<DocumentaryUserDO>().lambda().eq(DocumentaryUserDO::getLotteryOrderId, order.getId()));
 
         if (ObjectUtil.isNotNull(documentary)) {
-            log.debug("=======>[{}][已中奖]  订单 :[{}]  中奖【{}】是跟单发起人 [{}]  ", name, order.getOrderId(), price, documentary.getUserId());
+            log.debug("=======>[{}][已中奖]  订单 :[{}]  中奖【{}】是跟单发起人或退还本金 [{}]  ", name, order.getOrderId(), bonuseVO.getMoney(), documentary.getUserId());
             //是发单订单
             order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
-            BigDecimal winPrice = NumberUtil.round(price, 2);
+            BigDecimal winPrice = NumberUtil.round(bonuseVO.getMoney(), 2);
             order.setWinPrice(winPrice);
-        } else if (ObjectUtil.isNotNull(documentaryUser)) {
-            log.debug("=======>[{}][已中奖]  订单 :[{}]  中奖【{}】是跟单订单 跟单人[{}]  ", name, order.getOrderId(), price, documentaryUser.getUserId());
+        } else if (ObjectUtil.isNotNull(documentaryUser) && bonuseVO.getBonus().compareTo(BigDecimal.ZERO) > 0) {
+            log.debug("=======>[{}][已中奖]  订单 :[{}]  中奖【{}】是跟单订单 跟单人[{}]  ", name, order.getOrderId(), bonuseVO.getBonus(), documentaryUser.getUserId());
             //是跟单订单
             //查询跟单是那个用户的订单
             documentary = documentaryMapper.selectOne(new QueryWrapper<DocumentaryDO>().lambda().eq(DocumentaryDO::getId, documentaryUser.getDocumentaryId()));
-            BigDecimal winPrice = NumberUtil.round(price, 2);
+            BigDecimal winPrice = NumberUtil.round(bonuseVO.getBonus(), 2);
             //需要扣除比赛后的金额给发单用户，根据发单的设置的佣金比例来计算
             BigDecimal proportionPrice = winPrice.multiply(new BigDecimal((float) documentary.getCommission() / 100)).setScale(2, RoundingMode.HALF_UP);
             order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
             order.setWinPrice(winPrice.subtract(proportionPrice));
-            log.debug("=======>[{}][已中奖]  订单 :[{}]  中奖【{}】是跟单订单 跟单人[{}],佣金[{}],分佣[{}]  ", name, order.getOrderId(), price, documentary.getUserId(), documentary.getCommission(), proportionPrice.toPlainString());
+            log.debug("=======>[{}][已中奖]  订单 :[{}]  中奖【{}】是跟单订单 跟单人[{}],佣金[{}],分佣[{}]  ", name, order.getOrderId(), bonuseVO.getBonus(), documentary.getUserId(), documentary.getCommission(), proportionPrice.toPlainString());
             //给发单用户加金额
             UserDO userDO = userMapper.selectById(documentary.getUserId());
             userDO.setGold(userDO.getGold().add(proportionPrice));
@@ -84,10 +85,10 @@ public class DocumentaryCommissionHelper {
             payOrder.setPrice(proportionPrice);
             payOrderMapper.insert(payOrder);
         } else {
-            log.debug("=======>[{}][中奖] 订单[{}] 已中奖[{}]  ", name, order.getOrderId(), price);
+            log.debug("=======>[{}][中奖] 订单[{}] 已中奖[{}]  ", name, order.getOrderId(), bonuseVO.getMoney().add(bonuseVO.getBonus()));
             //已经中奖
             order.setState(LotteryOrderStateEnum.WAITING_AWARD.getKey());
-            order.setWinPrice(NumberUtil.round(price, 2));
+            order.setWinPrice(NumberUtil.round(bonuseVO.getMoney().add(bonuseVO.getBonus()), 2));
         }
     }
 

@@ -12,7 +12,9 @@ import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.util.reward.BasketballUtil;
 import com.qihang.common.util.reward.FootballUtil;
+import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
+import com.qihang.common.vo.BonuseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.basketball.dto.BasketballMatchDTO;
 import com.qihang.controller.basketball.vo.BasketballMatchVO;
@@ -294,17 +296,17 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
 //                //反向保存一下数据
 //                order.setSchemeDetails(JSON.toJSONString(listVOList));
                 List<LotteryTicketDO> lotteryTicketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
-                double price = FootballUtil.award(lotteryTicketDOS, resultMatch);
+                BonuseVO bonuseVO = FootballUtil.award(lotteryTicketDOS, resultMatch);
                 for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
                     lotteryTicketMapper.updateById(lotteryTicketDO);
                 }
                 //等于0相当于没有中奖
-                log.info("=======>[竞猜篮球] [待开奖]  订单 [{}] 中奖金额 【{}】 ", order.getOrderId(), price);
-                if (price == 0) {
+                log.info("=======>[竞猜篮球] [待开奖]  订单 [{}] 中奖金额 【{}】 ", order.getOrderId(), bonuseVO.getMoney().add(bonuseVO.getBonus()));
+                if (!bonuseVO.getShoted()) {
                     log.info("=======>[竞猜篮球] [未中奖]  订单 [{}]  ", order.getOrderId());
                     order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
                 } else {
-                    documentaryCommissionHelper.processCommiss("竞猜篮球", order, price);
+                    documentaryCommissionHelper.processCommiss("竞猜篮球", order, bonuseVO);
                 }
                 order.setUpdateTime(new Date());
                 lotteryOrderMapper.updateById(order);
@@ -339,7 +341,7 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
             //list.add(basketballMatch.getAward() + "," + basketballMatch.getHalfFullCourt());
             resultMatch.put(basketballMatch.getNumber(), basketballMatch.getHalfFullCourt());
         }
-        double price = 0d;
+        BonuseVO bonuseVO = BonuseVO.builder().build();
         if (flag) {
             //对schemeDetails兑奖
 //            if (StringUtils.isBlank(order.getSchemeDetails())) {
@@ -353,24 +355,24 @@ public class BasketballMatchServiceImpl extends ServiceImpl<BasketballMatchMappe
 //                //反向保存一下数据
 //                order.setSchemeDetails(JSON.toJSONString(listVOList));
             List<LotteryTicketDO> lotteryTicketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
-            price = FootballUtil.award(lotteryTicketDOS, resultMatch);
+            bonuseVO = BasketballUtil.award(lotteryTicketDOS, resultMatch);
             for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
                 lotteryTicketMapper.updateById(lotteryTicketDO);
             }
             //等于0相当于没有中奖
-            log.info("=======>[竞猜篮球] [待开奖]  订单 [{}] 中奖金额 【{}】 ", order.getOrderId(), price);
-            if (price == 0) {
+            log.info("=======>[竞猜篮球] [待开奖]  订单 [{}] 中奖金额 【{}】 ", order.getOrderId(), bonuseVO.getMoney().add(bonuseVO.getBonus()));
+            if (!bonuseVO.getShoted()) {
                 log.info("=======>[竞猜篮球] [未中奖]  订单 [{}]  ", order.getOrderId());
                 order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
             } else {
-                documentaryCommissionHelper.processCommiss("竞猜篮球", order, price);
+                documentaryCommissionHelper.processCommiss("竞猜篮球", order, bonuseVO);
             }
             order.setUpdateTime(new Date());
             lotteryOrderMapper.updateById(order);
         } else {
-            price = -1;
+            return BaseDataVO.builder().success(true).data("有对阵未完成比赛").build();
         }
-        return BaseVO.builder().success(true).errorMsg("奖金[" + price + "]").build();
+        return BaseDataVO.builder().success(true).data(bonuseVO).build();
     }
 
     private void addRecord(LotteryOrderDO lotteryOrder, Integer tenantId) {

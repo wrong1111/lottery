@@ -71,6 +71,11 @@
         </el-button>
       </el-col>
       <el-col :span="1.5">
+        <el-button type="warning" icon="el-icon-receiving" size="mini" plain @click="awardBatchs">
+          一键开奖
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
         <el-button type="info" icon="el-icon-sort" size="mini" plain @click="toggleExpandAll">
           展开/折叠
         </el-button>
@@ -188,13 +193,15 @@
                       <el-table-column label="下注内容" align="center">
                         <template slot-scope="inner">
                           <div v-if="showDan(inner.row)" class="blue">[胆]</div>
+                          <span v-for="(it,idx) in inner.row.result" :class="it.award?'red':''">
+                            {{it.describe}} {{it.odds}}
+                          </span>
 
-                          {{ getRaceContent(scope.row.type,inner.row) }}
                         </template>
                       </el-table-column>
-                      <el-table-column label="赛果(全/半)" align="center">
+                      <el-table-column label="赛果" align="center">
                         <template slot-scope="inner">
-                          {{ getRaceResult(inner.row) }}
+                          {{ getRaceResult(inner.row,scope.row.type) }}
                         </template>
                       </el-table-column>
                     </el-table>
@@ -213,7 +220,7 @@
                           <span>{{ inner.row.content }}</span>
                         </template>
                       </el-table-column>
-                      <el-table-column label="赛果" prop="reward" align="center">
+                      <el-table-column label="赛果" prop="reaward" align="center">
                       </el-table-column>
                     </el-table>
                   </template>
@@ -221,18 +228,24 @@
                 <el-col :span="24">
                   <el-form-item>
                     <template v-if="scope.row.tickingState === '0'">
-                      <el-button size="mini" type="success" @click="ticketSigle(scope.row)" >出票</el-button>
+                      <el-button size="mini" type="success" @click="ticketSigle(scope.row)">出票</el-button>
                       <!-- <el-button size="mini" type="warning" @click="refuseSigle(scope.row)">拒绝</el-button> -->
                     </template>
-                    <el-button size="mini" type="danger" @click="retreatSigle(scope.row)" v-if="scope.row.tickingState!=2">退票</el-button>
+                    <el-button size="mini" type="danger" @click="retreatSigle(scope.row)"
+                      v-if="scope.row.tickingState!=2">退票</el-button>
                     <el-button size="mini" type="primary" @click="showInfo(scope.row)">详情</el-button>
-                    <el-button size="mini" type="success" @click="upload(scope.row)" v-if="scope.row.tickingState!=2">上传票据</el-button>
+                    <el-button size="mini" type="success" @click="upload(scope.row)"
+                      v-if="scope.row.tickingState!=2">上传票据</el-button>
                     <template v-if="scope.row.transferType==null">
-                      <el-button size="mini" type="primary" @click="changeSigle(scope.row.id)" v-if="scope.row.tickingState!=2">转单</el-button>
+                      <el-button size="mini" type="primary" @click="changeSigle(scope.row.id)"
+                        v-if="scope.row.tickingState!=2">转单</el-button>
                     </template>
                     <template v-if="scope.row.transferType==1">
-                      <el-button size="mini" type="success" @click="syncChangeState(scope.row.id)" v-if="scope.row.tickingState!=2">同步转单状态</el-button>
+                      <el-button size="mini" type="success" @click="syncChangeState(scope.row.id)"
+                        v-if="scope.row.tickingState!=2">同步转单状态</el-button>
                     </template>
+                    <el-button size="mini" type="success" @click="awardSigles(scope.row.id)"
+                      v-if="scope.row.tickingState!=0">开奖</el-button>
                   </el-form-item>
                 </el-col>
                 <el-col :span="24">
@@ -360,6 +373,8 @@
     orderChange,
     orderChangeState,
     orderSumData,
+    awardSigle,
+    awardBatch,
   } from "@/api/order";
   import {
     removeUser
@@ -377,9 +392,9 @@
     props: {},
     data() {
       return {
-        showCard:false,
+        showCard: false,
         activeName: 'first',
-        ticketCard:'',
+        ticketCard: '',
         sumData: {
           "waitPrintCounts": 0,
           "back_money": 0,
@@ -553,6 +568,17 @@
       this.getList()
     },
     methods: {
+      awardBatchs() {
+        awardBatch().then((res) => {
+          this.$alert('开奖程序正在后台运行,请刷新页面查看结果')
+        })
+      },
+      awardSigles(id) {
+        awardSigle(id).then((res) => {
+          this.$alert(res.data)
+          this.getList()
+        })
+      },
       handleClick(r, e) {
         console.log(r, e)
       },
@@ -645,14 +671,18 @@
         let that = this
         that.itemInfo = []
         that.sportItemInfo = []
-        if(row.type ==0 ||row.type ==1 ||row.type ==25||row.type ==2){
-            this.$router.push({
-            'name':'OrderTicket',
-            'query':{'id':row.orderId}
-          })
+        if (row.type == 0 || row.type == 1 || row.type == 25 || row.type == 2) {
+          //  this.$router.push({
+          //  'name': 'OrderTicket',
+          //  'query': {
+          //     'id': row.orderId
+          //   }
+          // })
+          //新窗体打开
+          window.open('/#/order/ticket?id=' + row.orderId, '_blank');
           //this.showCard = true
-         // this.ticketCard = row.ticketDOList
-           return
+          // this.ticketCard = row.ticketDOList
+          return
         }
 
         that.lotId = row.type
@@ -714,23 +744,30 @@
           this.loading = false;
           if (!response.errorCode) {
             this.total = response.total;
-            const volist = response.voList;
+            let volist = response.voList;
             if (volist.length > 0) {
               this.activeName = volist[0].orderId
             }
             for (let index = 0; index < volist.length; index++) {
-              const outter = volist[index];
+              let outter = volist[index];
               //数字彩的内容。
               if (outter.schemeDetails != null) {
                 outter.schemeDetails = JSON.parse(outter.schemeDetails)
               }
               for (let i = 0; i < outter.racingBallList.length; i++) {
-                const inner = outter.racingBallList[i];
+                let inner = outter.racingBallList[i];
                 const content = inner.content;
                 try {
                   const contentObject = JSON.parse(content);
                   inner.content = contentObject;
-                } catch (error) {}
+                  const r = this.getRaceContentArys(outter.type, inner)
+                  inner.result = r
+                 // console.log('racing', inner)
+                  outter.racingBallList[i] = inner
+                } catch (error) {
+                  console.log('error>>', error)
+                }
+
               }
             }
             this.voList = volist;
@@ -746,6 +783,7 @@
       // 重置数据
       resetQuery() {
         this.resetForm("queryForm");
+        this.queryParams.day = ''
         this.handleQuery();
       },
       // 展开/收缩
@@ -794,6 +832,182 @@
         return result ? "red" : "blue";
       },
       // 下注内容
+      getRaceContentArys(type, row) {
+        let result = [];
+
+        let awards = (row.award != null && row.award != '') ? row.award.split(',') : []
+        // console.log(' show content', type, row,awards)
+        if (type == 1) {
+          let content = row.content
+          //胜分
+          if (content.winNegativeOddsList && content.winNegativeOddsList.length) {
+            for (let index = 0; index < content.winNegativeOddsList.length; index++) {
+              let element = content.winNegativeOddsList[index]
+              element.odds = "(" + element.odds + ")"
+              element.award = false
+              awards.forEach(item => {
+                if (element.describe == item) {
+                  element.award = true
+                }
+              })
+              result.push(element);
+            }
+          }
+          //让分胜负
+          if (content.cedePointsOddsList && content.cedePointsOddsList.length) {
+            for (let index = 0; index < content.cedePointsOddsList.length; index++) {
+              let element = content.cedePointsOddsList[index];
+              element.describe = '让分' + element.describe
+              element.odds = "[" + content.cedePoints + "]" + "(" + element.odds + ")";
+              if (awards.length > 0) {
+                awards[1] = awards[1].length == 2 ? ('让分' + awards[1]) : awards[1]
+                element.award = false
+                awards.forEach(item => {
+                  if (element.describe == item) {
+                    element.award = true
+                  }
+                })
+              }
+              result.push(element);
+            }
+          }
+          //总分
+          if (content.sizeOddsList && content.sizeOddsList.length) {
+            for (let index = 0; index < content.sizeOddsList.length; index++) {
+              let element = content.sizeOddsList[index];
+              element.odds = "[" + element.score + "]" + "(" + element.odds + ")"
+              element.award = false
+              awards.forEach(item => {
+                if (element.describe == item) {
+                  element.award = true
+                }
+              })
+              result.push(element);
+            }
+          }
+          //胜分差
+          if (content.differenceOddsList && content.differenceOddsList.length) {
+            for (let index = 0; index < content.differenceOddsList.length; index++) {
+              let element = content.differenceOddsList[index]
+              element.odds = "(" + element.odds + ")"
+              element.award = false
+              awards.forEach(item => {
+                if (element.describe == item) {
+                  element.award = true
+                }
+              })
+              result.push(element);
+            }
+          }
+        } else {
+          const content = row.content;
+          //胜负过关
+          if (content.sfggOdds && content.sfggOdds.length) {
+            for (let index = 0; index < content.sfggOdds.length; index++) {
+              let element = content.sfggOdds[index]
+              element.odds = "(" + element.odds + ")"
+              element.award = false
+              awards.forEach(item => {
+                if (element.describe == item) {
+                  element.award = true
+                }
+              })
+              result.push(element);
+            }
+          }
+          // 让球胜平负
+          if (content.letOddsList && content.letOddsList.length) {
+            let oddsList = [];
+            for (let index = 0; index < content.letOddsList.length; index++) {
+              let element = content.letOddsList[index]
+              element.describe = "让" + element.describe
+              element.odds = "(" + element.odds + ")"
+              if (awards.length > 0) {
+                awards[1] = awards[1].length == 1 ? ('让' + awards[1]) : awards[1]
+                element.award = false
+                //console.log(awards[1],element.describe,awards[1] == element.describe)
+                awards.forEach(item => {
+                  if (element.describe == item) {
+                    element.award = true
+                  }
+                })
+              }
+              result.push(element);
+            }
+          }
+          // 胜平负
+          if (content.notLetOddsList && content.notLetOddsList.length) {
+            for (let index = 0; index < content.notLetOddsList.length; index++) {
+              let element = content.notLetOddsList[index]
+              element.odds = "(" + element.odds + ")"
+              element.award = false
+              awards.forEach(item => {
+                if (element.describe == item) {
+                  element.award = true
+                }
+              })
+              result.push(element)
+            }
+          }
+          // 总进球数
+          if (content.goalOddsList && content.goalOddsList.length) {
+            for (let index = 0; index < content.goalOddsList.length; index++) {
+              let element = content.goalOddsList[index]
+              element.odds = "(" + element.odds + ")"
+              element.award = false
+              awards.forEach(item => {
+                if (element.describe == item) {
+                  element.award = true
+                }
+              })
+              result.push(element)
+            }
+          }
+          // 半全场
+          if (content.halfWholeOddsList && content.halfWholeOddsList.length) {
+            for (let index = 0; index < content.halfWholeOddsList.length; index++) {
+              let element = content.halfWholeOddsList[index]
+              element.odds = "(" + element.odds + ")"
+              element.award = false
+              awards.forEach(item => {
+                if (element.describe == item) {
+                  element.award = true
+                }
+              })
+              result.push(element)
+            }
+          }
+          // 比分
+          if (content.scoreOddsList && content.scoreOddsList.length) {
+            for (let index = 0; index < content.scoreOddsList.length; index++) {
+              let element = content.scoreOddsList[index]
+              element.odds = "(" + element.odds + ")"
+              element.award = false
+              awards.forEach(item => {
+                if (element.describe == item) {
+                  element.award = true
+                }
+              })
+              result.push(element)
+            }
+          }
+          //上下单双
+          if (content.oddEvenOdds && content.oddEvenOdds.length) {
+            for (let index = 0; index < content.oddEvenOdds.length; index++) {
+              let element = content.oddEvenOdds[index]
+              element.odds = "(" + element.odds + ")"
+              element.award = false
+              awards.forEach(item => {
+                if (element.describe == item) {
+                  element.award = true
+                }
+              })
+              result.push(element)
+            }
+          }
+        }
+        return result
+      },
       getRaceContent(type, row) {
         let result = "";
         // console.log(' show content', type, row)
@@ -929,20 +1143,18 @@
         return result;
       },
       // 赛果
-      getRaceResult(row) {
+      getRaceResult(row,type) {
 
         if (!row.reward) {
           return "";
         }
-        let result = row.reward.split(",");
-        if (result.length < 2) {
-          return "";
+      //  console.log('getRaceResult',row)
+        let result = row.award.split(',')
+        if(type !=2&&type!=25){
+           result[1] = '让' + result[1]
         }
-        let all = result[1];
-        let half = result[0];
-        let r = all + "\n" + "半" + half;
-        //目的就是为了展示让字
-        return r + "\n" + row.award.replace(/,/, ',让')
+        let score= row.reward.split(":")
+        return result.join(',')+","+(type==1?(score[1]+":"+score[0]):(row.reward))
       },
       // ---------------- 其他格式化 -----------------------
       // 投注数量

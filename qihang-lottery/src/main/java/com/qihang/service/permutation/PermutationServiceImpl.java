@@ -14,10 +14,7 @@ import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.log.LogUtil;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.util.reward.*;
-import com.qihang.common.vo.BaseDataVO;
-import com.qihang.common.vo.BaseVO;
-import com.qihang.common.vo.BonusVo;
-import com.qihang.common.vo.CommonListVO;
+import com.qihang.common.vo.*;
 import com.qihang.controller.grandlotto.dto.GrandLottoObjDTO;
 import com.qihang.controller.permutation.app.dto.PlaceOrderDTO;
 import com.qihang.controller.permutation.app.vo.PermutationRecordVO;
@@ -373,13 +370,16 @@ public class PermutationServiceImpl extends ServiceImpl<PermutationMapper, Permu
 //            }
             //另外 计算schemedetail
             this.calculationBySchemeDetail(lotteryOrderDO, permutationAward);
+            BonuseVO bonuseVO = BonuseVO.builder().build();
             price = lotteryOrderDO.getPrice() != null ? lotteryOrderDO.getWinPrice().doubleValue() : 0;
             log.debug("彩种[{}],订单[{}]  中奖金额[{}] >>>>", LotteryOrderTypeEnum.valueOFS(lotteryOrderDO.getType()).getValue(), lotteryOrderDO.getOrderId(), price);
             if (price > 0) {
+                bonuseVO.setShoted(true);
+                bonuseVO.setBonus(BigDecimal.valueOf(price));
                 log.debug("彩种[{}],订单[{}]  已中奖 >>>>", LotteryOrderTypeEnum.valueOFS(lotteryOrderDO.getType()).getValue(), lotteryOrderDO.getOrderId());
                 //中奖就修改订单状态为待派奖
                 lotteryOrderDO.setUpdateTime(new Date());
-                documentaryCommissionHelper.processCommiss(LotteryOrderTypeEnum.valueOFS(permutationAward.getType()).getValue(), lotteryOrderDO, price);
+                documentaryCommissionHelper.processCommiss(LotteryOrderTypeEnum.valueOFS(permutationAward.getType()).getValue(), lotteryOrderDO, bonuseVO);
                 orderMapper.updateById(lotteryOrderDO);
             } else {
                 log.debug("彩种[{}],订单[{}]  未中奖 >>>>", LotteryOrderTypeEnum.valueOFS(lotteryOrderDO.getType()).getValue(), lotteryOrderDO.getOrderId());

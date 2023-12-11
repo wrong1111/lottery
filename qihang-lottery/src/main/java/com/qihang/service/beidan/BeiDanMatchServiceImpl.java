@@ -9,8 +9,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.util.reward.BeiDanUtil;
+import com.qihang.common.util.reward.BeidanSfggUtil;
 import com.qihang.common.util.reward.FootballUtil;
+import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
+import com.qihang.common.vo.BonuseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.beidan.dto.BeiDanMatchDTO;
 import com.qihang.controller.beidan.vo.BeiDanMatchVO;
@@ -331,7 +334,7 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
             resultMatch.put(beiDanMatch.getNumber(), beiDanMatch.getAward());
             bonusMap.put(beiDanMatch.getNumber(), beiDanMatch.getBonusOdds());
         }
-        double price = 0d;
+        BonuseVO bonuseVO = BonuseVO.builder().build();
         if (flag) {
             //对schemeDetails兑奖
 //            if (StringUtils.isBlank(order.getSchemeDetails())) {
@@ -349,29 +352,28 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
              //order.setSchemeDetails(JSON.toJSONString(listVOList));
              **/
             List<LotteryTicketDO> lotteryOrderDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
-            price = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
+            bonuseVO = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
             //修改lotteryTicket表中的状态
             for (LotteryTicketDO ticketDO : lotteryOrderDOS) {
                 lotteryTicketMapper.updateById(ticketDO);
             }
             //等于0相当于没有中奖
-            log.debug("=======>[北单][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
-            if (price == 0) {
+            log.debug("=======>[北单][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), bonuseVO.getMoney().add(bonuseVO.getBonus()));
+            if (!bonuseVO.getShoted()) {
                 log.debug("=======>[北单][未中奖] 订单[{}] 未中奖  ", order.getOrderId());
                 order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
             } else {
                 //已经中奖
                 //给订单分佣处理。
-                documentaryCommissionHelper.processCommiss("北单", order, price);
+                documentaryCommissionHelper.processCommiss("北单", order, bonuseVO);
             }
             order.setUpdateTime(new Date());
             lotteryOrderMapper.updateById(order);
-            log.debug("=======>[北单]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), price);
+            log.debug("=======>[北单]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), bonuseVO.getMoney().add(bonuseVO.getBonus()));
         } else {
-            price = -1;
-
+            return BaseDataVO.builder().success(true).data("有对阵未完成比赛").build();
         }
-        return BaseVO.builder().success(true).errorMsg("奖金[" + price + "]").build();
+        return BaseDataVO.builder().success(true).data(bonuseVO).build();
     }
 
     @Override
@@ -403,7 +405,7 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
             resultMatch.put(beiDanMatch.getNumber(), beiDanMatch.getAward());
             bonusMap.put(beiDanMatch.getNumber(), beiDanMatch.getBonusOdds());
         }
-        double price = 0d;
+        BonuseVO bonuseVO = BonuseVO.builder().build();
         if (flag) {
             //对schemeDetails兑奖
 //            if (StringUtils.isBlank(order.getSchemeDetails())) {
@@ -418,28 +420,26 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
 //                order.setSchemeDetails(JSON.toJSONString(listVOList));
 
             List<LotteryTicketDO> lotteryOrderDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
-            price = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
+            bonuseVO = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
             //修改lotteryTicket表中的状态
             for (LotteryTicketDO ticketDO : lotteryOrderDOS) {
                 lotteryTicketMapper.updateById(ticketDO);
             }
             //等于0相当于没有中奖
-            log.debug("=======>[北单胜负过关][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
-            if (price == 0) {
+            log.debug("=======>[北单胜负过关][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), bonuseVO.getBonus().add(bonuseVO.getMoney()));
+            if (!bonuseVO.getShoted()) {
                 log.debug("=======>[北单胜负过关][未中奖] 订单[{}] 未中奖  ", order.getOrderId());
                 order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
             } else {
                 //已经中奖
                 //给订单分佣处理。
-                documentaryCommissionHelper.processCommiss("北单胜负过关", order, price);
+                documentaryCommissionHelper.processCommiss("北单胜负过关", order, bonuseVO);
             }
             order.setUpdateTime(new Date());
             lotteryOrderMapper.updateById(order);
-            log.debug("=======>[北单胜负过关]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), price);
-        } else {
-            price = -1;
+            log.debug("=======>[北单胜负过关]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), bonuseVO.getBonus().add(bonuseVO.getMoney()));
         }
-        return BaseVO.builder().success(true).errorMsg("奖金[" + price + "]").build();
+        return BaseDataVO.builder().success(true).data(bonuseVO).build();
     }
 
     private void awardBeidanSfgg() {
@@ -482,6 +482,7 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
                 resultMatch.put(beiDanMatch.getNumber(), beiDanMatch.getAward());
                 bonusMap.put(beiDanMatch.getNumber(), beiDanMatch.getBonusOdds());
             }
+            BonuseVO bonuseVO = BonuseVO.builder().build();
             if (flag) {
                 //对schemeDetails兑奖
                 if (StringUtils.isBlank(order.getSchemeDetails())) {
@@ -496,24 +497,24 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
 //                order.setSchemeDetails(JSON.toJSONString(listVOList));
 
                 List<LotteryTicketDO> lotteryOrderDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
-                double price = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
+                bonuseVO = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
                 //修改lotteryTicket表中的状态
                 for (LotteryTicketDO ticketDO : lotteryOrderDOS) {
                     lotteryTicketMapper.updateById(ticketDO);
                 }
                 //等于0相当于没有中奖
-                log.debug("=======>[北单胜负过关][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
-                if (price == 0) {
+                log.debug("=======>[北单胜负过关][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), bonuseVO.getMoney().add(bonuseVO.getBonus()));
+                if (!bonuseVO.getShoted()) {
                     log.debug("=======>[北单胜负过关][未中奖] 订单[{}] 未中奖  ", order.getOrderId());
                     order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
                 } else {
                     //已经中奖
                     //给订单分佣处理。
-                    documentaryCommissionHelper.processCommiss("北单胜负过关", order, price);
+                    documentaryCommissionHelper.processCommiss("北单胜负过关", order, bonuseVO);
                 }
                 order.setUpdateTime(new Date());
                 lotteryOrderMapper.updateById(order);
-                log.debug("=======>[北单胜负过关]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), price);
+                log.debug("=======>[北单胜负过关]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), bonuseVO.getMoney().add(bonuseVO.getBonus()));
             }
         }
     }
@@ -558,6 +559,7 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
                 resultMatch.put(beiDanMatch.getNumber(), beiDanMatch.getAward());
                 bonusMap.put(beiDanMatch.getNumber(), beiDanMatch.getBonusOdds());
             }
+            BonuseVO bonuseVO = BonuseVO.builder().build();
             if (flag) {
                 //对schemeDetails兑奖
                 if (StringUtils.isBlank(order.getSchemeDetails())) {
@@ -575,24 +577,24 @@ public class BeiDanMatchServiceImpl extends ServiceImpl<BeiDanMatchMapper, BeiDa
                  //order.setSchemeDetails(JSON.toJSONString(listVOList));
                  **/
                 List<LotteryTicketDO> lotteryOrderDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
-                double price = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
+                bonuseVO = BeiDanUtil.award(lotteryOrderDOS, resultMatch, bonusMap);
                 //修改lotteryTicket表中的状态
                 for (LotteryTicketDO ticketDO : lotteryOrderDOS) {
                     lotteryTicketMapper.updateById(ticketDO);
                 }
                 //等于0相当于没有中奖
-                log.debug("=======>[北单][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), price);
-                if (price == 0) {
+                log.debug("=======>[北单][待开奖] 订单 [{}] 中奖[{}] ", order.getOrderId(), bonuseVO.getMoney().add(bonuseVO.getBonus()));
+                if (!bonuseVO.getShoted()) {
                     log.debug("=======>[北单][未中奖] 订单[{}] 未中奖  ", order.getOrderId());
                     order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
                 } else {
                     //已经中奖
                     //给订单分佣处理。
-                    documentaryCommissionHelper.processCommiss("北单", order, price);
+                    documentaryCommissionHelper.processCommiss("北单", order, bonuseVO);
                 }
                 order.setUpdateTime(new Date());
                 lotteryOrderMapper.updateById(order);
-                log.debug("=======>[北单]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), price);
+                log.debug("=======>[北单]  订单 [{}] 中奖金额[{}] 完成 <<<<<<<<<< ", order.getOrderId(), bonuseVO.getMoney().add(bonuseVO.getBonus()));
             }
         }
     }

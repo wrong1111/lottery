@@ -289,7 +289,7 @@ public class LotteryProcessor implements PageProcessor {
                             String dxf = tr.get(j).css("td").nodes().get(6).css(".betbtn-ok").xpath("//p/@data-value").get();
                             if ("2".equals(dxf)) {
                                 dxf = "小";
-                            } else if ("2".equals(dxf)) {
+                            } else if ("1".equals(dxf)) {
                                 dxf = "大";
                             }
                             String sfx = tr.get(j + 1).css(".bet-more-tb .sbetbtn-ok").xpath("//p/@data-value").get();
@@ -341,11 +341,12 @@ public class LotteryProcessor implements PageProcessor {
                     footballMatch.setOpenTime(nodes.get(i).css("td:nth-child(3)", "text").toString().trim());
                     //footballMatch.setHomeTeam((nodes.get(i).css(".text_r a", "text").toString()).replace(" ", ""));
                     //footballMatch.setVisitingTeam((nodes.get(i).css(".text_l a", "text").toString()).replace(" ", ""));
-                    String str = nodes.get(i).css("td:nth-child(7)", "text").toString();
-                    String result = nodes.get(i).css("td:nth-child(18)", "text").toString();
+                    String str = nodes.get(i).css("td:nth-child(7)", "text").toString().trim();
+                    String result = nodes.get(i).css("td:nth-child(18)", "text").toString().trim();
                     String r = result.substring(0, 1) + "-" + result.substring(1, 2);
-                    footballMatch.setAward((nodes.get(i).css("td:nth-child(12)", "text").toString() + "," + nodes.get(i).css("td:nth-child(9)", "text").toString() + "," + nodes.get(i).css("td:nth-child(15)", "text").toString() + "," + r + "," + str.substring(str.lastIndexOf(")") + 1)).replaceAll(" ",""));
+                    footballMatch.setAward((nodes.get(i).css("td:nth-child(12)", "text").toString() + "," + nodes.get(i).css("td:nth-child(9)", "text").toString() + "," + nodes.get(i).css("td:nth-child(15)", "text").toString() + "," + r + "," + str.substring(str.lastIndexOf(")") + 1)).replaceAll(" ", ""));
                     footballMatch.setHalfFullCourt(str.split(" ")[1]);
+                    footballMatch.setHalfScore(str.split(" ")[0]);
                     footballMatchList.add(footballMatch);
                 }
             } catch (Exception e) {

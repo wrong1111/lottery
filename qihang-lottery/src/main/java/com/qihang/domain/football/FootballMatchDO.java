@@ -144,4 +144,5 @@ public class FootballMatchDO implements Serializable {
      * 赛事唯一标识
      */
     String gameNo;
+    String halfScore;
 }

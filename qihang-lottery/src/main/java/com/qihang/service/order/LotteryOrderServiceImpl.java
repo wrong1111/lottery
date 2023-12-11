@@ -95,6 +95,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -202,7 +203,12 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
         List<LotteryOrderVO> orderList = BeanUtil.copyToList(lotteryOrderPage.getRecords(), LotteryOrderVO.class);
         for (LotteryOrderVO lotteryOrderVO : orderList) {
             //设置订单对应的彩票名字和logo
-            LotteryOrderTypeEnum lotteryEnum = LotteryOrderTypeEnum.valueOFS(lotteryOrderVO.getType());
+            LotteryOrderTypeEnum lotteryEnum = null;
+            if (lotteryOrderVO.getType().equals(LotteryOrderTypeEnum.SIGLE_SFGG.getKey())) {
+                lotteryEnum = LotteryOrderTypeEnum.SINGLE;
+            } else {
+                lotteryEnum = LotteryOrderTypeEnum.valueOFS(lotteryOrderVO.getType());
+            }
             BallGameDO ballGame = ballGameMapper.selectOne(new QueryWrapper<BallGameDO>().lambda().eq(BallGameDO::getName, lotteryEnum.getValue()));
             lotteryOrderVO.setBallName(ballGame.getName());
             lotteryOrderVO.setBallUrl(ballGame.getUrl());
@@ -1250,28 +1256,29 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
     @Override
     public BaseVO openAward(Integer id) {
         if (null == id) {
-            //足球出奖结果计算
-            footballMatchService.award();
-            //篮球出奖结果计算
-            basketballMatchService.award();
-            //北单出奖结果计算
-            beiDanMatchService.award();
-            //任九
-            winBurdenMatchService.renJiuAward();
-            //十四场
-            winBurdenMatchService.victoryDefeatAward();
-            //数字彩
-            for (LotteryOrderTypeEnum value : LotteryOrderTypeEnum.values()) {
-                if (!ITransferOutServiceImpl.isSports(Integer.valueOf(value.getKey()))) {
-                    permutationService.calculation(value.getKey());
+            new Thread(() -> {
+                //足球出奖结果计算
+                footballMatchService.award();
+                //篮球出奖结果计算
+                basketballMatchService.award();
+                //北单出奖结果计算
+                beiDanMatchService.award();
+                //任九
+                winBurdenMatchService.renJiuAward();
+                //十四场
+                winBurdenMatchService.victoryDefeatAward();
+                //数字彩
+                for (LotteryOrderTypeEnum value : LotteryOrderTypeEnum.values()) {
+                    if (!ITransferOutServiceImpl.isSports(Integer.valueOf(value.getKey()))) {
+                        permutationService.calculation(value.getKey());
+                    }
                 }
-            }
-
+            }).start();
+            return BaseDataVO.builder().success(true).data("后台正在运行，请稍候再刷新").build();
         } else {
-            LotteryOrderDO orderDO = lotteryOrderMapper.selectById(id);
-            if (!(orderDO.getState().equals(LotteryOrderStateEnum.FAIL_TO_WIN.getKey())
-                    || orderDO.getState().equals(LotteryOrderStateEnum.ALREADY_AWARD.getKey())
-                    || orderDO.getState().equals(LotteryOrderStateEnum.WAITING_AWARD.getKey()))) {
+            try {
+                LotteryOrderDO orderDO = lotteryOrderMapper.selectById(id);
+
                 if (LotteryOrderTypeEnum.FOOTBALL.getKey().equals(orderDO.getType())) {
                     //足球出奖结果计算
                     return footballMatchService.openAward(orderDO);
@@ -1284,7 +1291,6 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                 } else if (LotteryOrderTypeEnum.SINGLE.getKey().equals(orderDO.getType())) {
                     //北单出奖结果计算
                     return beiDanMatchService.openAward(orderDO);
-
                 } else if (LotteryOrderTypeEnum.REN_JIU.getKey().equals(orderDO.getType())) {
                     return winBurdenMatchService.openAwardRj(orderDO);
                 } else if (LotteryOrderTypeEnum.VICTORY_DEFEAT.getKey().equals(orderDO.getType())) {
@@ -1292,9 +1298,11 @@ public class LotteryOrderServiceImpl extends ServiceImpl<LotteryOrderMapper, Lot
                 } else {
                     return permutationService.calculation(orderDO);
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+            return BaseDataVO.builder().success(true).data("未处理").build();
         }
-        return BaseVO.builder().success(false).errorMsg("未处理").build();
     }
 
     private void addRecord(LotteryOrderDO lotteryOrder) {

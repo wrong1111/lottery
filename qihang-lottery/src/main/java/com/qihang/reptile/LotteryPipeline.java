@@ -187,6 +187,7 @@ public class LotteryPipeline implements Pipeline {
                 if (ObjectUtil.isNotNull(footballMatch)) {
                     footballMatch.setAward(footballMatchDO.getAward());
                     footballMatch.setHalfFullCourt(footballMatchDO.getHalfFullCourt());
+                    footballMatch.setHalfScore(footballMatchDO.getHalfScore());
                     footballMatch.setUpdateTime(new Date());
                     footballMatchService.updateById(footballMatch);
                 }

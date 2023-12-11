@@ -12,6 +12,7 @@ import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.util.reward.RenJiuUtil;
 import com.qihang.common.util.reward.WinBurdenUtil;
 import com.qihang.common.vo.BaseVO;
+import com.qihang.common.vo.BonuseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.racingball.app.dto.BallCalculationDTO;
 import com.qihang.controller.racingball.app.vo.BallCalculationVO;
@@ -44,6 +45,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -223,7 +225,10 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
                     order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
                 } else {
                     log.error("======>[胜负彩][已中奖] 订单[{}]   ", order.getOrderId());
-                    documentaryCommissionHelper.processCommiss("胜负彩", order, price);
+                    BonuseVO bonuseVO = BonuseVO.builder().build();
+                    bonuseVO.setShoted(true);
+                    bonuseVO.setBonus(BigDecimal.valueOf(price));
+                    documentaryCommissionHelper.processCommiss("胜负彩", order, bonuseVO);
                 }
                 order.setUpdateTime(new Date());
                 lotteryOrderMapper.updateById(order);
@@ -328,7 +333,10 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
                 } else {
                     log.debug("======>[任九][已中奖] 订单[{}],已中奖 {} ", order.getOrderId(), price);
                     //已经中奖
-                    documentaryCommissionHelper.processCommiss("任九", order, price);
+                    BonuseVO bonuseVO = BonuseVO.builder().build();
+                    bonuseVO.setShoted(true);
+                    bonuseVO.setBonus(BigDecimal.valueOf(price));
+                    documentaryCommissionHelper.processCommiss("任九", order, bonuseVO);
                 }
                 order.setUpdateTime(new Date());
                 lotteryOrderMapper.updateById(order);
@@ -386,7 +394,10 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
             } else {
                 log.debug("======>[任九][已中奖] 订单[{}],已中奖 {} ", order.getOrderId(), price);
                 //已经中奖
-                documentaryCommissionHelper.processCommiss("任九", order, price);
+                BonuseVO bonuseVO = BonuseVO.builder().build();
+                bonuseVO.setShoted(true);
+                bonuseVO.setBonus(BigDecimal.valueOf(price));
+                documentaryCommissionHelper.processCommiss("任九", order, bonuseVO);
             }
             order.setUpdateTime(new Date());
             lotteryOrderMapper.updateById(order);
@@ -436,7 +447,10 @@ public class WinBurdenMatchServiceImpl extends ServiceImpl<WinBurdenMatchMapper,
                 order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
             } else {
                 log.error("======>[胜负彩][已中奖] 订单[{}]   ", order.getOrderId());
-                documentaryCommissionHelper.processCommiss("胜负彩", order, price);
+                BonuseVO bonuseVO = BonuseVO.builder().build();
+                bonuseVO.setShoted(true);
+                bonuseVO.setBonus(BigDecimal.valueOf(price));
+                documentaryCommissionHelper.processCommiss("胜负彩", order, bonuseVO);
             }
             order.setUpdateTime(new Date());
             lotteryOrderMapper.updateById(order);

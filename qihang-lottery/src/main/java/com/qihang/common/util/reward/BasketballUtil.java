@@ -4,6 +4,7 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.qihang.common.util.CombinationUtil;
+import com.qihang.common.vo.BonuseVO;
 import com.qihang.constant.Constant;
 import com.qihang.controller.basketball.dto.BasketballMatchDTO;
 import com.qihang.controller.football.dto.FootballMatchDTO;
@@ -1106,11 +1107,11 @@ public class BasketballUtil {
      * 主队分+让球
      */
 
-    public static double award(List<LotteryTicketDO> ticketDOList, Map<String, String> resultMap) {
+    public static BonuseVO award(List<LotteryTicketDO> ticketDOList, Map<String, String> resultMap) {
+        BonuseVO bonuseVO = BonuseVO.builder().build();
         if (CollectionUtils.isEmpty(ticketDOList)) {
-            return 0d;
+            return bonuseVO;
         }
-        BigDecimal price = BigDecimal.ZERO;
         for (LotteryTicketDO ticketDO : ticketDOList) {
             List<TicketVO> ticketDTOList = JSONUtil.toList(ticketDO.getTicketContent(), TicketVO.class);
             List<String> oddsList = new ArrayList<>();
@@ -1140,21 +1141,23 @@ public class BasketballUtil {
                 ticketDO.setWinPrice(ticketDO.getPrice());
                 if (ticketDO.getTicketState() != 2) {
                     ticketDO.setState(3);
-                    price = price.add(ticketDO.getPrice());
+                    bonuseVO.setShoted(true);
+                    bonuseVO.setMoney(bonuseVO.getMoney().add(ticketDO.getPrice()));
                 }
             } else if (ticketDTOList.size() == oddsList.size()) {
-                price = FootballUtil.sumItem(oddsList).multiply(BigDecimal.valueOf(2d));//不乘倍数，考虑倍数有减少行为，导致倍数为0
+                BigDecimal price = FootballUtil.sumItem(oddsList);//不乘倍数，考虑倍数有减少行为，导致倍数为0
                 ticketDO.setWinPrice(price.setScale(2, RoundingMode.HALF_UP));
                 if (ticketDO.getTicketState() != 2) {
                     ticketDO.setState(3);
                     ticketDO.setWinPrice(price.multiply(BigDecimal.valueOf(ticketDO.getTimes())).setScale(2, RoundingMode.HALF_UP));
-                    price = price.add(ticketDO.getPrice());
+                    bonuseVO.setShoted(true);
+                    bonuseVO.setBonus(bonuseVO.getBonus().add(ticketDO.getWinPrice()));
                 }
             } else {
                 ticketDO.setState(2);
             }
         }
-        return price.doubleValue();
+        return bonuseVO;
     }
 
 

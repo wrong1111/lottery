@@ -11,7 +11,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.qihang.annotation.TenantIgnore;
 import com.qihang.common.util.order.OrderNumberGenerationUtil;
 import com.qihang.common.util.reward.FootballUtil;
+import com.qihang.common.vo.BaseDataVO;
 import com.qihang.common.vo.BaseVO;
+import com.qihang.common.vo.BonuseVO;
 import com.qihang.common.vo.CommonListVO;
 import com.qihang.controller.football.dto.FootballMatchDTO;
 import com.qihang.controller.football.vo.FootballMatchVO;
@@ -310,12 +312,13 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
                 String award = buildResult(footballMatch.getHalfFullCourt(), footballMatch.getAward());
                 resultMatch.put(footballMatch.getNumber(), award);
             }
+            BonuseVO bonuseVO = BonuseVO.builder().build();
             if (flag) {
                 //对schemeDetails兑奖
-                if (StringUtils.isBlank(order.getSchemeDetails())) {
-                    log.error("============订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
-                    continue;
-                }
+//                if (StringUtils.isBlank(order.getSchemeDetails())) {
+//                    log.error("============订单 [{}] 没有具体schemeDetail 不参与兑派奖==========", order.getOrderId());
+//                    continue;
+//                }
 //                List<SportSchemeDetailsListVO> listVOList = JSONUtil.toList(order.getSchemeDetails(), SportSchemeDetailsListVO.class);
 //                FootballUtil.awardSchemeDetails(listVOList, resultMatch);
 //                //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
@@ -323,25 +326,23 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
 //                //反向保存一下数据
 //                order.setSchemeDetails(JSON.toJSONString(listVOList));
                 List<LotteryTicketDO> lotteryTicketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
-                double price = FootballUtil.award(lotteryTicketDOS, resultMatch);
+                bonuseVO = FootballUtil.award(lotteryTicketDOS, resultMatch);
                 for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
                     lotteryTicketMapper.updateById(lotteryTicketDO);
                 }
                 //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
                 //等于0相当于没有中奖
-                log.debug("=======>[竞猜足球][待开奖]  订单 :[{}]  中奖【{}】  ", order.getOrderId(), price);
-                if (price == 0) {
+                log.debug("=======>[竞猜足球][待开奖]  订单 :[{}]  中奖【{}】  ", order.getOrderId(), bonuseVO.getMoney().toPlainString());
+                if (!bonuseVO.getShoted()) {
                     log.info("=======>[竞猜足球][待开奖]  订单 :[{}]  未中奖 ", order.getOrderId());
                     order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
                 } else {
                     //具体处理
-                    documentaryCommissionHelper.processCommiss("竞猜足球", order, price);
+                    documentaryCommissionHelper.processCommiss("竞猜足球", order, bonuseVO);
                 }
                 order.setUpdateTime(new Date());
                 lotteryOrderMapper.updateById(order);
             }
-
-
         }
         return new BaseVO();
     }
@@ -376,7 +377,7 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
             String award = buildResult(footballMatch.getHalfFullCourt(), footballMatch.getAward());
             resultMatch.put(footballMatch.getNumber(), award);
         }
-        double price = 0d;
+        BonuseVO bonuseVO = BonuseVO.builder().build();
         if (flag) {
             //对schemeDetails兑奖
 //            if (StringUtils.isBlank(order.getSchemeDetails())) {
@@ -390,24 +391,26 @@ public class FootballMatchServiceImpl extends ServiceImpl<FootballMatchMapper, F
 //                //反向保存一下数据
 //                order.setSchemeDetails(JSON.toJSONString(listVOList));
             List<LotteryTicketDO> lotteryTicketDOS = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, order.getOrderId()));
-            price = FootballUtil.award(lotteryTicketDOS, resultMatch);
+            bonuseVO = FootballUtil.award(lotteryTicketDOS, resultMatch);
             for (LotteryTicketDO lotteryTicketDO : lotteryTicketDOS) {
                 lotteryTicketMapper.updateById(lotteryTicketDO);
             }
             //计算用户有没有中奖，中奖了把每一注的金额进行累加在返回
             //等于0相当于没有中奖
-            log.debug("=======>[竞猜足球][待开奖]  订单 :[{}]  中奖【{}】  ", order.getOrderId(), price);
-            if (price == 0) {
+            log.debug("=======>[竞猜足球][待开奖]  订单 :[{}]  中奖【{}】  ", order.getOrderId(), bonuseVO.getMoney().toPlainString());
+            if (!bonuseVO.getShoted()) {
                 log.info("=======>[竞猜足球][待开奖]  订单 :[{}]  未中奖 ", order.getOrderId());
                 order.setState(LotteryOrderStateEnum.FAIL_TO_WIN.getKey());
             } else {
                 //具体处理
-                documentaryCommissionHelper.processCommiss("竞猜足球", order, price);
+                documentaryCommissionHelper.processCommiss("竞猜足球", order, bonuseVO);
             }
             order.setUpdateTime(new Date());
             lotteryOrderMapper.updateById(order);
+        } else {
+            return BaseDataVO.builder().success(true).data("有对阵未获取赛果").build();
         }
-        return BaseVO.builder().success(true).errorMsg("奖金[" + price + "]").build();
+        return BaseDataVO.builder().success(true).data("奖金[" + bonuseVO.getMoney().toPlainString() + "]").build();
     }
 
     /***
