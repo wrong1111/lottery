@@ -69,7 +69,7 @@ public class BeidanSfggUtil {
         lotteryTicketDO.setOrderId(orderNo);
         lotteryTicketDO.setTimes(Integer.valueOf(times));
         lotteryTicketDO.setTicketState(0);
-        lotteryTicketDO.setTicketNo(idx+"");
+        lotteryTicketDO.setTicketNo(idx + "");
         lotteryTicketDO.setRevokePrice(BigDecimal.ZERO);
         lotteryTicketDO.setPrice(BigDecimal.valueOf(2).multiply(BigDecimal.valueOf(lotteryTicketDO.getTimes())));
         lotteryTicketDO.setForecast(foreast.multiply(BigDecimal.valueOf(2)).multiply(BigDecimal.valueOf(lotteryTicketDO.getTimes())));
@@ -105,12 +105,14 @@ public class BeidanSfggUtil {
             List<List<String>> lists = CombinationUtil.getCombinations(matchArrays, play);
             lotteryTicketDOS.addAll(replaceTicketVO(lists, ticketMap, orderNo, play, times));
         }
-        lotteryTicketDOS.forEach(p -> {
+        idx = 1;
+        for (LotteryTicketDO p : lotteryTicketDOS) {
+            p.setTicketNo(String.valueOf(idx++));
             p.setTicketState(0);
             p.setCreateTime(new Date());
             p.setRevokePrice(BigDecimal.ZERO);
             p.setState(0);
-        });
+        }
         return lotteryTicketDOS;
     }
 
@@ -125,7 +127,7 @@ public class BeidanSfggUtil {
      */
     private static List<LotteryTicketDO> replaceTicketVO(List<List<String>> combines, Map<String, ArrayList<TicketVO>> ticketVOMap, String orderId, Integer play, Integer times) {
         List<LotteryTicketDO> lotteryTicketDOS = new ArrayList<>();
-        int multiPer = times % Constant.MAX_TICKET_MULTI == 0 ? times / Constant.MAX_TICKET_MULTI : times / Constant.MAX_TICKET_MULTI + 1;
+        // int multiPer = times % Constant.MAX_TICKET_MULTI == 0 ? times / Constant.MAX_TICKET_MULTI : times / Constant.MAX_TICKET_MULTI + 1;
         int idx = 0;
         for (List<String> lists : combines) {
 
@@ -150,25 +152,26 @@ public class BeidanSfggUtil {
                     ordersTicketList.add(ticketVO);
                 }
 
-                for (int i = 0; i < multiPer; i++) {
-                    int mult = Constant.MAX_TICKET_MULTI;
-                    if (i == multiPer - 1) {
-                        //最后一票倍数
-                        mult = times % Constant.MAX_TICKET_MULTI;
-                    }
-                    LotteryTicketDO lotteryTicketDO = new LotteryTicketDO();
-                    lotteryTicketDO.setTicketNo(String.valueOf(++idx));
-                    lotteryTicketDO.setForecast(maxOddsList.stream().reduce(BigDecimal.ONE, BigDecimal::multiply).multiply(BigDecimal.valueOf(1.3d)).multiply(BigDecimal.valueOf(mult)));
-                    lotteryTicketDO.setBets(bets);
-                    lotteryTicketDO.setBetType("" + play);
-                    lotteryTicketDO.setTimes(mult);
-                    lotteryTicketDO.setOrderId(orderId);
-                    lotteryTicketDO.setPrice(BigDecimal.valueOf(bets).multiply(BigDecimal.valueOf(2)).multiply(BigDecimal.valueOf(mult)));
-                    lists.sort((a, b) -> a.compareTo(b));
-                    lotteryTicketDO.setMatchs(StringUtils.join(lists, ","));
-                    lotteryTicketDO.setTicketContent(JSON.toJSONString(ordersTicketList));
-                    lotteryTicketDOS.add(lotteryTicketDO);
-                }
+                // for (int i = 0; i < multiPer; i++) {
+//                    int mult = Constant.MAX_TICKET_MULTI;
+//                    if (i == multiPer - 1) {
+//                        //最后一票倍数
+//                        mult = times % Constant.MAX_TICKET_MULTI;
+//                    }
+                int mult = times;
+                LotteryTicketDO lotteryTicketDO = new LotteryTicketDO();
+                lotteryTicketDO.setTicketNo(String.valueOf(++idx));
+                lotteryTicketDO.setForecast(maxOddsList.stream().reduce(BigDecimal.ONE, BigDecimal::multiply).multiply(BigDecimal.valueOf(1.3d)).multiply(BigDecimal.valueOf(mult)));
+                lotteryTicketDO.setBets(bets);
+                lotteryTicketDO.setBetType("" + play);
+                lotteryTicketDO.setTimes(mult);
+                lotteryTicketDO.setOrderId(orderId);
+                lotteryTicketDO.setPrice(BigDecimal.valueOf(bets).multiply(BigDecimal.valueOf(2)).multiply(BigDecimal.valueOf(mult)));
+                lists.sort((a, b) -> a.compareTo(b));
+                lotteryTicketDO.setMatchs(StringUtils.join(lists, ","));
+                lotteryTicketDO.setTicketContent(JSON.toJSONString(ordersTicketList));
+                lotteryTicketDOS.add(lotteryTicketDO);
+                // }
             }
         }
         return lotteryTicketDOS;

@@ -430,7 +430,7 @@ public class ChangeServiceImpl implements IChangeService {
                     if (StringUtils.isNotBlank(tickets)) {
                         List<LotteryTicketDO> ticketDOList = lotteryTicketMapper.selectList(new QueryWrapper<LotteryTicketDO>().lambda().eq(LotteryTicketDO::getOrderId, orderDO.getOrderId()));
                         if (!CollectionUtil.isEmpty(ticketDOList)) {
-                            Map<String, LotteryTicketDO> ticketDOMap = ticketDOList.stream().collect(Collectors.toMap(LotteryTicketDO::getTicketNo, lotteryTicketDO -> lotteryTicketDO));
+                            Map<String, LotteryTicketDO> ticketDOMap = ticketDOList.stream().collect(Collectors.toMap(LotteryTicketDO::getTicketNo, lotteryTicketDO -> lotteryTicketDO,(a,b)->a));
                             for (String ticket : ticketArys) {
                                 String[] ticketItemArys = StringUtils.split(ticket, ",");
                                 LotteryTicketDO lotteryTicketDO = ticketDOMap.get(ticketItemArys[0]);
