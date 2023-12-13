@@ -18,8 +18,9 @@
 				</view>
 				<u-divider text="前区(至少5个)"></u-divider>
 				<ul>
-					<li @click="check(1,1,index)" v-for="(item,index) in  shi" :class="item.active?'active':''">
-						{{item.num}}<span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
+					<li  v-for="(item,index) in  shi" :class="item.active?'active':''">
+						<span @click="check(1,1,index)">{{item.num}}</span>
+						<span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
 						<view style="display: flex;justify-content: center;align-items: center;">
 							<view v-if="omitData.record!=undefined&&omiIsShow"
 								style="color: #A5A5A5;font-size: 13px;margin-top: 6px;">
@@ -36,9 +37,9 @@
 				</ul>
 				<u-divider text="后区(至少2个)"></u-divider>
 				<ul style="margin-bottom: 30px;">
-					<li id="last" @click="check(1,2,index)" v-for="(item,index) in ge"
+					<li id="last"  v-for="(item,index) in ge"
 						:class="item.active?'active1':''">
-						{{item.num}}<span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
+						<span @click="check(1,2,index)">{{item.num}}</span><span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
 						<view style="display: flex;justify-content: center;align-items: center;">
 							<view v-if="omitData.record!=undefined&&omiIsShow"
 								style="color: #A5A5A5;font-size: 13px;margin-top: 6px;">

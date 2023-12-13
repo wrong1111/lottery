@@ -91,47 +91,47 @@
           <el-card>
             <el-form label-position="left" inline class="demo-table-expand">
               <el-row :gutter="5">
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="订单号：">
                     <span>{{ scope.row.orderId }}</span>
                     <el-tag type="danger" size="mini" class="ml5" v-if="scope.row.betType==1">奖金优化</el-tag>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="用户名：">
                     <span>{{ scope.row.nickname }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="上级：">
                     <span>{{ scope.row.parentName }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="订单状态：">
                     <span :class="getAward(scope.row)">{{
                       getOrderState(scope.row)
                     }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="下注金额：">
                     <span>{{ scope.row.price }}</span>
                     {{ (scope.row.revokePrice==null||scope.row.revokePrice==0)?'':'已退'+scope.row.revokePrice }}
                     <el-tag type="danger" size="mini" class="ml5" v-if="scope.row.betType==1">奖金优化</el-tag>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="预计奖金：">
                     <span>{{ scope.row.forecast }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="中奖金额：">
                     <span :class="getAward(scope.row)">{{ (scope.row.winPrice>0?scope.row.winPrice:'') }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item>
                     <el-tag size="mini" type="success">{{
                       getBettingNotes(scope.row)
@@ -145,23 +145,23 @@
                     </template>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="创建时间：">
                     <span>{{ parseTime(scope.row.createTime) }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="出票时间：">
                     <span>{{ parseTime(scope.row.ticketingTime) }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="订单标识：">
                     <span
                       :class="0 == scope.row.transferType?'red1':(1==scope.row.transferType?'blue1':'')">{{ getTransferType(scope.row) }}</span>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <el-form-item label="转单时间：">
                     <span
                       :class="0 == scope.row.transferType?'red1':(1==scope.row.transferType?'blue1':'')">{{ 0 == scope.row.transferType?parseTime(scope.row.createTime):parseTime(scope.row.transferTime)}}</span>

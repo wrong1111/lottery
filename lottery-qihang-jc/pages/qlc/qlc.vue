@@ -18,8 +18,9 @@
 				</view>
 				<u-divider text="选号区(至少7个)"></u-divider>
 				<ul>
-					<li @click="check(1,1,index)" v-for="(item,index) in  shi" :class="item.active?'active':''">
-						{{item.num}}<span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
+					<li  v-for="(item,index) in  shi" :class="item.active?'active':''">
+						<span @click="check(1,1,index)">{{item.num}}</span>
+						<span style="font-size: 15px;" v-if="item.isGallbladder">胆</span>
 						<view style="display: flex;justify-content: center;align-items: center;">
 							<view v-if="omitData.record!=undefined&&omiIsShow"
 								style="color: #A5A5A5;font-size: 13px;margin-top: 6px;">
@@ -207,7 +208,7 @@
 			//机选
 			randomSelect() {
 				this.clear()
-				let numberArr = this.globalUtil.randomFromZero(31, 7);
+				let numberArr = this.globalUtil.randomFromZero(30, 7);
 				for (var i = 0; i < numberArr.length; i++) {
 					let j = numberArr[i];
 					this.shi[j].active = true;

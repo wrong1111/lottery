@@ -127,14 +127,14 @@ public class SpiderRunner {
      */
     public void runDay() {
         Spider.create(new LotteryProcessor()).addUrl(
-                CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
-                , CrawlingAddressConstant.URL_SSQ // 双色球 开奖
-                , CrawlingAddressConstant.URL_KL8 // 快乐8 开奖
-                , CrawlingAddressConstant.URL_QLC // 七乐彩 开奖
-                , CrawlingAddressConstant.URL20 //大乐透开奖
-                , CrawlingAddressConstant.URL17 //七星彩开奖
-                , CrawlingAddressConstant.URL16 //排列5开奖
-                , CrawlingAddressConstant.URL2 //排列三出奖
+//                CrawlingAddressConstant.URL_FC3D // 福彩3D 开奖
+//                , CrawlingAddressConstant.URL_SSQ // 双色球 开奖
+//                , CrawlingAddressConstant.URL_KL8 // 快乐8 开奖
+//                , CrawlingAddressConstant.URL_QLC // 七乐彩 开奖
+                 CrawlingAddressConstant.URL20 //大乐透开奖
+//                , CrawlingAddressConstant.URL17 //七星彩开奖
+//                , CrawlingAddressConstant.URL16 //排列5开奖
+//                , CrawlingAddressConstant.URL2 //排列三出奖
         ).setDownloader(downloaderA()).setScheduler(new QueueScheduler().setDuplicateRemover(new BloomFilterDuplicateRemover(10000000))).addPipeline(lotteryPipeline).thread(5).runAsync();
     }
 

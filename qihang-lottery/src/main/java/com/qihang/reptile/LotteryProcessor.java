@@ -168,10 +168,10 @@ public class LotteryProcessor implements PageProcessor {
                     List<String> moneyList = new ArrayList<>();
                     int idx = 0;
                     for (Selectable td : tdList) {
-                        if (idx == 0) {
+                        if (idx++ == 0) {
                             continue;
                         }
-                        String tdStr = td.css("td:nth-child(3)", "text").get().trim();
+                        String tdStr = td.css("td:nth-child(3)", "text").get().trim().replaceAll(",", "");
                         if (StringUtils.isNotBlank(tdStr)) {
                             moneyList.add(tdStr);
                         }

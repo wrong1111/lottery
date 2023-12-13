@@ -98,14 +98,14 @@
 		onLoad(option) {
 			let obj = JSON.parse(decodeURIComponent(option.obj));
 			this.calculationParam = obj
-			console.log(' 合买页，收到参数=>',obj,this.calculationParam)
+			//console.log(' 合买页，收到参数=>',obj,this.calculationParam)
 		},
 		methods: {
 			getLotteryName(type) {
 				return getLottery(type)
 			},
 			confirm() {
-				console.log(" 跟单信息 ==》",this.calculationParam)
+				//console.log(" 跟单信息 ==》",this.calculationParam)
 				if (this.calculationParam.multiple * this.calculationParam.notes * 2 < 200) {
 					uni.showToast({
 						title: '发布跟单最低200起投',
